@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: LogistiScout API
+  version: 1.0.0
+  description: API pour la gestion du matériel scout, des groupes, des événements et des contrôles.
+servers:
+  - url: https://api.logistiscout.fr/v1
+paths:
+  /auth/login:
+    post:
+      summary: Authentification d'un groupe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                groupe_id:
+                  type: string
+                groupe_mdp:
+                  type: string
+              required: [groupe_id, groupe_mdp]
+      responses:
+        '200':
+          description: Authentifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Identifiants invalides
+  /groupes:
+    get:
+      summary: Liste des groupes
+      responses:
+        '200':
+          description: Liste des groupes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Groupe'
+  /groupes/{groupeId}:
+    get:
+      summary: Infos d'un groupe
+      parameters:
+        - in: path
+          name: groupeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Groupe trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Groupe'
+  /tentes:
+    get:
+      summary: Liste des tentes du groupe
+      parameters:
+        - in: query
+          name: groupeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des tentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tente'
+    post:
+      summary: Ajouter une tente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tente'
+      responses:
+        '201':
+          description: Tente créée
+  /tentes/{tenteId}:
+    get:
+      summary: Détail d'une tente
+      parameters:
+        - in: path
+          name: tenteId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de la tente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tente'
+    put:
+      summary: Modifier une tente
+      parameters:
+        - in: path
+          name: tenteId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tente'
+      responses:
+        '200':
+          description: Tente modifiée
+    delete:
+      summary: Supprimer une tente
+      parameters:
+        - in: path
+          name: tenteId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Tente supprimée
+  /evenements:
+    get:
+      summary: Liste des événements du groupe
+      parameters:
+        - in: query
+          name: groupeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des événements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evenement'
+    post:
+      summary: Créer un événement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Evenement'
+      responses:
+        '201':
+          description: Événement créé
+  /evenements/{evenementId}:
+    get:
+      summary: Détail d'un événement
+      parameters:
+        - in: path
+          name: evenementId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de l'événement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evenement'
+    put:
+      summary: Modifier un événement
+      parameters:
+        - in: path
+          name: evenementId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Evenement'
+      responses:
+        '200':
+          description: Événement modifié
+    delete:
+      summary: Supprimer un événement
+      parameters:
+        - in: path
+          name: evenementId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Événement supprimé
+  /reservations:
+    get:
+      summary: Liste des réservations d'une tente
+      parameters:
+        - in: query
+          name: tenteId
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: evenementId
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des réservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+    post:
+      summary: Créer une réservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '201':
+          description: Réservation créée
+  /controles:
+    get:
+      summary: Liste des contrôles d'une tente
+      parameters:
+        - in: query
+          name: tenteId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des contrôles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Controle'
+    post:
+      summary: Ajouter un contrôle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Controle'
+      responses:
+        '201':
+          description: Contrôle ajouté
+components:
+  schemas:
+    Groupe:
+      type: object
+      properties:
+        id:
+          type: string
+        nom:
+          type: string
+        membres:
+          type: array
+          items:
+            type: string
+    Tente:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        uniteId:
+          type: integer
+        etat:
+          type: string
+        remarques:
+          type: string
+        nbPlaces:
+          type: integer
+        typeTente:
+          type: string
+        unitePreferee:
+          type: string
+    Evenement:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        type:
+          type: string
+        date:
+          type: string
+          format: date
+        dateFin:
+          type: string
+          format: date
+        tentesAssociees:
+          type: array
+          items:
+            type: integer
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenteId:
+          type: integer
+        evenementId:
+          type: integer
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+    Controle:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenteId:
+          type: integer
+        userId:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        checklist:
+          type: object
+        remarques:
+          type: string
+
