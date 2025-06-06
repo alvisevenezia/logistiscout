@@ -1,10 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:logistiscout/models/api_service.dart';
 import '../models/models.dart';
 import '../models/database_helper.dart';
 
-class TenteDetailPage extends StatelessWidget {
+class TenteDetailPage extends StatefulWidget {
   final Tente tente;
   const TenteDetailPage({super.key, required this.tente});
+
+  @override
+  State<TenteDetailPage> createState() => _TenteDetailPageState();
+}
+
+class _TenteDetailPageState extends State<TenteDetailPage> {
+  late String etat;
+  late String remarques;
+  late String unite;
+  late Tente tente;
+
+  @override
+  void initState() {
+    super.initState();
+    tente = widget.tente;
+    _updateFromTente();
+  }
+
+  void _updateFromTente() {
+    etat = tente.etat;
+    unite = tente.unitePreferee.isNotEmpty ? tente.unitePreferee : "Non affectée";
+    if (tente.historiqueControles.isNotEmpty) {
+      remarques = tente.historiqueControles.last.remarques;
+    } else {
+      remarques = tente.remarques;
+    }
+  }
+
+  Future<void> _refreshTente() async {
+    final updated = await ApiService.getTente(tente.id);
+    setState(() {
+      tente = Tente.fromJson(updated);
+      _updateFromTente();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +51,20 @@ class TenteDetailPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.assignment_turned_in),
             tooltip: 'Contrôle',
-            onPressed: () {
-              showModalBottomSheet(
+            onPressed: () async {
+              final result = await showModalBottomSheet<Tente>(
                 context: context,
                 isScrollControlled: true,
                 builder: (context) => ControleChecklistSheet(tenteId: tente.id),
               );
+              if (result != null) {
+                setState(() {
+                  tente = result;
+                  _updateFromTente();
+                });
+              } else {
+                await _refreshTente();
+              }
             },
           ),
         ],
@@ -32,13 +76,25 @@ class TenteDetailPage extends StatelessWidget {
           children: [
             Text('Nom : ${tente.nom}', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text('Unité : ${tente.uniteId != null ? tente.uniteId.toString() : "Non affectée"}'),
+            Text('Unité : $unite'),
             const SizedBox(height: 8),
-            Text('État : ${tente.etat}'),
+            Text('État : $etat'),
             const SizedBox(height: 8),
-            Text('Remarques : ${tente.remarques}'),
+            Text('Remarques : $remarques'),
             const SizedBox(height: 16),
             Text('Historique des contrôles :', style: Theme.of(context).textTheme.titleMedium),
+            if (tente.historiqueControles.isNotEmpty) ...[
+              Card(
+                color: Colors.blue.shade50,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  title: Text('Dernier contrôle du '
+                      '${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}'),
+                  subtitle: Text('Remarques : '
+                      '${tente.historiqueControles.last.remarques ?? "Aucune remarque"}'),
+                ),
+              ),
+            ],
             Expanded(
               child: tente.historiqueControles.isEmpty
                   ? const Text('Aucun contrôle enregistré.')
@@ -232,18 +288,25 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
                   }
                   checklistResult['Nombre de sardines/piquets'] = sardinesCountController.text;
                   if (widget.tenteId != null) {
-                    await DatabaseHelper.instance.insertControle(
-                      Controle(
-                        id: 0,
-                        tenteId: widget.tenteId!,
-                        userId: 0, // à remplacer plus tard par l'id utilisateur
-                        date: DateTime.now(),
-                        checklist: checklistResult,
-                        remarques: commentaireController.text,
-                      ),
-                    );
+                    try {
+                      await ApiService.addControle({
+                        'tenteId': widget.tenteId!,
+                        'userId': 0, // à remplacer plus tard par l'id utilisateur
+                        'date': DateTime.now().toIso8601String(),
+                        'checklist': checklistResult,
+                        'remarques': commentaireController.text,
+                      });
+                      // Met à jour l'historique et les remarques de la tente après ajout du contrôle
+                      final updatedTenteJson = await ApiService.getTente(widget.tenteId!);
+                      final updatedTente = await Tente.fromApiJson(updatedTenteJson);
+                      Navigator.pop(context, updatedTente);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erreur lors de l\'ajout du contrôle : $e')),
+                      );
+                      // Ne pas faire de Navigator.pop ici pour éviter l'erreur !_debugLocked
+                    }
                   }
-                  Navigator.pop(context);
                 },
                 child: const Text('Valider le contrôle'),
               ),

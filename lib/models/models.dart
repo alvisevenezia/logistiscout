@@ -1,3 +1,5 @@
+import 'package:logistiscout/models/api_service.dart';
+
 class Tente {
   final int id;
   final String nom;
@@ -24,14 +26,36 @@ class Tente {
     required this.agenda,
     required this.historiqueControles,
   });
-}
 
-class Unite {
-  final int id;
-  final String nom;
-  final List<int> tentesIds;
+  factory Tente.fromJson(Map<String, dynamic> json) {
+    return Tente(
+      id: json['id'],
+      nom: json['nom'],
+      uniteId: json['uniteId'],
+      etat: json['etat'],
+      remarques: json['remarques'] ?? '',
+      tapisSolIntegre: json['tapisSolIntegre'] ?? false,
+      nbPlaces: json['nbPlaces'] ?? 0,
+      typeTente: json['typeTente'] ?? '',
+      unitePreferee: json['unitePreferee'] ?? '',
+      agenda: (json['agenda'] ?? []).map<Reservation>((r) => Reservation.fromJson(r)).toList(),
+      historiqueControles: [], // sera rempli dynamiquement après récupération
+    );
+  }
 
-  Unite({required this.id, required this.nom, required this.tentesIds});
+  // Charge automatiquement l'historique des contrôles lors de la création d'une Tente
+  static Future<Tente> fromApiJson(Map<String, dynamic> json) async {
+    final tente = Tente.fromJson(json);
+    await tente.fetchAndSetControles();
+    return tente;
+  }
+
+  // Méthode utilitaire pour remplir l'historique des contrôles depuis une liste json
+  Future<void> fetchAndSetControles() async {
+    final controlesJson = await ApiService.getControles(this.id);
+    historiqueControles.clear();
+    historiqueControles.addAll(controlesJson.map<Controle>((c) => Controle.fromJson(c)));
+  }
 }
 
 class Evenement {
@@ -41,6 +65,7 @@ class Evenement {
   final DateTime dateFin;
   final String type;
   final List<int> tentesAssociees;
+  final List<int> unites;
 
   Evenement({
     required this.id,
@@ -49,7 +74,20 @@ class Evenement {
     required this.dateFin,
     required this.type,
     required this.tentesAssociees,
+    required this.unites,
   });
+
+  factory Evenement.fromJson(Map<String, dynamic> json) {
+    return Evenement(
+      id: json['id'],
+      nom: json['nom'],
+      date: DateTime.parse(json['date']),
+      dateFin: DateTime.parse(json['dateFin']),
+      type: json['type'],
+      tentesAssociees: List<int>.from(json['tentesAssociees'] ?? []),
+      unites: List<int>.from(json['unites'] ?? []),
+    );
+  }
 }
 
 class Reservation {
@@ -62,22 +100,52 @@ class Reservation {
     required this.fin,
     required this.evenementId,
   });
+
+  factory Reservation.fromJson(Map<String, dynamic> json) {
+    return Reservation(
+      debut: DateTime.parse(json['debut']),
+      fin: DateTime.parse(json['fin']),
+      evenementId: json['evenementId'],
+    );
+  }
 }
 
 class Controle {
-  final int id;
+  final int? id;
   final int tenteId;
   final int userId;
-  final DateTime date;
-  final Map<String, dynamic> checklist;
+  final DateTime date; // ISO 8601, ex : "2025-06-06T12:00:00"
+  final Map<String, dynamic> checklist; // peut être un Map ou List selon usage
   final String remarques;
 
   Controle({
-    required this.id,
+    this.id,
     required this.tenteId,
     required this.userId,
     required this.date,
     required this.checklist,
     required this.remarques,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tenteId': tenteId,
+      'userId': userId,
+      'date': date.toString(),
+      'checklist': checklist,
+      'remarques': remarques,
+    };
+  }
+
+  factory Controle.fromJson(Map<String, dynamic> json) {
+    return Controle(
+      id: json['id'],
+      tenteId: json['tenteId'],
+      userId: json['userId'],
+      date: DateTime.parse(json['date']),
+      checklist: json['checklist'],
+      remarques: json['remarques'] ?? '',
+    );
+  }
 }
+

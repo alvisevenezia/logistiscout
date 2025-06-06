@@ -9,58 +9,20 @@ class UnitesPage extends StatefulWidget {
 }
 
 class _UnitesPageState extends State<UnitesPage> {
-  List<Unite> unites = [];
+  final unites = [
+    {'id': 1, 'nom': 'Farfadet'},
+    {'id': 2, 'nom': 'Louveteau/Jeannette'},
+    {'id': 3, 'nom': 'Scout/Guide'},
+    {'id': 4, 'nom': 'Pionnier/Caravelle'},
+    {'id': 5, 'nom': 'Compagnon'},
+    {'id': 6, 'nom': 'Groupe'},
+  ];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUnites();
-  }
-
-  Future<void> _loadUnites() async {
-    final data = await DatabaseHelper.instance.getAllUnites();
-    setState(() {
-      unites = data;
-      isLoading = false;
-    });
-  }
-
-  Future<void> _ajouterUnite() async {
-    final TextEditingController nomController = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nouvelle unité'),
-        content: TextField(
-          controller: nomController,
-          decoration: const InputDecoration(labelText: 'Nom de l\'unité'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, nomController.text),
-            child: const Text('Ajouter'),
-          ),
-        ],
-      ),
-    );
-    if (result != null && result.isNotEmpty) {
-      await DatabaseHelper.instance.insertUnite(Unite(
-        id: 0,
-        nom: result,
-        tentesIds: [],
-      ));
-      await _loadUnites();
-    }
-  }
-
-  Future<void> _supprimerUnite(int id) async {
-    await DatabaseHelper.instance.deleteUnite(id);
-    _loadUnites();
+    isLoading = false;
   }
 
   @override
@@ -76,40 +38,10 @@ class _UnitesPageState extends State<UnitesPage> {
                   itemBuilder: (context, index) {
                     final unite = unites[index];
                     return ListTile(
-                      title: Text(unite.nom),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Supprimer l\'unité'),
-                              content: Text('Supprimer ${unite.nom} ?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Annuler'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Supprimer'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) {
-                            _supprimerUnite(unite.id);
-                          }
-                        },
-                      ),
+                      title: Text(unite["nom"] as String),
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _ajouterUnite,
-        child: const Icon(Icons.add),
-        tooltip: 'Ajouter une unité',
-      ),
     );
   }
 }

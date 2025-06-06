@@ -138,15 +138,6 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Unite>> getAllUnites() async {
-    final db = await database;
-    final result = await db.query('unites');
-    return result.map((json) => Unite(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
-      tentesIds: [], // À compléter si besoin de lier les tentes à l'unité
-    )).toList();
-  }
 
   Future<int> updateTente(Tente tente) async {
     final db = await database;
@@ -166,26 +157,6 @@ class DatabaseHelper {
   Future<int> deleteTente(int id) async {
     final db = await database;
     return await db.delete('tentes', where: 'id = ?', whereArgs: [id]);
-  }
-
-  // CRUD Unités
-  Future<int> insertUnite(Unite unite) async {
-    final db = await database;
-    return await db.insert('unites', {
-      'nom': unite.nom,
-    });
-  }
-
-  Future<int> updateUnite(Unite unite) async {
-    final db = await database;
-    return await db.update(
-      'unites',
-      {
-        'nom': unite.nom,
-      },
-      where: 'id = ?',
-      whereArgs: [unite.id],
-    );
   }
 
   Future<int> deleteUnite(int id) async {
@@ -212,25 +183,6 @@ class DatabaseHelper {
     return id;
   }
 
-  Future<List<Evenement>> getAllEvenements() async {
-    final db = await database;
-    final result = await db.query('evenements');
-    List<Evenement> evenements = [];
-    for (final row in result) {
-      // Récupérer les tentes associées
-      final tentesRows = await db.query('evenement_materiel', where: 'evenementId = ?', whereArgs: [row['id']]);
-      final tentesAssociees = tentesRows.map((e) => e['materielId'] as int).toList();
-      evenements.add(Evenement(
-        id: row['id'] as int,
-        nom: row['nom'] as String,
-        date: DateTime.parse(row['dateDebut'] as String),
-        tentesAssociees: tentesAssociees,
-        type: row['type'] as String,
-        dateFin: DateTime.parse(row['dateFin'] as String),
-      ));
-    }
-    return evenements;
-  }
 
   Future<int> deleteEvenement(int id) async {
     final db = await database;

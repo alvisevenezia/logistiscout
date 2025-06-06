@@ -95,8 +95,64 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
       home: isLoggedIn!
-          ? const AccueilPage()
+          ? const _MainNavigation()
           : LoginPage(onLogin: _onLogin),
     );
   }
 }
+
+class _MainNavigation extends StatefulWidget {
+  const _MainNavigation();
+  @override
+  State<_MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<_MainNavigation> {
+  int _selectedIndex = 0;
+  static const List<Widget> _pages = <Widget>[
+    AccueilPage(),
+    TentesPage(),
+    EvenementsPage(),
+    ControlePage(),
+    UnitesPage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Accueil',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cabin),
+            label: 'Tentes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event),
+            label: 'Événements',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.qr_code_scanner),
+            label: 'Contrôle',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.groups),
+            label: 'Unités',
+          ),
+        ],
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
+}
+

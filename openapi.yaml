@@ -45,6 +45,17 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Groupe'
+    post:
+      summary: Ajouter un groupe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Groupe'
+      responses:
+        '201':
+          description: Groupe créé
   /groupes/{groupeId}:
     get:
       summary: Infos d'un groupe
@@ -61,6 +72,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Groupe'
+    put:
+      summary: Modifier un groupe
+      parameters:
+        - in: path
+          name: groupeId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Groupe'
+      responses:
+        '200':
+          description: Groupe modifié
+    delete:
+      summary: Supprimer un groupe
+      parameters:
+        - in: path
+          name: groupeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Groupe supprimé
   /tentes:
     get:
       summary: Liste des tentes du groupe
@@ -241,13 +280,57 @@ paths:
       responses:
         '201':
           description: Réservation créée
+  /reservations/{reservationId}:
+    get:
+      summary: Détail d'une réservation
+      parameters:
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de la réservation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+    put:
+      summary: Modifier une réservation
+      parameters:
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '200':
+          description: Réservation modifiée
+    delete:
+      summary: Supprimer une réservation
+      parameters:
+        - in: path
+          name: reservationId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Réservation supprimée
   /controles:
     get:
       summary: Liste des contrôles d'une tente
       parameters:
         - in: query
           name: tenteId
-          required: true
+          required: false
           schema:
             type: integer
       responses:
@@ -270,6 +353,50 @@ paths:
       responses:
         '201':
           description: Contrôle ajouté
+  /controles/{controleId}:
+    get:
+      summary: Détail d'un contrôle
+      parameters:
+        - in: path
+          name: controleId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail du contrôle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Controle'
+    put:
+      summary: Modifier un contrôle
+      parameters:
+        - in: path
+          name: controleId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Controle'
+      responses:
+        '200':
+          description: Contrôle modifié
+    delete:
+      summary: Supprimer un contrôle
+      parameters:
+        - in: path
+          name: controleId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Contrôle supprimé
 components:
   schemas:
     Groupe:

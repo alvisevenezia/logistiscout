@@ -65,10 +65,13 @@ class _ControlePageState extends State<ControlePage> {
                           itemCount: tentes.length,
                           itemBuilder: (context, index) {
                             final tente = tentes[index];
+                            final remarques = (tente.historiqueControles.isNotEmpty)
+                                ? tente.historiqueControles.last.remarques
+                                : tente.remarques;
                             return ListTile(
                               leading: const Icon(Icons.cabin),
                               title: Text(tente.nom),
-                              subtitle: Text('ID: ${tente.id}'),
+                              subtitle: Text('ID: ${tente.id}\nRemarques: $remarques'),
                               onTap: () {
                                 setState(() {
                                   materielType = 'tente';

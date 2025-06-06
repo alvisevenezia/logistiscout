@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../models/database_helper.dart';
+import '../models/api_service.dart';
 import 'tente_detail.dart';
 
 class TentesPage extends StatefulWidget {
@@ -20,9 +21,12 @@ class _TentesPageState extends State<TentesPage> {
   }
 
   Future<void> _loadTentes() async {
-    final data = await DatabaseHelper.instance.getAllTentes();
+    final groupeId = 'test'; // À remplacer par l'id du groupe courant (SharedPreferences)
+    final data = await ApiService.getTentes(groupeId);
+    final futures = data.map<Future<Tente>>((json) => Tente.fromApiJson(json)).toList();
+    final loadedTentes = await Future.wait(futures);
     setState(() {
-      tentes = data;
+      tentes = loadedTentes;
       isLoading = false;
     });
   }
@@ -34,9 +38,14 @@ class _TentesPageState extends State<TentesPage> {
     int nbPlaces = 6;
     String unitePreferee = '';
     final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
-    // Charger les unités existantes depuis la BDD
-    final unites = await DatabaseHelper.instance.getAllUnites();
-    final List<String> unitesNoms = unites.map((u) => u.nom).toList();
+    // Liste fixe des unités SGDF
+    final List<String> unitesNoms = [
+      'Farfadet',
+      'Louveteaux-Jeannettes',
+      'Scout-Guide',
+      'Pionnier-Caravelle',
+      'Compagnon',
+    ];
     if (unitesNoms.isNotEmpty) unitePreferee = unitesNoms.first;
     final result = await showDialog<bool>(
       context: context,
@@ -118,25 +127,22 @@ class _TentesPageState extends State<TentesPage> {
       ),
     );
     if (result == true && nomController.text.isNotEmpty) {
-      await DatabaseHelper.instance.insertTente(Tente(
-        id: 0,
-        nom: nomController.text,
-        uniteId: null,
-        etat: 'Bon',
-        remarques: '',
-        agenda: [],
-        historiqueControles: [],
-        tapisSolIntegre: tapisSolIntegre,
-        nbPlaces: nbPlaces,
-        typeTente: typeTente,
-        unitePreferee: unitePreferee,
-      ));
+      await ApiService.addTente({
+        'nom': nomController.text,
+        'uniteId': null,
+        'etat': 'Bon',
+        'remarques': '',
+        'tapisSolIntegre': tapisSolIntegre,
+        'nbPlaces': nbPlaces,
+        'typeTente': typeTente,
+        'unitePreferee': unitePreferee,
+      });
       await _loadTentes();
     }
   }
 
   Future<void> _supprimerTente(int id) async {
-    await DatabaseHelper.instance.deleteTente(id);
+    await ApiService.deleteTente(id);
     _loadTentes();
   }
 
@@ -152,49 +158,80 @@ class _TentesPageState extends State<TentesPage> {
                   itemCount: tentes.length,
                   itemBuilder: (context, index) {
                     final tente = tentes[index];
-                    return ListTile(
-                      title: Text(tente.nom),
-                      subtitle: Text('État: \'${tente.etat}\' | Unité: \'${tente.uniteId ?? "Non affectée"}\''),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Supprimer la tente'),
-                                  content: Text('Supprimer ${tente.nom} ?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Annuler'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Supprimer'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                _supprimerTente(tente.id);
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.chevron_right),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TenteDetailPage(tente: tente),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                    final Color etatColor;
+                    switch (tente.etat.toLowerCase()) {
+                      case 'bon':
+                        etatColor = Colors.green.shade100;
+                        break;
+                      case 'moyen':
+                        etatColor = Colors.orange.shade100;
+                        break;
+                      case 'mauvais':
+                        etatColor = Colors.red.shade100;
+                        break;
+                      default:
+                        etatColor = Colors.grey.shade200;
+                    }
+                    return Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      color: etatColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.blue.shade100, width: 1),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue.shade100,
+                          child: const Icon(Icons.cabin, color: Color(0xFF003a5d)),
+                        ),
+                        title: Text(
+                          tente.nom,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('État : ${tente.etat}', style: const TextStyle(fontSize: 14)),
+                            Text('Unité : ${tente.unitePreferee ?? "Non affectée"}', style: const TextStyle(fontSize: 13)),
+                            if (tente.historiqueControles.isNotEmpty)
+                              Text('Dernier contrôle : ${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TenteDetailPage(tente: tente),
+                            ),
+                          );
+                        },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Supprimer la tente'),
+                                content: Text('Supprimer ${tente.nom} ?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Annuler'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Supprimer'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              _supprimerTente(tente.id);
+                            }
+                          },
+                        ),
                       ),
                     );
                   },

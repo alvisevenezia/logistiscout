@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:logistiscout/models/api_service.dart';
 import 'package:logistiscout/models/database_helper.dart';
 import '../models/models.dart';
+import '../models/api_service.dart';
 
 class AccueilPage extends StatefulWidget {
   const AccueilPage({super.key});
@@ -20,8 +22,11 @@ class _AccueilPageState extends State<AccueilPage> {
   }
 
   Future<void> _loadData() async {
-    final evts = await DatabaseHelper.instance.getAllEvenements();
-    final tts = await DatabaseHelper.instance.getAllTentes();
+    final String groupeId = "1"; // À adapter selon ton contexte
+    final evtsApi = await ApiService.getEvenements(groupeId);
+    final ttsApi = await ApiService.getTentes(groupeId);
+    final evts = evtsApi.map((e) => Evenement.fromJson(e)).toList();
+    final tts = ttsApi.map((t) => Tente.fromJson(t)).toList();
     setState(() {
       evenements = evts;
       tentes = tts;
