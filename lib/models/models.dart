@@ -76,7 +76,7 @@ class Tente {
 
   // Méthode utilitaire pour remplir l'historique des contrôles depuis une liste json
   Future<void> fetchAndSetControles() async {
-    final controlesJson = await ApiService.getControles(this.id);
+    final controlesJson = await ApiService.getControles(id);
     historiqueControles.clear();
     historiqueControles.addAll(controlesJson.map<Controle>((c) => Controle.fromJson(c)));
   }

@@ -246,7 +246,7 @@ class _EvenementsPageState extends State<EvenementsPage> {
     List<int> materielSelectionne = List.from(evenement.tentesAssociees);
     final tentesApi = await ApiService.getTentes(groupeId);
     final tentes = tentesApi.map((t) => Tente.fromJson(t)).toList();
-    List<int> tentesIndisponibles = await _tentesIndisponibles(debut!, fin!, evenementId: evenement.id);
+    List<int> tentesIndisponibles = await _tentesIndisponibles(debut, fin, evenementId: evenement.id);
 
     // Liste des unités hardcodée
     final unites = [
@@ -439,8 +439,8 @@ class _EvenementsPageState extends State<EvenementsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Début : 	${evt.date.toLocal().toString().split(' ')[0]}'),
-                            Text('Fin : 	${evt.dateFin?.toLocal().toString().split(' ')[0] ?? ''}'),
-                            Text('Type : ${evt.type ?? ''}'),
+                            Text('Fin : 	${evt.dateFin.toLocal().toString().split(' ')[0]}'),
+                            Text('Type : ${evt.type}'),
                             Text('Tentes : ${evt.tentesAssociees.join(', ')}'),
                           ],
                         ),
@@ -484,8 +484,8 @@ class _EvenementsPageState extends State<EvenementsPage> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _ajouterEvenement,
-        child: const Icon(Icons.add),
         tooltip: 'Ajouter un événement',
+        child: const Icon(Icons.add),
       ),
     );
   }

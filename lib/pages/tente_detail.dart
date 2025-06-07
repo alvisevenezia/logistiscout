@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
 import '../models/models.dart';
-import '../models/database_helper.dart';
 
 class TenteDetailPage extends StatefulWidget {
   final Tente tente;
@@ -93,7 +92,7 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
                   title: Text('Dernier contrôle du '
                       '${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}'),
                   subtitle: Text('Remarques : '
-                      '${tente.historiqueControles.last.remarques ?? "Aucune remarque"}'),
+                      '${tente.historiqueControles.last.remarques}'),
                 ),
               ),
             ],

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'models/models.dart';
-import 'models/database_helper.dart';
 import 'pages/accueil_page.dart';
 import 'pages/tentes_page.dart';
 import 'pages/unites_page.dart';
@@ -41,8 +38,6 @@ class MyApp extends StatelessWidget {
           onSecondary: Colors.white,
           error: Color(0xFFE2001A),
           onError: Colors.white,
-          background: Color(0xFFF5F5F5),
-          onBackground: Color(0xFF003a5d),
           surface: Colors.white,
           onSurface: Color(0xFF003a5d),
         ),

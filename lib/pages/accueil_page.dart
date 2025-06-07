@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
-import 'package:logistiscout/models/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
-import '../models/api_service.dart';
 
 class AccueilPage extends StatefulWidget {
   const AccueilPage({super.key});

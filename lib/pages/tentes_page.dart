@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
-import '../models/database_helper.dart';
 import '../models/api_service.dart';
 import 'tente_detail.dart';
 
@@ -47,7 +46,6 @@ class _TentesPageState extends State<TentesPage> {
     final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
     final List<Color> couleurs = [];
     Color? couleurSelectionnee;
-    final couleurController = TextEditingController();
     // Liste fixe des unités SGDF
     final List<String> unitesNoms = [
       'Farfadet',
@@ -77,9 +75,14 @@ class _TentesPageState extends State<TentesPage> {
                   onChanged: (val) {
                     setStateDialog(() {
                       typeTente = val!;
-                      if (typeTente == 'Canadienne') nbPlaces = 6;
-                      else if (typeTente == 'Tipi') nbPlaces = 8;
-                      else nbPlaces = 0;
+                      if (typeTente == 'Canadienne') {
+                        nbPlaces = 6;
+                      } else if (typeTente == 'Tipi') {
+                        nbPlaces = 8;
+                      }
+                      else {
+                        nbPlaces = 0;
+                      }
                     });
                   },
                   decoration: const InputDecoration(labelText: 'Type de tente'),
@@ -127,7 +130,7 @@ class _TentesPageState extends State<TentesPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       ...couleurs.map((c) => Chip(
-                        label: Text('#${c.value.toRadixString(16).substring(2).toUpperCase()}'),
+                        label: Text('#${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
                         backgroundColor: c,
                         labelStyle: TextStyle(
                           color: ThemeData.estimateBrightnessForColor(c) == Brightness.dark ? Colors.white : Colors.black,
@@ -150,7 +153,6 @@ class _TentesPageState extends State<TentesPage> {
                                     tempColor = color;
                                   },
                                   enableAlpha: false,
-                                  showLabel: true,
                                   pickerAreaHeightPercent: 0.7,
                                 ),
                               ),
@@ -183,7 +185,7 @@ class _TentesPageState extends State<TentesPage> {
                           child: couleurSelectionnee != null
                               ? Center(
                                   child: Text(
-                                    '#${couleurSelectionnee!.value.toRadixString(16).substring(2).toUpperCase()}',
+                                    '#${couleurSelectionnee!.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                                     style: const TextStyle(fontSize: 10, color: Colors.black),
                                     textAlign: TextAlign.center,
                                   ),
@@ -196,7 +198,7 @@ class _TentesPageState extends State<TentesPage> {
                         tooltip: 'Ajouter la couleur',
                         onPressed: () {
                           if (couleurSelectionnee != null) {
-                            final exists = couleurs.any((c) => c.value == couleurSelectionnee!.value);
+                            final exists = couleurs.any((c) => c.toARGB32() == couleurSelectionnee!.toARGB32());
                             if (!exists) {
                               setStateDialog(() {
                                 couleurs.add(couleurSelectionnee!);
@@ -238,7 +240,7 @@ class _TentesPageState extends State<TentesPage> {
         'nbPlaces': nbPlaces,
         'typeTente': typeTente,
         'unitePreferee': unitePreferee,
-        'couleurs': couleurs.map((c) => '#${c.value.toRadixString(16).substring(2).toUpperCase()}').toList(),
+        'couleurs': couleurs.map((c) => '#${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}').toList(),
         'groupeId': groupeId,
       });
       await _loadTentes();
@@ -284,9 +286,14 @@ class _TentesPageState extends State<TentesPage> {
                   onChanged: (val) {
                     setStateDialog(() {
                       typeTente = val!;
-                      if (typeTente == 'Canadienne') nbPlaces = 6;
-                      else if (typeTente == 'Tipi') nbPlaces = 8;
-                      else nbPlaces = 0;
+                      if (typeTente == 'Canadienne') {
+                        nbPlaces = 6;
+                      } else if (typeTente == 'Tipi') {
+                        nbPlaces = 8;
+                      }
+                      else {
+                        nbPlaces = 0;
+                      }
                     });
                   },
                   decoration: const InputDecoration(labelText: 'Type de tente'),
@@ -334,7 +341,7 @@ class _TentesPageState extends State<TentesPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       ...couleurs.map((c) => Chip(
-                        label: Text('#${c.value.toRadixString(16).substring(2).toUpperCase()}'),
+                        label: Text('#${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
                         backgroundColor: c,
                         labelStyle: TextStyle(
                           color: ThemeData.estimateBrightnessForColor(c) == Brightness.dark ? Colors.white : Colors.black,
@@ -357,7 +364,6 @@ class _TentesPageState extends State<TentesPage> {
                                     tempColor = color;
                                   },
                                   enableAlpha: false,
-                                  showLabel: true,
                                   pickerAreaHeightPercent: 0.7,
                                 ),
                               ),
@@ -390,7 +396,7 @@ class _TentesPageState extends State<TentesPage> {
                           child: couleurSelectionnee != null
                               ? Center(
                                   child: Text(
-                                    '#${couleurSelectionnee!.value.toRadixString(16).substring(2).toUpperCase()}',
+                                    '#${couleurSelectionnee!.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                                     style: const TextStyle(fontSize: 10, color: Colors.black),
                                     textAlign: TextAlign.center,
                                   ),
@@ -403,7 +409,7 @@ class _TentesPageState extends State<TentesPage> {
                         tooltip: 'Ajouter la couleur',
                         onPressed: () {
                           if (couleurSelectionnee != null) {
-                            final exists = couleurs.any((c) => c.value == couleurSelectionnee!.value);
+                            final exists = couleurs.any((c) => c.toARGB32() == couleurSelectionnee!.toARGB32());
                             if (!exists) {
                               setStateDialog(() {
                                 couleurs.add(couleurSelectionnee!);
@@ -445,7 +451,7 @@ class _TentesPageState extends State<TentesPage> {
         'nbPlaces': nbPlaces,
         'typeTente': typeTente,
         'unitePreferee': unitePreferee,
-        'couleurs': couleurs.map((c) => '#${c.value.toRadixString(16).substring(2).toUpperCase()}').toList(),
+        'couleurs': couleurs.map((c) => '#${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}').toList(),
         'groupeId': groupeId,
       });
       await _loadTentes();
@@ -507,7 +513,7 @@ class _TentesPageState extends State<TentesPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('État : ${tente.etat}', style: const TextStyle(fontSize: 14)),
-                                Text('Unité : ${tente.unitePreferee ?? "Non affectée"}', style: const TextStyle(fontSize: 13)),
+                                Text('Unité : ${tente.unitePreferee}', style: const TextStyle(fontSize: 13)),
                                 if (tente.historiqueControles.isNotEmpty)
                                   Text('Dernier contrôle : ${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                               ],
@@ -587,8 +593,8 @@ class _TentesPageState extends State<TentesPage> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _ajouterTente,
-        child: const Icon(Icons.add),
         tooltip: 'Ajouter une tente',
+        child: const Icon(Icons.add),
       ),
     );
   }
