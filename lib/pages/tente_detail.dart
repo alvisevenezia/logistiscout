@@ -46,105 +46,118 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
+    final List<String> unitesNoms = [
+      'Farfadet',
+      'Louveteaux-Jeannettes',
+      'Scout-Guide',
+      'Pionnier-Caravelle',
+      'Compagnon',
+    ];
     return Scaffold(
       appBar: AppBar(
         title: Text('Détail - ${tente.nom}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.assignment_turned_in),
-            tooltip: 'Contrôle',
-            onPressed: () async {
-              final result = await showModalBottomSheet<Tente>(
-                context: context,
-                isScrollControlled: true,
-                builder: (context) => ControleChecklistSheet(tenteId: tente.id),
-              );
-              if (result != null) {
-                setState(() {
-                  tente = result;
-                  _updateFromTente();
-                });
-              } else {
-                await _refreshTente();
-              }
-            },
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Rafraîchir',
+            onPressed: _refreshTente,
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            Text('Nom : ${tente.nom}', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text('Unité : $unite'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text('État : '),
-                DropdownButton<String>(
-                  value: etat,
-                  items: ['Bon', 'À réparer', 'HS', 'Perdue']
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (val) async {
-                    if (val != null && val != etat) {
-                      setState(() {
-                        etat = val;
-                      });
-                      final prefs = await SharedPreferences.getInstance();
-                      final String groupeId = prefs.getString('groupeId') ?? '';
-                      // Construire la map complète pour l'API
-                      final updateData = {
-                        'nom': tente.nom,
-                        'etat': val,
-                        'groupeId': groupeId,
-                        'uniteId': tente.uniteId,
-                        'remarques': tente.remarques,
-                        'nbPlaces': tente.nbPlaces,
-                        'typeTente': tente.typeTente,
-                        'unitePreferee': tente.unitePreferee,
-                        'tapisSolIntegre': tente.tapisSolIntegre,
-                      };
-                      await ApiService.updateTente(tente.id, updateData);
-                      await _refreshTente();
-                    }
-                  },
-                ),
-              ],
+            TextFormField(
+              initialValue: tente.nom,
+              decoration: const InputDecoration(labelText: 'Nom'),
+              onChanged: (val) => setState(() => tente = tente.copyWith(nom: val)),
             ),
-            const SizedBox(height: 8),
-            Text('Tapis de sol intégrée : ${tente.tapisSolIntegre ? "Oui" : "Non"}'),
-            const SizedBox(height: 8),
-            Text('Remarques : $remarques'),
-            const SizedBox(height: 16),
-            Text('Historique des contrôles :', style: Theme.of(context).textTheme.titleMedium),
-            if (tente.historiqueControles.isNotEmpty) ...[
-              Card(
-                color: Colors.blue.shade50,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  title: Text('Dernier contrôle du '
-                      '${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}'),
-                  subtitle: Text('Remarques : '
-                      '${tente.historiqueControles.last.remarques}'),
-                ),
-              ),
-            ],
-            Expanded(
-              child: tente.historiqueControles.isEmpty
-                  ? const Text('Aucun contrôle enregistré.')
-                  : ListView.builder(
-                      itemCount: tente.historiqueControles.length,
-                      itemBuilder: (context, index) {
-                        final controle = tente.historiqueControles[index];
-                        return ListTile(
-                          title: Text('Contrôle du ${controle.date.toLocal().toString().split(' ')[0]}'),
-                          subtitle: Text('Remarques : ${controle.remarques}\nContrôlé par utilisateur ${controle.userId}'),
-                        );
-                      },
-                    ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: types.contains(tente.typeTente) ? tente.typeTente : 'Autre',
+              items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+              onChanged: (val) => setState(() => tente = tente.copyWith(typeTente: val ?? 'Autre')),
+              decoration: const InputDecoration(labelText: 'Type'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              initialValue: tente.nbPlaces.toString(),
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Nombre de places'),
+              onChanged: (val) => setState(() => tente = tente.copyWith(nbPlaces: int.tryParse(val) ?? tente.nbPlaces)),
+            ),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              value: tente.tapisSolIntegre,
+              onChanged: (val) => setState(() => tente = tente.copyWith(tapisSolIntegre: val)),
+              title: const Text('Tapis de sol intégré'),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: unitesNoms.contains(tente.unitePreferee) ? tente.unitePreferee : null,
+              items: unitesNoms.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+              onChanged: (val) => setState(() => tente = tente.copyWith(unitePreferee: val ?? '')),
+              decoration: const InputDecoration(labelText: 'Unité préférée'),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: ['Bon', 'À réparer', 'HS', 'Perdue'].contains(tente.etat) ? tente.etat : 'Bon',
+              items: ['Bon', 'À réparer', 'HS', 'Perdue']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (val) => setState(() => tente = tente.copyWith(etat: val ?? 'Bon')),
+              decoration: const InputDecoration(labelText: 'État'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              initialValue: tente.remarques,
+              decoration: const InputDecoration(labelText: 'Remarques'),
+              maxLines: 2,
+              onChanged: (val) => setState(() => tente = tente.copyWith(remarques: val)),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.save),
+              label: const Text('Enregistrer'),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final groupeId = prefs.getString('groupeId') ?? '';
+                await ApiService.updateTente(tente.id, {
+                  'nom': tente.nom,
+                  'uniteId': tente.uniteId,
+                  'etat': tente.etat,
+                  'remarques': tente.remarques,
+                  'estIntegree': tente.tapisSolIntegre,
+                  'nbPlaces': tente.nbPlaces,
+                  'typeTente': tente.typeTente,
+                  'unitePreferee': tente.unitePreferee,
+                  'couleurs': tente.couleurs,
+                  'groupeId': groupeId,
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Modifications enregistrées !')),
+                  );
+                }
+                await _refreshTente();
+              },
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.assignment_turned_in),
+              label: const Text('Faire un contrôle'),
+              onPressed: () async {
+                final result = await showModalBottomSheet<Tente>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) => ControleChecklistSheet(tenteId: tente.id),
+                );
+                if (result != null) {
+                  await _refreshTente();
+                }
+              },
             ),
           ],
         ),
@@ -252,105 +265,108 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      builder: (context, scrollController) => SingleChildScrollView(
-        controller: scrollController,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final section in sections.entries) ...[
-                Text(section.key, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ...section.value.map((item) {
-                  if (item['isCount'] == true) {
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: CheckboxListTile(
-                            title: Text(item['label']),
-                            value: item['value'],
-                            onChanged: (val) {
-                              setState(() {
-                                item['value'] = val ?? false;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          width: 80,
-                          child: TextField(
-                            controller: sardinesCountController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Nb',
-                              isDense: true,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: DraggableScrollableSheet(
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final section in sections.entries) ...[
+                  Text(section.key, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  ...section.value.map((item) {
+                    if (item['isCount'] == true) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: CheckboxListTile(
+                              title: Text(item['label']),
+                              value: item['value'],
+                              onChanged: (val) {
+                                setState(() {
+                                  item['value'] = val ?? false;
+                                });
+                              },
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  } else {
-                    return CheckboxListTile(
-                      title: Text(item['label']),
-                      value: item['value'],
-                      onChanged: (val) {
-                        setState(() {
-                          item['value'] = val ?? false;
-                        });
-                      },
-                    );
-                  }
-                }),
-                const SizedBox(height: 16),
-              ],
-              Text('Observations complémentaires', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              TextField(
-                controller: commentaireController,
-                decoration: const InputDecoration(labelText: 'Commentaires libres'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  // Construction de la checklist à sauvegarder
-                  final Map<String, dynamic> checklistResult = {};
-                  for (final section in sections.entries) {
-                    for (final item in section.value) {
-                      checklistResult[item['label']] = item['value'];
-                    }
-                  }
-                  checklistResult['Nombre de sardines/piquets'] = sardinesCountController.text;
-                  if (widget.tenteId != null) {
-                    try {
-                      await ApiService.addControle({
-                        'tenteId': widget.tenteId!,
-                        'userId': 0, // à remplacer plus tard par l'id utilisateur
-                        'date': DateTime.now().toIso8601String(),
-                        'checklist': checklistResult,
-                        'remarques': commentaireController.text,
-                      });
-                      // Met à jour l'historique et les remarques de la tente après ajout du contrôle
-                      final updatedTenteJson = await ApiService.getTente(widget.tenteId!);
-                      final updatedTente = await Tente.fromApiJson(updatedTenteJson);
-                      // Met à jour la liste des tentes sur la page précédente après ajout du contrôle
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context, updatedTente);
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erreur lors de l\'ajout du contrôle : $e')),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: sardinesCountController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Nb',
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
                       );
-                      // Ne pas faire de Navigator.pop ici pour éviter l'erreur !_debugLocked
+                    } else {
+                      return CheckboxListTile(
+                        title: Text(item['label']),
+                        value: item['value'],
+                        onChanged: (val) {
+                          setState(() {
+                            item['value'] = val ?? false;
+                          });
+                        },
+                      );
                     }
-                  }
-                },
-                child: const Text('Valider le contrôle'),
-              ),
-            ],
+                  }),
+                  const SizedBox(height: 16),
+                ],
+                Text('Observations complémentaires', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: commentaireController,
+                  decoration: const InputDecoration(labelText: 'Commentaires libres'),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    // Construction de la checklist à sauvegarder
+                    final Map<String, dynamic> checklistResult = {};
+                    for (final section in sections.entries) {
+                      for (final item in section.value) {
+                        checklistResult[item['label']] = item['value'];
+                      }
+                    }
+                    checklistResult['Nombre de sardines/piquets'] = sardinesCountController.text;
+                    if (widget.tenteId != null) {
+                      try {
+                        await ApiService.addControle({
+                          'tenteId': widget.tenteId!,
+                          'userId': 0, // à remplacer plus tard par l'id utilisateur
+                          'date': DateTime.now().toIso8601String(),
+                          'checklist': checklistResult,
+                          'remarques': commentaireController.text,
+                        });
+                        // Met à jour l'historique et les remarques de la tente après ajout du contrôle
+                        final updatedTenteJson = await ApiService.getTente(widget.tenteId!);
+                        final updatedTente = await Tente.fromApiJson(updatedTenteJson);
+                        // Met à jour la liste des tentes sur la page précédente après ajout du contrôle
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context, updatedTente);
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erreur lors de l\'ajout du contrôle : $e')),
+                        );
+                        // Ne pas faire de Navigator.pop ici pour éviter l'erreur !_debugLocked
+                      }
+                    }
+                  },
+                  child: const Text('Valider le contrôle'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

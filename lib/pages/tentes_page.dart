@@ -568,6 +568,7 @@ class _TentesPageState extends State<TentesPage> {
                                   builder: (context) => TenteDetailPage(tente: tente),
                                 ),
                               );
+                              await _loadTentes();
                             },
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,

@@ -80,6 +80,38 @@ class Tente {
     historiqueControles.clear();
     historiqueControles.addAll(controlesJson.map<Controle>((c) => Controle.fromJson(c)));
   }
+
+  Tente copyWith({
+    int? id,
+    String? nom,
+    int? uniteId,
+    String? etat,
+    String? remarques,
+    bool? tapisSolIntegre,
+    int? nbPlaces,
+    String? typeTente,
+    String? unitePreferee,
+    List<Reservation>? agenda,
+    List<Controle>? historiqueControles,
+    List<String>? couleurs,
+    String? groupeId,
+  }) {
+    return Tente(
+      id: id ?? this.id,
+      nom: nom ?? this.nom,
+      uniteId: uniteId ?? this.uniteId,
+      etat: etat ?? this.etat,
+      remarques: remarques ?? this.remarques,
+      tapisSolIntegre: tapisSolIntegre ?? this.tapisSolIntegre,
+      nbPlaces: nbPlaces ?? this.nbPlaces,
+      typeTente: typeTente ?? this.typeTente,
+      unitePreferee: unitePreferee ?? this.unitePreferee,
+      agenda: agenda ?? this.agenda,
+      historiqueControles: historiqueControles ?? this.historiqueControles,
+      couleurs: couleurs ?? this.couleurs,
+      groupeId: groupeId ?? this.groupeId,
+    );
+  }
 }
 
 class Evenement {
