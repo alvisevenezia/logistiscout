@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
-import '../models/database_helper.dart';
 
 class EvenementsPage extends StatefulWidget {
   const EvenementsPage({super.key});
@@ -20,7 +20,8 @@ class _EvenementsPageState extends State<EvenementsPage> {
   }
 
   Future<void> _loadEvenements() async {
-    final String groupeId = "1"; // À adapter selon ton contexte
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
     final dataApi = await ApiService.getEvenements(groupeId);
     final data = dataApi.map((e) => Evenement.fromJson(e)).toList();
     setState(() {
@@ -30,7 +31,8 @@ class _EvenementsPageState extends State<EvenementsPage> {
   }
 
   Future<List<int>> _tentesIndisponibles(DateTime debut, DateTime fin, {int? evenementId}) async {
-    final String groupeId = "1"; // À adapter selon ton contexte
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
     final evenements = await ApiService.getEvenementsParPeriode(groupeId, debut, fin);
     List<int> indispo = [];
     for (final evt in evenements) {
@@ -48,12 +50,13 @@ class _EvenementsPageState extends State<EvenementsPage> {
   }
 
   Future<void> _ajouterEvenement() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
     final TextEditingController nomController = TextEditingController();
     String typeRencontre = 'Rencontre';
     DateTime? debut;
     DateTime? fin;
     List<int> materielSelectionne = [];
-    final String groupeId = "1"; // À adapter selon ton contexte
     final tentesApi = await ApiService.getTentes(groupeId);
     final tentes = tentesApi.map((t) => Tente.fromJson(t)).toList();
     List<int> tentesIndisponibles = [];
@@ -234,12 +237,15 @@ class _EvenementsPageState extends State<EvenementsPage> {
   }
 
   Future<void> _modifierEvenement(Evenement evenement) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
     final TextEditingController nomController = TextEditingController(text: evenement.nom);
     final TextEditingController typeController = TextEditingController(text: evenement.type);
     DateTime? debut = evenement.date;
     DateTime? fin = evenement.dateFin;
     List<int> materielSelectionne = List.from(evenement.tentesAssociees);
-    final tentes = await DatabaseHelper.instance.getAllTentes();
+    final tentesApi = await ApiService.getTentes(groupeId);
+    final tentes = tentesApi.map((t) => Tente.fromJson(t)).toList();
     List<int> tentesIndisponibles = await _tentesIndisponibles(debut!, fin!, evenementId: evenement.id);
 
     // Liste des unités hardcodée
@@ -372,20 +378,16 @@ class _EvenementsPageState extends State<EvenementsPage> {
             ElevatedButton(
               onPressed: () async {
                 if (nomController.text.isNotEmpty && debut != null && fin != null) {
-                  await DatabaseHelper.instance.deleteEvenement(evenement.id);
-                  await DatabaseHelper.instance.insertEvenement(
-                    Evenement(
-                      id: evenement.id,
-                      nom: nomController.text,
-                      date: debut!,
-                      tentesAssociees: materielSelectionne,
-                      type: typeController.text,
-                      dateFin: fin!,
-                      unites: unitesSelectionnees,
-                    ),
-                    fin!,
-                    materielSelectionne,
-                  );
+                  final evenementMap = {
+                    'nom': nomController.text,
+                    'date': debut!.toIso8601String(),
+                    'dateFin': fin!.toIso8601String(),
+                    'type': typeController.text,
+                    'tentesAssociees': materielSelectionne,
+                    'unites': unitesSelectionnees,
+                    'groupeId': groupeId,
+                  };
+                  await ApiService.updateEvenement(evenement.id, evenementMap);
                   await _loadEvenements();
                   Navigator.pop(context);
                 }

@@ -18,6 +18,13 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo_transparent.png"
+  adaptive_icon_background: "#FFFFFF"  # facultatif
+  adaptive_icon_foreground: "assets/images/logo_transparent.png"
+
 environment:
   sdk: ^3.8.1
 
@@ -39,10 +46,12 @@ dependencies:
   mobile_scanner: ^7.0.0
   shared_preferences: ^2.1.0
   http: ^1.4.0
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

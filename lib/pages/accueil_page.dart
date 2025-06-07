@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
 import 'package:logistiscout/models/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../models/api_service.dart';
 
@@ -22,7 +23,8 @@ class _AccueilPageState extends State<AccueilPage> {
   }
 
   Future<void> _loadData() async {
-    final String groupeId = "1"; // À adapter selon ton contexte
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
     final evtsApi = await ApiService.getEvenements(groupeId);
     final ttsApi = await ApiService.getTentes(groupeId);
     final evts = evtsApi.map((e) => Evenement.fromJson(e)).toList();
@@ -50,6 +52,22 @@ class _AccueilPageState extends State<AccueilPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accueil'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Déconnexion',
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('groupe_id');
+              await prefs.remove('groupe_mdp');
+              await prefs.remove('groupeId');
+              await prefs.remove('token');
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -62,7 +80,18 @@ class _AccueilPageState extends State<AccueilPage> {
               const Text('Aucun événement à venir.')
             else
               ...evtsAVenir.map((e) => Card(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: _getUniteColor(e.unites.isNotEmpty ? e.unites.first : null),
+                        width: 3,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getUniteColor(e.unites.isNotEmpty ? e.unites.first : null),
+                        child: const Icon(Icons.groups, color: Colors.white),
+                      ),
                       title: Text(e.nom),
                       subtitle: Text('Du ${e.date.toLocal().toString().split(' ')[0]} au ${e.dateFin.toLocal().toString().split(' ')[0]}\nType : ${e.type}'),
                     ),
@@ -73,16 +102,119 @@ class _AccueilPageState extends State<AccueilPage> {
             if (tentesUtilisees.isEmpty)
               const Text('Aucune tente réservée pour les prochains événements.')
             else
-              ...tentesUtilisees.map((t) => Card(
-                    child: ListTile(
-                      title: Text(t.nom),
-                      subtitle: Text('Type : ${t.typeTente} | Unité préférée : ${t.unitePreferee}'),
-                    ),
-                  )),
+              ...tentesUtilisees.map((t) => buildTenteCard(t)),
           ],
         ),
       ),
     );
+  }
+
+  Widget buildTenteCard(Tente tente) {
+    // Couleurs d'unité (à adapter selon ta logique)
+    final Map<String, Color> uniteColors = {
+      'Farfadet': Colors.greenAccent.shade200,
+      'Louveteaux-Jeannettes': Colors.orange.shade600,
+      'Scout-Guide': Colors.blue.shade600,
+      'Pionnier-Caravelle': Colors.red.shade600,
+      'Compagnon': Colors.green.shade600,
+    };
+    final Color uniteColor = uniteColors[tente.unitePreferee] ?? Colors.grey.shade200;
+    // Couleur principale de la tente (première couleur de la liste)
+    final Color tenteColor = tente.couleurs.isNotEmpty ? _parseColor(tente.couleurs.first) : Colors.grey.shade400;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      elevation: 3,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: uniteColor, width: 3), // Bordure couleur unité
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              leading: CircleAvatar(
+                backgroundColor: tenteColor,
+                child: const Icon(Icons.cabin, color: Colors.white),
+              ),
+              title: Text(tente.nom, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('Unité : ${tente.unitePreferee}'),
+            ),
+          ),
+          // Affichage des rectangles de couleur de la tente en haut à droite
+          if (tente.couleurs.isNotEmpty)
+            Positioned(
+              top: 10,
+              right: 18,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: tente.couleurs.take(5).map<Widget>((couleur) => Container(
+                  width: 18,
+                  height: 10,
+                  margin: const EdgeInsets.only(left: 2),
+                  decoration: BoxDecoration(
+                    color: _parseColor(couleur),
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                )).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Color _parseColor(String couleur) {
+    try {
+      if (couleur.startsWith('#')) {
+        return Color(int.parse(couleur.substring(1), radix: 16) + 0xFF000000);
+      }
+      switch (couleur.toLowerCase()) {
+        case 'rouge':
+          return Colors.red;
+        case 'vert':
+          return Colors.green;
+        case 'bleu':
+          return Colors.blue;
+        case 'jaune':
+          return Colors.yellow;
+        case 'orange':
+          return Colors.orange;
+        case 'violet':
+          return Colors.purple;
+        case 'noir':
+          return Colors.black;
+        case 'blanc':
+          return Colors.white;
+        case 'gris':
+          return Colors.grey;
+        default:
+          return Colors.grey.shade400;
+      }
+    } catch (e) {
+      return Colors.grey.shade400;
+    }
+  }
+
+  Color _getUniteColor(int? uniteId) {
+    switch (uniteId) {
+      case 1:
+        return Colors.greenAccent.shade200; // Farfadet
+      case 2:
+        return Colors.orange.shade600; // Louveteaux-Jeannettes
+      case 3:
+        return Colors.blue.shade600; // Scout-Guide
+      case 4:
+        return Colors.red.shade600; // Pionnier-Caravelle
+      case 5:
+        return Colors.green.shade600; // Compagnon
+      case 6:
+        return Colors.deepPurple.shade600; // Groupe
+      default:
+        return Colors.grey.shade300;
+    }
   }
 }
 

@@ -6,16 +6,16 @@ class ApiService {
   static const String baseUrl = 'http://57.128.224.111:8000';
 
   // Authentification groupe
-  static Future<String?> loginGroupe(String groupeId, String groupeMdp) async {
-    print('[API] POST /auth/login {groupe_id: $groupeId, groupe_mdp: ***}');
+  static Future<Map<String, dynamic>?> loginGroupe(String userlogin, String mdp) async {
+    print('[API] POST /auth/login {userlogin: $userlogin, mdp: ***}');
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'groupe_id': groupeId, 'groupe_mdp': groupeMdp}),
+      body: jsonEncode({'userlogin': userlogin, 'mdp': mdp}),
     );
-    print('[API] Response: ${response.statusCode} - ${response.body}');
+    print('[API] Response: \\${response.statusCode} - \\${response.body}');
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['token'];
+      return jsonDecode(response.body);
     }
     return null;
   }
@@ -65,6 +65,10 @@ class ApiService {
     throw Exception('Erreur chargement tente');
   }
   static Future<void> addTente(Map<String, dynamic> tente) async {
+    // S'assurer que le champ groupeId est bien présent
+    if (!tente.containsKey('groupeId') || tente['groupeId'] == null || tente['groupeId'].toString().isEmpty) {
+      throw Exception('groupeId manquant lors de l\'ajout de tente');
+    }
     print('[API] POST /tentes {tente: $tente}');
     final response = await http.post(
       Uri.parse('$baseUrl/tentes'),
@@ -77,6 +81,10 @@ class ApiService {
     }
   }
   static Future<void> updateTente(int tenteId, Map<String, dynamic> tente) async {
+    // S'assurer que le champ groupeId est bien présent
+    if (!tente.containsKey('groupeId') || tente['groupeId'] == null || tente['groupeId'].toString().isEmpty) {
+      throw Exception('groupeId manquant lors de la modification de tente');
+    }
     print('[API] PUT /tentes/$tenteId {tente: $tente}');
     final response = await http.put(
       Uri.parse('$baseUrl/tentes/$tenteId'),

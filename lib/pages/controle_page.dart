@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:logistiscout/models/database_helper.dart';
+import 'package:logistiscout/models/api_service.dart';
 import 'package:logistiscout/models/models.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'tente_detail.dart';
 
 class ControlePage extends StatefulWidget {
@@ -49,10 +50,14 @@ class _ControlePageState extends State<ControlePage> {
                   ),
                   const SizedBox(height: 24),
                   const Text('Ou sélectionnez un matériel manuellement.'),
-                 // Liste des tentes à contrôler (exemple statique, à remplacer par une récupération dynamique)
                   Expanded(
                     child: FutureBuilder<List<Tente>>(
-                      future: DatabaseHelper.instance.getAllTentes(),
+                      future: (() async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final groupeId = prefs.getString('groupeId') ?? '';
+                        final tentesApi = await ApiService.getTentes(groupeId);
+                        return tentesApi.map<Tente>((t) => Tente.fromJson(t)).toList();
+                      })(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
@@ -152,7 +157,10 @@ class ControleMaterielWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (type == 'tente') {
       return FutureBuilder<Tente?>(
-        future: DatabaseHelper.instance.getTenteById(id),
+        future: (() async {
+          final t = await ApiService.getTente(id);
+          return Tente.fromJson(t);
+        })(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

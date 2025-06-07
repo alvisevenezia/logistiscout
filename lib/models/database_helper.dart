@@ -90,55 +90,6 @@ class DatabaseHelper {
     });
   }
 
-  Future<List<Tente>> getAllTentes() async {
-    final db = await database;
-    final result = await db.query('tentes');
-    return result.map((json) => Tente(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
-      uniteId: json['uniteId'] as int?,
-      etat: json['etat'] as String,
-      remarques: json['remarques'] as String,
-      tapisSolIntegre: (json['tapisSolIntegre'] ?? 0) == 1,
-      nbPlaces: json['nbPlaces'] as int? ?? 0,
-      typeTente: json['typeTente'] as String? ?? '',
-      unitePreferee: json['unitePreferee'] as String? ?? '',
-      agenda: [],
-      historiqueControles: [],
-    )).toList();
-  }
-
-  Future<Tente?> getTenteById(int id) async {
-    final db = await database;
-    final result = await db.query('tentes', where: 'id = ?', whereArgs: [id]);
-    if (result.isEmpty) return null;
-    // Récupérer les contrôles associés à cette tente
-    final controlesResult = await db.query('controles', where: 'tenteId = ?', whereArgs: [id], orderBy: 'date DESC');
-    final controles = controlesResult.map((json) => Controle(
-      id: json['id'] as int,
-      tenteId: json['tenteId'] as int,
-      userId: json['userId'] as int? ?? 0,
-      date: DateTime.parse(json['date'] as String),
-      checklist: {}, // À parser si besoin
-      remarques: json['remarques'] as String,
-    )).toList();
-    final json = result.first;
-    return Tente(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
-      uniteId: json['uniteId'] as int?,
-      etat: json['etat'] as String,
-      remarques: json['remarques'] as String,
-      tapisSolIntegre: (json['tapisSolIntegre'] ?? 0) == 1,
-      nbPlaces: json['nbPlaces'] as int? ?? 0,
-      typeTente: json['typeTente'] as String? ?? '',
-      unitePreferee: json['unitePreferee'] as String? ?? '',
-      agenda: [],
-      historiqueControles: controles,
-    );
-  }
-
-
   Future<int> updateTente(Tente tente) async {
     final db = await database;
     return await db.update(

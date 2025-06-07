@@ -80,6 +80,8 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
             const SizedBox(height: 8),
             Text('État : $etat'),
             const SizedBox(height: 8),
+            Text('Tapis de sol intégrée : ${tente.tapisSolIntegre ? "Oui" : "Non"}'),
+            const SizedBox(height: 8),
             Text('Remarques : $remarques'),
             const SizedBox(height: 16),
             Text('Historique des contrôles :', style: Theme.of(context).textTheme.titleMedium),

@@ -12,48 +12,26 @@ import 'pages/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await deleteDatabase(await getDatabasesPath() + '/logistiscout.db');
-  await DatabaseHelper.instance.database;
-  runApp(const MyApp());
+  final prefs = await SharedPreferences.getInstance();
+  final String? groupeId = prefs.getString('groupeId');
+  runApp(MyApp(isLoggedIn: groupeId != null && groupeId.isNotEmpty));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool? isLoggedIn;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkLogin();
-  }
-
-  Future<void> _checkLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString('groupe_id');
-    final mdp = prefs.getString('groupe_mdp');
-    setState(() {
-      isLoggedIn = (id != null && mdp != null && id.isNotEmpty && mdp.isNotEmpty);
-    });
-  }
-
-  void _onLogin() {
-    setState(() {
-      isLoggedIn = true;
-    });
-  }
+class MyApp extends StatelessWidget {
+  final bool isLoggedIn;
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
-    if (isLoggedIn == null) {
-      return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
-    }
     return MaterialApp(
-      title: 'LogistiScout',
+      title: 'Logistiscout',
+      initialRoute: isLoggedIn ? '/accueil' : '/login',
+      routes: {
+        '/login': (context) => LoginPage(onLogin: () {
+          Navigator.of(context).pushReplacementNamed('/accueil');
+        }),
+        '/accueil': (context) => const _MainNavigation(),
+      },
       theme: ThemeData(
         colorScheme: ColorScheme(
           brightness: Brightness.light,
@@ -94,9 +72,6 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
       ),
-      home: isLoggedIn!
-          ? const _MainNavigation()
-          : LoginPage(onLogin: _onLogin),
     );
   }
 }

@@ -12,6 +12,8 @@ class Tente {
   final String unitePreferee;
   final List<Reservation> agenda;
   final List<Controle> historiqueControles;
+  final List<String> couleurs;
+  final String groupeId;
 
   Tente({
     required this.id,
@@ -25,6 +27,8 @@ class Tente {
     required this.unitePreferee,
     required this.agenda,
     required this.historiqueControles,
+    required this.couleurs,
+    required this.groupeId,
   });
 
   factory Tente.fromJson(Map<String, dynamic> json) {
@@ -34,13 +38,33 @@ class Tente {
       uniteId: json['uniteId'],
       etat: json['etat'],
       remarques: json['remarques'] ?? '',
-      tapisSolIntegre: json['tapisSolIntegre'] ?? false,
+      tapisSolIntegre: json['estIntegree'] ?? false,
       nbPlaces: json['nbPlaces'] ?? 0,
       typeTente: json['typeTente'] ?? '',
       unitePreferee: json['unitePreferee'] ?? '',
       agenda: (json['agenda'] ?? []).map<Reservation>((r) => Reservation.fromJson(r)).toList(),
       historiqueControles: [], // sera rempli dynamiquement après récupération
+      couleurs: (json['couleurs'] as List<dynamic>? ?? []).map((c) => c.toString()).toList(),
+      groupeId: json['groupeId']?.toString() ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nom': nom,
+      'uniteId': uniteId,
+      'etat': etat,
+      'remarques': remarques,
+      'estIntegree': tapisSolIntegre,
+      'nbPlaces': nbPlaces,
+      'typeTente': typeTente,
+      'unitePreferee': unitePreferee,
+      'agenda': agenda.map((r) => r.toJson()).toList(),
+      'historiqueControles': historiqueControles.map((c) => c.toJson()).toList(),
+      'couleurs': couleurs,
+      'groupeId': groupeId,
+    };
   }
 
   // Charge automatiquement l'historique des contrôles lors de la création d'une Tente
@@ -108,6 +132,14 @@ class Reservation {
       evenementId: json['evenementId'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'debut': debut.toIso8601String(),
+      'fin': fin.toIso8601String(),
+      'evenementId': evenementId,
+    };
+  }
 }
 
 class Controle {
@@ -148,4 +180,5 @@ class Controle {
     );
   }
 }
+
 

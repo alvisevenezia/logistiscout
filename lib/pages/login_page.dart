@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logistiscout/models/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,16 +18,24 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     setState(() { loading = true; error = null; });
-    final id = idController.text.trim();
+    final userlogin = idController.text.trim();
     final mdp = mdpController.text.trim();
-    if (id.isEmpty || mdp.isEmpty) {
+    if (userlogin.isEmpty || mdp.isEmpty) {
       setState(() { error = 'Veuillez remplir les deux champs.'; loading = false; });
       return;
     }
-    // Ici, on pourrait vérifier le couple id/mdp côté serveur ou localement
+    // Vérification côté serveur
+    final response = await ApiService.loginGroupe(userlogin, mdp);
+    if (response == null) {
+      setState(() { error = 'Identifiants invalides.'; loading = false; });
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('groupe_id', id);
-    await prefs.setString('groupe_mdp', mdp);
+    await prefs.setString('token', response['token'] ?? '');
+    await prefs.setString('groupeId', response['id'].toString());
+    await prefs.setString('groupe_nom', response['nom'] ?? '');
+    await prefs.setString('userlogin', response['userlogin'] ?? '');
+    setState(() { loading = false; });
     widget.onLogin();
   }
 
