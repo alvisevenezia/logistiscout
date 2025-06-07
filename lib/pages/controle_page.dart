@@ -36,8 +36,8 @@ class _ControlePageState extends State<ControlePage> {
             } catch (_) {
               result = null;
             }
-            print('QR code parsé :');
-            print(result);
+            //print('QR code parsé :');
+            //print(result);
             if (result is Map && result.containsKey('type') && result.containsKey('id') && result.containsKey('groupeId')) {
               final prefs = await SharedPreferences.getInstance();
               final userGroupeId = prefs.getString('groupeId') ?? '';
@@ -116,8 +116,8 @@ class _QRViewExampleState extends State<QRViewExample> {
             } catch (_) {
               result = null;
             }
-            print('QR code parsé :');
-            print(result);
+            //print('QR code parsé :');
+            //print(result);
             if (result is Map && result.containsKey('type') && result.containsKey('id') && result.containsKey('groupeId')) {
               final prefs = await SharedPreferences.getInstance();
               final userGroupeId = prefs.getString('groupeId') ?? '';
