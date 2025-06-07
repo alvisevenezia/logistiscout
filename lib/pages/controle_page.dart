@@ -3,6 +3,7 @@ import 'package:logistiscout/models/api_service.dart';
 import 'package:logistiscout/models/models.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'tente_detail.dart';
 
 class ControlePage extends StatefulWidget {
@@ -17,81 +18,59 @@ class _ControlePageState extends State<ControlePage> {
   String? materielType;
   int? materielId;
 
-  void _scanQRCode() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const QRViewExample()),
-    );
-    if (result != null && result is Map<String, dynamic>) {
-      setState(() {
-        qrResult = result['code'];
-        materielType = result['type'];
-        materielId = result['id'];
-        showControle = true;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Contrôle du matériel')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: showControle && materielType != null && materielId != null
-            ? ControleMaterielWidget(type: materielType!, id: materielId!)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _scanQRCode,
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Scanner un QR code'),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('Ou sélectionnez un matériel manuellement.'),
-                  Expanded(
-                    child: FutureBuilder<List<Tente>>(
-                      future: (() async {
-                        final prefs = await SharedPreferences.getInstance();
-                        final groupeId = prefs.getString('groupeId') ?? '';
-                        final tentesApi = await ApiService.getTentes(groupeId);
-                        return tentesApi.map<Tente>((t) => Tente.fromJson(t)).toList();
-                      })(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text('Aucune tente disponible.');
-                        }
-                        final tentes = snapshot.data!;
-                        return ListView.builder(
-                          itemCount: tentes.length,
-                          itemBuilder: (context, index) {
-                            final tente = tentes[index];
-                            final remarques = (tente.historiqueControles.isNotEmpty)
-                                ? tente.historiqueControles.last.remarques
-                                : tente.remarques;
-                            return ListTile(
-                              leading: const Icon(Icons.cabin),
-                              title: Text(tente.nom),
-                              subtitle: Text('ID: ${tente.id}\nRemarques: $remarques'),
-                              onTap: () {
-                                setState(() {
-                                  materielType = 'tente';
-                                  materielId = tente.id;
-                                  showControle = true;
-                                });
-                              },
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+      appBar: AppBar(title: const Text('Scanner le QR code')),
+      body: MobileScanner(
+        controller: MobileScannerController(),
+        onDetect: (capture) async {
+          if (showControle) return;
+          final List<Barcode> barcodes = capture.barcodes;
+          if (barcodes.isNotEmpty) {
+            showControle = true;
+            final code = barcodes.first.rawValue;
+            dynamic result;
+            try {
+              result = code != null ? jsonDecode(code) : null;
+            } catch (_) {
+              result = null;
+            }
+            print('QR code parsé :');
+            print(result);
+            if (result is Map && result.containsKey('type') && result.containsKey('id') && result.containsKey('groupeId')) {
+              final prefs = await SharedPreferences.getInstance();
+              final userGroupeId = prefs.getString('groupeId') ?? '';
+              if (result['groupeId'].toString() != userGroupeId) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Vous n'avez pas le droit de modifier cette tente (groupe différent).")),
+                  );
+                }
+                showControle = false;
+                return;
+              }
+              Navigator.pop(context, {
+                'type': result['type'],
+                'id': result['id'],
+                'groupeId': result['groupeId'],
+                'code': code,
+              });
+            } else {
+              // fallback: ancien format type:id
+              final parts = code?.split(':');
+              if (parts != null && parts.length == 2) {
+                Navigator.pop(context, {
+                  'type': parts[0],
+                  'id': int.tryParse(parts[1]),
+                  'code': code,
+                });
+              } else {
+                Navigator.pop(context, null);
+              }
+            }
+          }
+        },
       ),
     );
   }
@@ -125,21 +104,50 @@ class _QRViewExampleState extends State<QRViewExample> {
       appBar: AppBar(title: const Text('Scanner le QR code')),
       body: MobileScanner(
         controller: controller,
-        onDetect: (capture) {
+        onDetect: (capture) async {
           if (scanned) return;
           final List<Barcode> barcodes = capture.barcodes;
           if (barcodes.isNotEmpty) {
             scanned = true;
             final code = barcodes.first.rawValue;
-            final parts = code?.split(':');
-            if (parts != null && parts.length == 2) {
+            dynamic result;
+            try {
+              result = code != null ? jsonDecode(code) : null;
+            } catch (_) {
+              result = null;
+            }
+            print('QR code parsé :');
+            print(result);
+            if (result is Map && result.containsKey('type') && result.containsKey('id') && result.containsKey('groupeId')) {
+              final prefs = await SharedPreferences.getInstance();
+              final userGroupeId = prefs.getString('groupeId') ?? '';
+              if (result['groupeId'].toString() != userGroupeId) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Vous n'avez pas le droit de modifier cette tente (groupe différent).")),
+                  );
+                }
+                scanned = false;
+                return;
+              }
               Navigator.pop(context, {
-                'type': parts[0],
-                'id': int.tryParse(parts[1]),
+                'type': result['type'],
+                'id': result['id'],
+                'groupeId': result['groupeId'],
                 'code': code,
               });
             } else {
-              Navigator.pop(context, null);
+              // fallback: ancien format type:id
+              final parts = code?.split(':');
+              if (parts != null && parts.length == 2) {
+                Navigator.pop(context, {
+                  'type': parts[0],
+                  'id': int.tryParse(parts[1]),
+                  'code': code,
+                });
+              } else {
+                Navigator.pop(context, null);
+              }
             }
           }
         },
@@ -158,7 +166,9 @@ class ControleMaterielWidget extends StatelessWidget {
     if (type == 'tente') {
       return FutureBuilder<Tente?>(
         future: (() async {
-          final t = await ApiService.getTente(id);
+          final prefs = await SharedPreferences.getInstance();
+          final groupeId = prefs.getString('groupeId') ?? '';
+          final t = await ApiService.getTente(id, groupeId: groupeId);
           return Tente.fromJson(t);
         })(),
         builder: (context, snapshot) {

@@ -26,6 +26,7 @@ class _TentesPageState extends State<TentesPage> {
     final data = await ApiService.getTentes(groupeId);
     final futures = data.map<Future<Tente>>((json) => Tente.fromApiJson(json)).toList();
     final loadedTentes = await Future.wait(futures);
+    loadedTentes.sort((a, b) => a.nom.compareTo(b.nom));
     setState(() {
       tentes = loadedTentes;
       isLoading = false;
@@ -43,6 +44,7 @@ class _TentesPageState extends State<TentesPage> {
     String typeTente = 'Canadienne';
     int nbPlaces = 6;
     String unitePreferee = '';
+    String etat = 'Bon';
     final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
     final List<Color> couleurs = [];
     Color? couleurSelectionnee;
@@ -120,6 +122,24 @@ class _TentesPageState extends State<TentesPage> {
                   items: unitesNoms.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                   onChanged: (val) => setStateDialog(() => unitePreferee = val ?? ''),
                   decoration: const InputDecoration(labelText: 'Unité préférée'),
+                ),
+                const SizedBox(height: 8),
+                // Ajout du choix de l'état de la tente
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: 'Bon',
+                  items: ['Bon', 'À réparer', 'HS', 'Perdue']
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (val) {
+                    // Stocker la valeur dans une variable locale
+                    if (val != null) {
+                      setStateDialog(() {
+                        etat = val;
+                      });
+                    }
+                  },
+                  decoration: const InputDecoration(labelText: 'État de la tente'),
                 ),
                 const SizedBox(height: 8),
                 // Gestion des couleurs (scotch)
@@ -234,7 +254,7 @@ class _TentesPageState extends State<TentesPage> {
       await ApiService.addTente({
         'nom': nomController.text,
         'uniteId': null,
-        'etat': 'Bon',
+        'etat': etat,
         'remarques': '',
         'tapisSolIntegre': tapisSolIntegre,
         'nbPlaces': nbPlaces,
@@ -253,6 +273,7 @@ class _TentesPageState extends State<TentesPage> {
     String typeTente = tente.typeTente;
     int nbPlaces = tente.nbPlaces;
     String unitePreferee = tente.unitePreferee;
+    String etat = tente.etat;
     final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
     final List<Color> couleurs = List<Color>.from(
       tente.couleurs.map((c) => _parseColor(c)),
@@ -331,6 +352,23 @@ class _TentesPageState extends State<TentesPage> {
                   items: unitesNoms.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                   onChanged: (val) => setStateDialog(() => unitePreferee = val ?? ''),
                   decoration: const InputDecoration(labelText: 'Unité préférée'),
+                ),
+                const SizedBox(height: 8),
+                // Ajout du choix de l'état de la tente lors de la modification
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: etat,
+                  items: ['Bon', 'À réparer', 'HS', 'Perdue']
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setStateDialog(() {
+                        etat = val;
+                      });
+                    }
+                  },
+                  decoration: const InputDecoration(labelText: 'État de la tente'),
                 ),
                 const SizedBox(height: 8),
                 // Gestion des couleurs (scotch)
@@ -445,7 +483,7 @@ class _TentesPageState extends State<TentesPage> {
       await ApiService.updateTente(tente.id, {
         'nom': nomController.text,
         'uniteId': tente.uniteId,
-        'etat': tente.etat,
+        'etat': etat,
         'remarques': tente.remarques,
         'estIntegree': tapisSolIntegre,
         'nbPlaces': nbPlaces,
@@ -459,7 +497,8 @@ class _TentesPageState extends State<TentesPage> {
   }
 
   Future<void> _supprimerTente(int id) async {
-    await ApiService.deleteTente(id);
+    final groupeId = await _getGroupeId();
+    await ApiService.deleteTente(id, groupeId: groupeId);
     _loadTentes();
   }
 
@@ -472,6 +511,7 @@ class _TentesPageState extends State<TentesPage> {
           : tentes.isEmpty
               ? const Center(child: Text('Aucune tente enregistrée.'))
               : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: tentes.length,
                   itemBuilder: (context, index) {
                     final tente = tentes[index];
@@ -480,11 +520,14 @@ class _TentesPageState extends State<TentesPage> {
                       case 'bon':
                         etatColor = Colors.green.shade100;
                         break;
-                      case 'moyen':
+                      case 'à réparer':
                         etatColor = Colors.orange.shade100;
                         break;
-                      case 'mauvais':
+                      case 'hs':
                         etatColor = Colors.red.shade100;
+                        break;
+                      case 'perdue':
+                        etatColor = Colors.grey.shade400;
                         break;
                       default:
                         etatColor = Colors.grey.shade200;
@@ -518,8 +561,8 @@ class _TentesPageState extends State<TentesPage> {
                                   Text('Dernier contrôle : ${tente.historiqueControles.last.date.toLocal().toString().split(' ')[0]}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
                               ],
                             ),
-                            onTap: () {
-                              Navigator.push(
+                            onTap: () async {
+                              await Navigator.push<Tente>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => TenteDetailPage(tente: tente),

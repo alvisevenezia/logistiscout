@@ -401,7 +401,9 @@ class _EvenementsPageState extends State<EvenementsPage> {
   }
 
   Future<void> _supprimerEvenement(int id) async {
-    await ApiService.deleteEvenement(id);
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
+    await ApiService.deleteEvenement(id, groupeId: groupeId);
     await _loadEvenements();
   }
 
@@ -426,7 +428,7 @@ class _EvenementsPageState extends State<EvenementsPage> {
                       5: Colors.green.shade600,  // Compagnon
                       6: Colors.deepPurple.shade600,   // Chef/Groupe
                     };
-                    final int uniteId = (evt.unites.isNotEmpty) ? evt.unites.first : 6;
+                    final int uniteId = evt.unites.isNotEmpty ? evt.unites.first : 6;
                     final Color cardColor = uniteColors[uniteId] ?? Colors.grey.shade100;
                     return Card(
                       color: cardColor,

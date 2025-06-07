@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class TenteDetailPage extends StatefulWidget {
@@ -34,7 +35,9 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
   }
 
   Future<void> _refreshTente() async {
-    final updated = await ApiService.getTente(tente.id);
+    final prefs = await SharedPreferences.getInstance();
+    final String groupeId = prefs.getString('groupeId') ?? '';
+    final updated = await ApiService.getTente(tente.id, groupeId: groupeId);
     setState(() {
       tente = Tente.fromJson(updated);
       _updateFromTente();
@@ -77,7 +80,40 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
             const SizedBox(height: 8),
             Text('Unité : $unite'),
             const SizedBox(height: 8),
-            Text('État : $etat'),
+            Row(
+              children: [
+                const Text('État : '),
+                DropdownButton<String>(
+                  value: etat,
+                  items: ['Bon', 'À réparer', 'HS', 'Perdue']
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (val) async {
+                    if (val != null && val != etat) {
+                      setState(() {
+                        etat = val;
+                      });
+                      final prefs = await SharedPreferences.getInstance();
+                      final String groupeId = prefs.getString('groupeId') ?? '';
+                      // Construire la map complète pour l'API
+                      final updateData = {
+                        'nom': tente.nom,
+                        'etat': val,
+                        'groupeId': groupeId,
+                        'uniteId': tente.uniteId,
+                        'remarques': tente.remarques,
+                        'nbPlaces': tente.nbPlaces,
+                        'typeTente': tente.typeTente,
+                        'unitePreferee': tente.unitePreferee,
+                        'tapisSolIntegre': tente.tapisSolIntegre,
+                      };
+                      await ApiService.updateTente(tente.id, updateData);
+                      await _refreshTente();
+                    }
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Text('Tapis de sol intégrée : ${tente.tapisSolIntegre ? "Oui" : "Non"}'),
             const SizedBox(height: 8),
@@ -300,7 +336,10 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
                       // Met à jour l'historique et les remarques de la tente après ajout du contrôle
                       final updatedTenteJson = await ApiService.getTente(widget.tenteId!);
                       final updatedTente = await Tente.fromApiJson(updatedTenteJson);
-                      Navigator.pop(context, updatedTente);
+                      // Met à jour la liste des tentes sur la page précédente après ajout du contrôle
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context, updatedTente);
+                      }
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Erreur lors de l\'ajout du contrôle : $e')),

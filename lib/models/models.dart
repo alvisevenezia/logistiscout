@@ -34,17 +34,17 @@ class Tente {
   factory Tente.fromJson(Map<String, dynamic> json) {
     return Tente(
       id: json['id'],
-      nom: json['nom'],
-      uniteId: json['uniteId'],
-      etat: json['etat'],
+      nom: json['nom'] ?? '',
+      uniteId: json['uniteId'] is int ? json['uniteId'] : (json['uniteId'] == null ? null : int.tryParse(json['uniteId'].toString())),
+      etat: json['etat'] ?? '',
       remarques: json['remarques'] ?? '',
       tapisSolIntegre: json['estIntegree'] ?? false,
-      nbPlaces: json['nbPlaces'] ?? 0,
+      nbPlaces: json['nbPlaces'] is int ? json['nbPlaces'] : int.tryParse(json['nbPlaces']?.toString() ?? '0') ?? 0,
       typeTente: json['typeTente'] ?? '',
       unitePreferee: json['unitePreferee'] ?? '',
       agenda: (json['agenda'] ?? []).map<Reservation>((r) => Reservation.fromJson(r)).toList(),
       historiqueControles: [], // sera rempli dynamiquement après récupération
-      couleurs: (json['couleurs'] as List<dynamic>? ?? []).map((c) => c.toString()).toList(),
+      couleurs: (json['couleurs'] as List<dynamic>? ?? []).map((c) => c?.toString() ?? '').where((c) => c.isNotEmpty).toList(),
       groupeId: json['groupeId']?.toString() ?? '',
     );
   }
@@ -180,5 +180,4 @@ class Controle {
     );
   }
 }
-
 
