@@ -92,9 +92,11 @@ class _TentesPageState extends State<TentesPage> {
                 const SizedBox(height: 8),
                 if (typeTente == 'Canadienne')
                   DropdownButtonFormField<int>(
-                    value: nbPlaces,
-                    items: [6, 8].map((n) => DropdownMenuItem(value: n, child: Text('$n places'))).toList(),
-                    onChanged: (val) => setStateDialog(() => nbPlaces = val ?? 6),
+                    value: [4, 5, 6, 7, 8].contains(nbPlaces) ? nbPlaces : 4,
+                    items: [4, 5, 6, 7, 8]
+                        .map((n) => DropdownMenuItem(value: n, child: Text('$n places')))
+                        .toList(),
+                    onChanged: (val) => setStateDialog(() => nbPlaces = val ?? 4),
                     decoration: const InputDecoration(labelText: 'Nombre de places'),
                   )
                 else if (typeTente == 'Tipi')
@@ -322,9 +324,11 @@ class _TentesPageState extends State<TentesPage> {
                 const SizedBox(height: 8),
                 if (typeTente == 'Canadienne')
                   DropdownButtonFormField<int>(
-                    value: nbPlaces,
-                    items: [6, 8].map((n) => DropdownMenuItem(value: n, child: Text('$n places'))).toList(),
-                    onChanged: (val) => setStateDialog(() => nbPlaces = val ?? 6),
+                    value: [4, 5, 6, 7, 8].contains(nbPlaces) ? nbPlaces : 4,
+                    items: [4, 5, 6, 7, 8]
+                        .map((n) => DropdownMenuItem(value: n, child: Text('$n places')))
+                        .toList(),
+                    onChanged: (val) => setStateDialog(() => nbPlaces = val ?? 4),
                     decoration: const InputDecoration(labelText: 'Nombre de places'),
                   )
                 else if (typeTente == 'Tipi')

@@ -1,0 +1,18 @@
+version: v1.0
+name: Initial Flutter iOS CI/CD Setup
+agent:
+  machine:
+    type: a2-standard-4
+    os_image: macos-xcode16
+blocks:
+  - name: Test Flutter sur App Store
+    task:
+      jobs:
+        - name: Test iOS
+          commands:
+            - checkout
+            - sem-version flutter 3.19.6
+            - flutter pub get
+            - flutter build ios --release --no-codesign
+            - xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -sdk iphoneos -configuration Release
+

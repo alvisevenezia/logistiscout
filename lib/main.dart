@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/accueil_page.dart';
 import 'pages/tentes_page.dart';
-import 'pages/unites_page.dart';
 import 'pages/evenements_page.dart';
 import 'pages/controle_page.dart';
 import 'pages/login_page.dart';
@@ -84,8 +83,12 @@ class _MainNavigationState extends State<_MainNavigation> {
     TentesPage(),
     EvenementsPage(),
     ControlePage(),
-    UnitesPage(),
   ];
+
+  // Ajout d'une méthode pour valider la capacité des canadiennes
+  bool isCapaciteValide(int capacite) {
+    return capacite >= 4 && capacite <= 8;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,10 +117,6 @@ class _MainNavigationState extends State<_MainNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.qr_code_scanner),
             label: 'Contrôle',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.groups),
-            label: 'Unités',
           ),
         ],
         type: BottomNavigationBarType.fixed,
