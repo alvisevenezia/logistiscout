@@ -4,8 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class TenteDetailPage extends StatefulWidget {
-  final Tente tente;
-  const TenteDetailPage({super.key, required this.tente});
+  final Tente? tente;
+  final int? tenteId;
+  const TenteDetailPage({super.key, this.tente, this.tenteId}) : assert(tente != null || tenteId != null, 'Il faut fournir soit une tente, soit un id');
 
   @override
   State<TenteDetailPage> createState() => _TenteDetailPageState();
@@ -15,29 +16,59 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
   late String etat;
   late String remarques;
   late String unite;
-  late Tente tente;
+  Tente? tente;
+  bool loading = false;
+  String? error;
 
   @override
   void initState() {
     super.initState();
-    tente = widget.tente;
-    _updateFromTente();
+    if (widget.tente != null) {
+      tente = widget.tente;
+      _updateFromTente();
+    } else if (widget.tenteId != null) {
+      _loadTente(widget.tenteId!);
+    }
+  }
+
+  Future<void> _loadTente(int id) async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String groupeId = prefs.getString('groupeId') ?? '';
+      final data = await ApiService.getTente(id, groupeId: groupeId);
+      setState(() {
+        tente = Tente.fromJson(data);
+        _updateFromTente();
+        loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        error = 'Erreur lors du chargement de la tente';
+        loading = false;
+      });
+    }
   }
 
   void _updateFromTente() {
-    etat = tente.etat;
-    unite = tente.unitePreferee.isNotEmpty ? tente.unitePreferee : "Non affectée";
-    if (tente.historiqueControles.isNotEmpty) {
-      remarques = tente.historiqueControles.last.remarques;
+    if (tente == null) return;
+    etat = tente!.etat;
+    unite = tente!.unitePreferee.isNotEmpty ? tente!.unitePreferee : "Non affectée";
+    if (tente!.historiqueControles.isNotEmpty) {
+      remarques = tente!.historiqueControles.last.remarques;
     } else {
-      remarques = tente.remarques;
+      remarques = tente!.remarques;
     }
   }
 
   Future<void> _refreshTente() async {
+    if (tente == null) return;
     final prefs = await SharedPreferences.getInstance();
     final String groupeId = prefs.getString('groupeId') ?? '';
-    final updated = await ApiService.getTente(tente.id, groupeId: groupeId);
+    final updated = await ApiService.getTente(tente!.id, groupeId: groupeId);
     setState(() {
       tente = Tente.fromJson(updated);
       _updateFromTente();
@@ -46,6 +77,23 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Détail tente')),
+        body: Center(child: Text(error!)),
+      );
+    }
+    if (tente == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Détail tente')),
+        body: const Center(child: Text('Tente introuvable.')),
+      );
+    }
     final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
     final List<String> unitesNoms = [
       'Farfadet',
@@ -56,7 +104,7 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text('Détail - ${tente.nom}'),
+        title: Text('Détail - ${tente!.nom}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -70,52 +118,52 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
         child: ListView(
           children: [
             TextFormField(
-              initialValue: tente.nom,
+              initialValue: tente!.nom,
               decoration: const InputDecoration(labelText: 'Nom'),
-              onChanged: (val) => setState(() => tente = tente.copyWith(nom: val)),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(nom: val)),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: types.contains(tente.typeTente) ? tente.typeTente : 'Autre',
+              value: types.contains(tente!.typeTente) ? tente!.typeTente : 'Autre',
               items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-              onChanged: (val) => setState(() => tente = tente.copyWith(typeTente: val ?? 'Autre')),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(typeTente: val ?? 'Autre')),
               decoration: const InputDecoration(labelText: 'Type'),
             ),
             const SizedBox(height: 12),
             TextFormField(
-              initialValue: tente.nbPlaces.toString(),
+              initialValue: tente!.nbPlaces.toString(),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Nombre de places'),
-              onChanged: (val) => setState(() => tente = tente.copyWith(nbPlaces: int.tryParse(val) ?? tente.nbPlaces)),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(nbPlaces: int.tryParse(val) ?? tente!.nbPlaces)),
             ),
             const SizedBox(height: 12),
             SwitchListTile(
-              value: tente.tapisSolIntegre,
-              onChanged: (val) => setState(() => tente = tente.copyWith(tapisSolIntegre: val)),
+              value: tente!.tapisSolIntegre,
+              onChanged: (val) => setState(() => tente = tente!.copyWith(tapisSolIntegre: val)),
               title: const Text('Tapis de sol intégré'),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: unitesNoms.contains(tente.unitePreferee) ? tente.unitePreferee : null,
+              value: unitesNoms.contains(tente!.unitePreferee) ? tente!.unitePreferee : null,
               items: unitesNoms.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-              onChanged: (val) => setState(() => tente = tente.copyWith(unitePreferee: val ?? '')),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(unitePreferee: val ?? '')),
               decoration: const InputDecoration(labelText: 'Unité préférée'),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: ['Bon', 'À réparer', 'HS', 'Perdue'].contains(tente.etat) ? tente.etat : 'Bon',
+              value: ['Bon', 'À réparer', 'HS', 'Perdue'].contains(tente!.etat) ? tente!.etat : 'Bon',
               items: ['Bon', 'À réparer', 'HS', 'Perdue']
                   .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                   .toList(),
-              onChanged: (val) => setState(() => tente = tente.copyWith(etat: val ?? 'Bon')),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(etat: val ?? 'Bon')),
               decoration: const InputDecoration(labelText: 'État'),
             ),
             const SizedBox(height: 12),
             TextFormField(
-              initialValue: tente.remarques,
+              initialValue: tente!.remarques,
               decoration: const InputDecoration(labelText: 'Remarques'),
               maxLines: 2,
-              onChanged: (val) => setState(() => tente = tente.copyWith(remarques: val)),
+              onChanged: (val) => setState(() => tente = tente!.copyWith(remarques: val)),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -124,16 +172,16 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final groupeId = prefs.getString('groupeId') ?? '';
-                await ApiService.updateTente(tente.id, {
-                  'nom': tente.nom,
-                  'uniteId': tente.uniteId,
-                  'etat': tente.etat,
-                  'remarques': tente.remarques,
-                  'estIntegree': tente.tapisSolIntegre,
-                  'nbPlaces': tente.nbPlaces,
-                  'typeTente': tente.typeTente,
-                  'unitePreferee': tente.unitePreferee,
-                  'couleurs': tente.couleurs,
+                await ApiService.updateTente(tente!.id, {
+                  'nom': tente!.nom,
+                  'uniteId': tente!.uniteId,
+                  'etat': tente!.etat,
+                  'remarques': tente!.remarques,
+                  'estIntegree': tente!.tapisSolIntegre,
+                  'nbPlaces': tente!.nbPlaces,
+                  'typeTente': tente!.typeTente,
+                  'unitePreferee': tente!.unitePreferee,
+                  'couleurs': tente!.couleurs,
                   'groupeId': groupeId,
                 });
                 if (mounted) {
@@ -152,7 +200,7 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
                 final result = await showModalBottomSheet<Tente>(
                   context: context,
                   isScrollControlled: true,
-                  builder: (context) => ControleChecklistSheet(tenteId: tente.id),
+                  builder: (context) => ControleChecklistSheet(tenteId: tente!.id),
                 );
                 if (result != null) {
                   await _refreshTente();
@@ -373,4 +421,3 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
     );
   }
 }
-

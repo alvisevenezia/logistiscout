@@ -50,6 +50,19 @@ class _ControlePageState extends State<ControlePage> {
                 showControle = false;
                 return;
               }
+              if (result['type'] == 'tente') {
+                // Navigation vers la page de détail de la tente
+                if (mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TenteDetailPage(tenteId: result['id']),
+                    ),
+                  );
+                }
+                showControle = false;
+                return;
+              }
               Navigator.pop(context, {
                 'type': result['type'],
                 'id': result['id'],
@@ -108,7 +121,9 @@ class _QRViewExampleState extends State<QRViewExample> {
           if (scanned) return;
           final List<Barcode> barcodes = capture.barcodes;
           if (barcodes.isNotEmpty) {
-            scanned = true;
+            setState(() {
+              scanned = true;
+            });
             final code = barcodes.first.rawValue;
             dynamic result;
             try {
@@ -116,8 +131,6 @@ class _QRViewExampleState extends State<QRViewExample> {
             } catch (_) {
               result = null;
             }
-            //print('QR code parsé :');
-            //print(result);
             if (result is Map && result.containsKey('type') && result.containsKey('id') && result.containsKey('groupeId')) {
               final prefs = await SharedPreferences.getInstance();
               final userGroupeId = prefs.getString('groupeId') ?? '';
@@ -127,7 +140,26 @@ class _QRViewExampleState extends State<QRViewExample> {
                     const SnackBar(content: Text("Vous n'avez pas le droit de modifier cette tente (groupe différent).")),
                   );
                 }
-                scanned = false;
+                setState(() {
+                  scanned = false;
+                });
+                return;
+              }
+              if (result['type'] == 'tente') {
+                if (mounted) {
+                  setState(() {
+                    scanned = true;
+                  });
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TenteDetailPage(tenteId: result['id']),
+                    ),
+                  );
+                  setState(() {
+                    scanned = false;
+                  });
+                }
                 return;
               }
               Navigator.pop(context, {
