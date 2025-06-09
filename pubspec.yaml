@@ -21,9 +21,9 @@ version: 1.0.0+1
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo_transparent.png"
+  image_path: "assets/images/logo.png"
   adaptive_icon_background: "#FFFFFF"  # facultatif
-  adaptive_icon_foreground: "assets/images/logo_transparent.png"
+  adaptive_icon_foreground: "assets/images/logo.png"
 
 environment:
   sdk: ^3.8.1
