@@ -30,6 +30,7 @@ class _ControleEditPageState extends State<ControleEditPage> {
   void dispose() {
     remarquesController.dispose();
     sardinesController.dispose();
+
     super.dispose();
   }
 
