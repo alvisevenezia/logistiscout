@@ -577,11 +577,7 @@ class _TentesPageState extends State<TentesPage> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (tente.tapisSolIntegre)
-                                  const Tooltip(
-                                    message: 'Tapis de sol intégrée',
-                                    child: Icon(Icons.check_circle, color: Colors.green, size: 22),
-                                  ),
+
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.blue),
                                   tooltip: 'Modifier',

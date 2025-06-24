@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
+import 'package:logistiscout/pages/controle_detail.dart';
+import 'package:logistiscout/pages/controle_edit_page.dart';
+import 'package:logistiscout/pages/controle_saisie_nom_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
@@ -75,6 +78,31 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
     });
   }
 
+  Color _parseColor(String color) {
+    try {
+      return Color(int.parse(color.replaceFirst('#', '0xff')));
+    } catch (e) {
+      return Colors.transparent;
+    }
+  }
+
+  Color _colorForUnite(String unite) {
+    switch (unite) {
+      case 'Farfadet':
+        return Colors.greenAccent;
+      case 'Louveteaux-Jeannettes':
+        return Colors.yellow[700]!;
+      case 'Scout-Guide':
+        return Colors.blue;
+      case 'Pionnier-Caravelle':
+        return Colors.red;
+      case 'Compagnon':
+        return Colors.green.shade900;
+      default:
+        return Colors.black;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -94,14 +122,6 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
         body: const Center(child: Text('Tente introuvable.')),
       );
     }
-    final List<String> types = ['Canadienne', 'Tipi', 'Autre'];
-    final List<String> unitesNoms = [
-      'Farfadet',
-      'Louveteaux-Jeannettes',
-      'Scout-Guide',
-      'Pionnier-Caravelle',
-      'Compagnon',
-    ];
     return Scaffold(
       appBar: AppBar(
         title: Text('Détail - ${tente!.nom}'),
@@ -117,58 +137,107 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            TextFormField(
-              initialValue: tente!.nom,
-              decoration: const InputDecoration(labelText: 'Nom'),
-              onChanged: (val) => setState(() => tente = tente!.copyWith(nom: val)),
+            // Affichage des infos principales
+            Row(
+              children: [
+                const Text('Nom : '),
+                Text(
+                  tente!.nom,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _colorForUnite(tente!.unitePreferee),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Capacité : ${tente!.nbPlaces} places'),
+            const SizedBox(height: 8),
+            Text('État : ${tente!.etat}'),
+            const SizedBox(height: 8),
+            Text('Type : ${tente!.typeTente}'),
+            const SizedBox(height: 8),
+            Text('Tapis de sol intégré : ${tente!.tapisSolIntegre ? 'Oui' : 'Non'}'),
+            const SizedBox(height: 8),
+            // Couleurs
+            if (tente!.couleurs.isNotEmpty)
+              Row(
+                children: [
+                  const Text('Couleurs : '),
+                  ...tente!.couleurs.map((c) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _parseColor(c),
+                          border: Border.all(),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      )),
+                ],
+              ),
+            const SizedBox(height: 8),
+            // Dernier contrôle
+            if (tente!.historiqueControles.isNotEmpty) ...[
+              Text(
+                'Dernière remarque : '
+                '${tente!.remarques.isNotEmpty ? tente!.remarques : 'Aucune'}'
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nombre de sardines (dernier contrôle) : '
+                '${tente!.historiqueControles.last.checklist['Nombre de sardines/piquets'] ?? tente!.historiqueControles.last.checklist['sardines'] ?? 'Non renseigné'}'
+              ),
+              const SizedBox(height: 8),
+              // Alerte si une case n'est pas cochée
+              if (tente!.historiqueControles.last.checklist.values.any((v) => v == false || v == null))
+                Row(
+                  children: const [
+                    Icon(Icons.warning, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Attention : contrôle incomplet', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              const SizedBox(height: 8),
+              // Card vers le dernier contrôle
+              Card(
+                color: Colors.blue.shade50,
+                child: ListTile(
+                  leading: const Icon(Icons.assignment_turned_in),
+                  title: const Text('Voir le dernier contrôle'),
+                  subtitle: Text('Effectué le '
+                    '${tente!.historiqueControles.last.date.day}/'
+                    '${tente!.historiqueControles.last.date.month}/'
+                    '${tente!.historiqueControles.last.date.year}'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ControleDetailPage(
+                          controle: tente!.historiqueControles.last,
+                          tente: tente,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            const Divider(),
+            ListTile(
+              title: const Text('Remarques'),
+              subtitle: TextFormField(
+                initialValue: tente!.remarques,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (val) => setState(() => tente = tente!.copyWith(remarques: val)),
+              ),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: types.contains(tente!.typeTente) ? tente!.typeTente : 'Autre',
-              items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-              onChanged: (val) => setState(() => tente = tente!.copyWith(typeTente: val ?? 'Autre')),
-              decoration: const InputDecoration(labelText: 'Type'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              initialValue: tente!.nbPlaces.toString(),
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Nombre de places'),
-              onChanged: (val) => setState(() => tente = tente!.copyWith(nbPlaces: int.tryParse(val) ?? tente!.nbPlaces)),
-            ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              value: tente!.tapisSolIntegre,
-              onChanged: (val) => setState(() => tente = tente!.copyWith(tapisSolIntegre: val)),
-              title: const Text('Tapis de sol intégré'),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: unitesNoms.contains(tente!.unitePreferee) ? tente!.unitePreferee : null,
-              items: unitesNoms.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-              onChanged: (val) => setState(() => tente = tente!.copyWith(unitePreferee: val ?? '')),
-              decoration: const InputDecoration(labelText: 'Unité préférée'),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: ['Bon', 'À réparer', 'HS', 'Perdue'].contains(tente!.etat) ? tente!.etat : 'Bon',
-              items: ['Bon', 'À réparer', 'HS', 'Perdue']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (val) => setState(() => tente = tente!.copyWith(etat: val ?? 'Bon')),
-              decoration: const InputDecoration(labelText: 'État'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              initialValue: tente!.remarques,
-              decoration: const InputDecoration(labelText: 'Remarques'),
-              maxLines: 2,
-              onChanged: (val) => setState(() => tente = tente!.copyWith(remarques: val)),
-            ),
-            const SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(Icons.save),
-              label: const Text('Enregistrer'),
+              label: const Text('Enregistrer les remarques'),
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 final groupeId = prefs.getString('groupeId') ?? '';
@@ -186,7 +255,7 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
                 });
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Modifications enregistrées !')),
+                    const SnackBar(content: Text('Remarques enregistrées !')),
                   );
                 }
                 await _refreshTente();
@@ -197,14 +266,30 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
               icon: const Icon(Icons.assignment_turned_in),
               label: const Text('Faire un contrôle'),
               onPressed: () async {
-                final result = await showModalBottomSheet<Tente>(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) => ControleChecklistSheet(tenteId: tente!.id),
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ControleSaisieNomPage(
+                      onNomValide: (nomControleur) async {
+                        final result = await Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) => ControleEditPage(tente: tente!, nomControleur: nomControleur),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                        if (result == true) {
+                          await _refreshTente();
+                        }
+                      },
+                    ),
+                  ),
                 );
-                if (result != null) {
-                  await _refreshTente();
-                }
               },
             ),
           ],
@@ -308,6 +393,18 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
       },
     ],
   };
+
+  final Map<String, String> explications = {
+    'Structure et éléments principaux':
+        "Vérifier l'état général de la toile, du sol, des mâts, haubans, cordes et sardines/piquets.",
+    'Fixations et fermetures':
+        "Contrôler les fermetures éclair, œillets, systèmes de serrage et attaches de haubanage.",
+    'Accessoires et rangement':
+        "Présence et état de la housse, du système de pliage et de la fiche d'identification.",
+    'État général':
+        "Propreté, séchage complet et absence d'odeur de moisi.",
+  };
+
   final TextEditingController commentaireController = TextEditingController();
   final TextEditingController sardinesCountController = TextEditingController();
 
@@ -326,6 +423,14 @@ class _ControleChecklistSheetState extends State<ControleChecklistSheet> {
               children: [
                 for (final section in sections.entries) ...[
                   Text(section.key, style: Theme.of(context).textTheme.titleMedium),
+                  if (explications[section.key] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Text(
+                        explications[section.key]!,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   ...section.value.map((item) {
                     if (item['isCount'] == true) {
