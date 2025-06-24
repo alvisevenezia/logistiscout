@@ -36,7 +36,18 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.setString('groupe_nom', response['nom'] ?? '');
     await prefs.setString('userlogin', response['userlogin'] ?? '');
     setState(() { loading = false; });
-    widget.onLogin();
+    // Après connexion, demander le nom de l'utilisateur
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SaisieNomUtilisateurPage(
+            onNomValide: () {
+              Navigator.of(context).pushReplacementNamed('/accueil');
+            },
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -78,3 +89,60 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+class SaisieNomUtilisateurPage extends StatefulWidget {
+  final VoidCallback onNomValide;
+  const SaisieNomUtilisateurPage({super.key, required this.onNomValide});
+
+  @override
+  State<SaisieNomUtilisateurPage> createState() => _SaisieNomUtilisateurPageState();
+}
+
+class _SaisieNomUtilisateurPageState extends State<SaisieNomUtilisateurPage> {
+  final TextEditingController nomController = TextEditingController();
+  bool boutonActif = false;
+
+  @override
+  void initState() {
+    super.initState();
+    nomController.addListener(() {
+      setState(() {
+        boutonActif = nomController.text.trim().isNotEmpty;
+      });
+    });
+  }
+
+  Future<void> _validerNom() async {
+    final nom = nomController.text.trim();
+    if (nom.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nom_utilisateur', nom);
+      widget.onNomValide();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Saisie du nom utilisateur')),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nomController,
+                decoration: const InputDecoration(labelText: 'Nom utilisateur'),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: boutonActif ? _validerNom : null,
+                child: const Text('Valider'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
