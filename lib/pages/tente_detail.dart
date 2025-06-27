@@ -72,8 +72,9 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
     final prefs = await SharedPreferences.getInstance();
     final String groupeId = prefs.getString('groupeId') ?? '';
     final updated = await ApiService.getTente(tente!.id, groupeId: groupeId);
+    final updatedTente = await Tente.fromApiJson(updated); // recharge aussi l'historique des contrôles
     setState(() {
-      tente = Tente.fromJson(updated);
+      tente = updatedTente;
       _updateFromTente();
     });
   }
@@ -158,6 +159,9 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
             const SizedBox(height: 8),
             Text('Tapis de sol intégré : ${tente!.tapisSolIntegre ? 'Oui' : 'Non'}'),
             const SizedBox(height: 8),
+            // Affichage du dernier contrôle
+
+            const SizedBox(height: 16),
             // Couleurs
             if (tente!.couleurs.isNotEmpty)
               Row(
@@ -207,7 +211,9 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
                   subtitle: Text('Effectué le '
                     '${tente!.historiqueControles.last.date.day}/'
                     '${tente!.historiqueControles.last.date.month}/'
-                    '${tente!.historiqueControles.last.date.year}'),
+                    '${tente!.historiqueControles.last.date.year}'
+                    '${tente!.historiqueControles.last.checklist['nom_controleur']?.isNotEmpty == true ? ' par ${tente!.historiqueControles.last.checklist['nom_controleur']}' : ''}'
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -285,6 +291,9 @@ class _TenteDetailPageState extends State<TenteDetailPage> {
                         );
                         if (result == true) {
                           await _refreshTente();
+                          if (mounted) {
+                            Navigator.of(context).pop(); // Revenir à la page précédente (détail tente)
+                          }
                         }
                       },
                     ),
