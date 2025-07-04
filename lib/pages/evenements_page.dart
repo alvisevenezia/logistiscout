@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logistiscout/models/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import 'evenement_detail_page.dart';
 
 class EvenementsPage extends StatefulWidget {
   const EvenementsPage({super.key});
@@ -11,6 +12,15 @@ class EvenementsPage extends StatefulWidget {
 
 class _EvenementsPageState extends State<EvenementsPage> {
   List<Evenement> evenements = [];
+  List<Tente> tentes = [];
+  final Map<int, String> unitesMap = const {
+    1: 'Farfadet',
+    2: 'Louveteau/Jeannette',
+    3: 'Scout/Guide',
+    4: 'Pionnier/Caravelle',
+    5: 'Compagnon',
+    6: 'Groupe',
+  };
   bool isLoading = true;
 
   @override
@@ -24,6 +34,8 @@ class _EvenementsPageState extends State<EvenementsPage> {
     final String groupeId = prefs.getString('groupeId') ?? '';
     final dataApi = await ApiService.getEvenements(groupeId);
     final data = dataApi.map((e) => Evenement.fromJson(e)).toList();
+    final tentesApi = await ApiService.getTentes(groupeId);
+    tentes = tentesApi.map((t) => Tente.fromJson(t)).toList();
     setState(() {
       evenements = data;
       isLoading = false;
@@ -174,7 +186,7 @@ class _EvenementsPageState extends State<EvenementsPage> {
                                   },
                             title: Row(
                               children: [
-                                Text(m.nom),
+                                Expanded(child: Text('${m.nom} (${m.nbPlaces}p)')),
                                 if (tentesIndisponibles.contains(m.id))
                                   const Padding(
                                     padding: EdgeInsets.only(left: 8),
@@ -340,7 +352,7 @@ class _EvenementsPageState extends State<EvenementsPage> {
                             },
                       title: Row(
                         children: [
-                          Text(m.nom),
+                          Expanded(child: Text('${m.nom} (${m.nbPlaces} places)')),
                           if (tentesIndisponibles.contains(m.id))
                             const Padding(
                               padding: EdgeInsets.only(left: 8),
@@ -440,12 +452,23 @@ class _EvenementsPageState extends State<EvenementsPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Début : 	${evt.date.toLocal().toString().split(' ')[0]}'),
-                            Text('Fin : 	${evt.dateFin.toLocal().toString().split(' ')[0]}'),
+                            Text('Début : \t			${evt.date.toLocal().toString().split(' ')[0]}'),
+                            Text('Fin : \t			${evt.dateFin.toLocal().toString().split(' ')[0]}'),
                             Text('Type : ${evt.type}'),
                             Text('Tentes : ${evt.tentesAssociees.join(', ')}'),
                           ],
                         ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => EvenementDetailPage(
+                                evenement: evt,
+                                tentes: tentes,
+                                unitesMap: unitesMap,
+                              ),
+                            ),
+                          );
+                        },
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
