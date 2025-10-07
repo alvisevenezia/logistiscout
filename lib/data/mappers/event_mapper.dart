@@ -19,8 +19,8 @@ class EventMapper {
       date: safeParse(dto.date),
       dateFin: safeParse(dto.dateFin),
       type: dto.type,
-      tentesAssociees: dto.tentesAssociees ?? const [],
-      unites: dto.unites ?? const [],
+      tentesAssociees: dto.tentesAssociees,
+      unites: dto.unites,
       groupeId: dto.groupeId,
     );
   }

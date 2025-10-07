@@ -30,7 +30,6 @@ class TenteRepositoryImpl implements TenteRepository {
 
   @override
   Future<Tente> createTente(Map<String, dynamic> json) async {
-    final createdJson = await api.createTente(json);
     final dto = TenteDto.fromJson(json);
     return mapTenteDtoToDomain(dto);
   }

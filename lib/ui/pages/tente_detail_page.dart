@@ -371,25 +371,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     );
   }
 
-  // Helpers
-  List<String> _parseCouleurs(String raw) =>
-      raw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-
-  List<Color> _stringToColors(String raw) =>
-      _parseCouleurs(raw).map(_parseColor).toList();
-
   static String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-
-  static Color _parseColor(String s) {
-    try {
-      if (s.startsWith('#')) {
-        return Color(int.parse(s.substring(1), radix: 16) + 0xFF000000);
-      }
-    } catch (_) {}
-    return Colors.grey.shade400;
-  }
-
 
 }
 
@@ -674,31 +657,6 @@ class _SectionCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ColorChipsPreview extends StatelessWidget {
-  final List<Color> colors;
-  const _ColorChipsPreview({required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    if (colors.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: colors
-          .map((c) => Container(
-        width: 22,
-        height: 12,
-        decoration: BoxDecoration(
-          color: c,
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(color: Colors.white, width: 1),
-        ),
-      ))
-          .toList(),
     );
   }
 }

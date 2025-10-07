@@ -24,8 +24,6 @@ class ApiService {
 
   final String baseUrl;
   final http.Client _client;
-
-
   // Authentification groupe
   Future<Map<String, dynamic>?> loginGroupe(String userlogin, String mdp) async {
     developer.log('POST /auth/login {userlogin: $userlogin, mdp: ***}', name: 'ApiService');
