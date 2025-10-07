@@ -1,26 +1,38 @@
-#!/bin/sh
+#!/bin/bash
 
-# Fail this script if any subcommand fails.
+# 🚨 Stop on first error
 set -e
 
-# The default execution directory of this script is the ci_scripts directory.
-cd $CI_PRIMARY_REPOSITORY_PATH # change working directory to the root of your cloned repo.
+# 🏠 Always start from the repo root (important for Xcode Cloud)
+cd "$CI_PRIMARY_REPOSITORY_PATH"
 
-# Install Flutter using git.
-git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
+echo "📦 Installing Flutter SDK..."
+# Clone Flutter stable channel
+git clone https://github.com/flutter/flutter.git --depth 1 -b stable "$HOME/flutter"
 export PATH="$PATH:$HOME/flutter/bin"
 
-# Install Flutter artifacts for iOS (--ios), or macOS (--macos) platforms.
+echo "⚙️ Running Flutter doctor..."
+flutter doctor -v
+
+echo "📲 Pre-caching Flutter iOS artifacts..."
 flutter precache --ios
 
-# Install Flutter dependencies.
+echo "📚 Getting Flutter packages..."
 flutter pub get
 
-# Install CocoaPods using Homebrew.
-HOMEBREW_NO_AUTO_UPDATE=1 # disable homebrew's automatic updates.
-brew install cocoapods
+echo "🍺 Installing CocoaPods..."
+HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods || true
 
-# Install CocoaPods dependencies.
-cd ios && pod install # run `pod install` in the `ios` directory.
+echo "📦 Running pod install..."
+cd ios
 
+# ✅ Ensure minimum iOS platform (fixes “no platform specified” warning)
+if ! grep -q "platform :ios" Podfile 2>/dev/null; then
+  echo "platform :ios, '15.0'" | cat - Podfile > temp && mv temp Podfile
+fi
+
+pod repo update
+pod install
+
+echo "✅ iOS dependencies installed successfully!"
 exit 0
