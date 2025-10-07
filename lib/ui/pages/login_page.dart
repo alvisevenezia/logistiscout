@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/ui/controllers/login_controller.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/pages/controle_saisie_nom_page.dart';
+import 'package:logistiscout/ui/pages/register_page.dart';
+
+
+class LoginPage extends ConsumerStatefulWidget {
+  final VoidCallback? onLogin; // ✅ Optional callback for after successful login
+
+  const LoginPage({super.key, this.onLogin});
+
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _loginController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _loginController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loginState = ref.watch(loginControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Connexion')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              const SizedBox(height: 40),
+              Text(
+                'Bienvenue 👋',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Connectez-vous pour accéder à votre espace LogistiScout',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 32),
+
+              // Identifiant
+              TextFormField(
+                controller: _loginController,
+                decoration: const InputDecoration(
+                  labelText: 'Identifiant',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Champ obligatoire' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Mot de passe
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
+                  ),
+                ),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Champ obligatoire' : null,
+              ),
+              const SizedBox(height: 24),
+
+              // Connexion button
+              ElevatedButton.icon(
+                icon: const Icon(Icons.login),
+                label: loginState.isLoading
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Se connecter'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                onPressed: loginState.isLoading
+                    ? null
+                    : () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    final success = await ref
+                        .read(loginControllerProvider.notifier)
+                        .login(
+                      _loginController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
+                    if (success && mounted) {
+                      // 🔹 Vérifie si le nom du contrôleur est déjà enregistré
+                      final savedName = await LocalStorageService.instance.getControleurName();
+
+                      if (savedName == null || savedName.isEmpty) {
+                        // 🟢 Si pas encore défini, on affiche la page pour le saisir
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => ControleSaisieNomPage(
+                              onNomValide: (_) async {
+                              },
+                            ),
+                          ),
+                        );
+                      }
+
+                      // 🔹 Continue le flux normal
+                      widget.onLogin?.call();
+                    }
+
+
+                  }
+                },
+              ),
+
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterPage()),
+                  );
+                },
+                child: const Text("Créer un compte"),
+              ),
+              // Error message
+              if (loginState.hasError)
+                Text(
+                  loginState.error
+                      ?.toString()
+                      .replaceFirst('Exception: ', '') ??
+                      'Erreur inconnue',
+                  style: const TextStyle(color: Colors.red),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

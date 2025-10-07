@@ -45,6 +45,7 @@ dependencies:
   http: ^1.4.0
   flutter_colorpicker: ^1.0.3
   url_launcher: ^6.1.10
+  flutter_riverpod: ^2.4.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
