@@ -36,7 +36,12 @@ end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
-ENV['FLUTTER_FRAMEWORK_DIR'] = File.join(flutter_root, 'bin', 'cache', 'artifacts', 'engine', 'ios-release')
+# Force CocoaPods to use the release engine artifacts (for device builds)
+flutter_application_path = File.expand_path('..', __dir__)
+engine_dir = File.join(flutter_root, 'bin', 'cache', 'artifacts', 'engine')
+
+ENV['FLUTTER_FRAMEWORK_DIR'] = File.join(engine_dir, 'ios-release')
+ENV['FLUTTER_BUILD_MODE'] = 'release'
 
 install! 'cocoapods', :deterministic_uuids => false
 
