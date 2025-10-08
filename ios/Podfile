@@ -11,7 +11,8 @@ project 'Runner', {
 # ✅ Corrected version of flutter_root for Xcode Cloud
 def flutter_root
   # Use absolute path based on current working directory (handles Xcode Cloud)
-  generated_xcode_build_settings_path = File.expand_path(File.join('ios', 'Flutter', 'Generated.xcconfig'), Dir.pwd)
+  generated_xcode_build_settings_path = File.expand_path(File.join('Flutter', 'Generated.xcconfig'), __dir__)
+
 
   unless File.exist?(generated_xcode_build_settings_path)
     # fallback path for local Flutter builds
@@ -35,6 +36,7 @@ end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
+install! 'cocoapods', :deterministic_uuids => false
 
 target 'Runner' do
   use_frameworks!
@@ -55,3 +57,5 @@ target 'Runner' do
     end
   end
 end
+
+workspace 'Runner.xcworkspace'

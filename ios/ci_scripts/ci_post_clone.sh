@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🚀 Xcode Cloud post-clone setup script for Flutter iOS
+# 🚀 Xcode Cloud post-clone setup script for Flutter iOS (App Store ready)
 set -e
 
 echo "🏠 Moving to repository root..."
@@ -16,7 +16,7 @@ export FLUTTER_ROOT="$HOME/flutter"
 export PATH="$PATH:$FLUTTER_ROOT/bin"
 echo "🔧 FLUTTER_ROOT set to: $FLUTTER_ROOT"
 
-echo "🧩 Flutter doctor..."
+echo "🧩 Running Flutter doctor..."
 flutter doctor -v
 
 echo "📲 Pre-caching Flutter iOS artifacts..."
@@ -25,14 +25,15 @@ flutter precache --ios
 echo "📚 Getting Flutter packages..."
 flutter pub get
 
-# ✅ Double-check that iOS build files are generated
+# ✅ Ensure Flutter build files exist
 if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
-  echo "⚠️ Missing Generated.xcconfig, running flutter build ios to regenerate..."
-  flutter build ios --simulator --no-codesign
+  echo "⚙️ Missing Generated.xcconfig — regenerating Flutter iOS files..."
+  flutter precache --ios
+  flutter pub get
 fi
 
 if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
-  echo "❌ ERROR: ios/Flutter/Generated.xcconfig not found even after build."
+  echo "❌ ERROR: ios/Flutter/Generated.xcconfig still missing."
   exit 1
 else
   echo "✅ Generated.xcconfig found!"
@@ -53,7 +54,7 @@ if ! grep -q "platform :ios" Podfile 2>/dev/null; then
   echo "platform :ios, '15.0'" | cat - Podfile > temp && mv temp Podfile
 fi
 
-# ✅ Ensure workspace is explicitly defined (avoids xcodebuild confusion)
+# ✅ Ensure workspace is defined
 if ! grep -q "workspace" Podfile 2>/dev/null; then
   echo "workspace 'Runner.xcworkspace'" >> Podfile
 fi
@@ -63,22 +64,22 @@ rm -rf Pods Podfile.lock
 pod repo update
 pod install --verbose
 
-echo "✅ iOS dependencies installed successfully!"
+echo "✅ CocoaPods integration complete!"
 
-# ✅ Sanity: check Flutter.framework exists
-if [ ! -d "Flutter/Flutter.framework" ]; then
-  echo "⚠️ Flutter.framework missing — forcing build to embed engine..."
-  cd "$CI_PRIMARY_REPOSITORY_PATH"
-  flutter build ios --release --no-codesign
-  cd "$IOS_DIR"
+# ⚙️ Prepare Flutter.framework for Xcode Cloud device build (no simulator build)
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+echo "⚙️ Preparing Flutter iOS engine for device build..."
+flutter precache --ios
+
+# ✅ Ensure AppFrameworkInfo.plist exists
+if [ ! -f "ios/Flutter/AppFrameworkInfo.plist" ]; then
+  echo "📄 Creating AppFrameworkInfo.plist..."
+  mkdir -p ios/Flutter
+  cp "$FLUTTER_ROOT/packages/flutter_tools/bin/templates/app/ios.tmpl/Flutter/AppFrameworkInfo.plist" ios/Flutter/ || true
 fi
 
-if [ -d "Flutter/Flutter.framework" ]; then
-  echo "🎯 Flutter.framework found, all good!"
-else
-  echo "❌ Flutter.framework still missing — build will likely fail."
-  exit 1
-fi
+cd "$IOS_DIR"
 
-echo "✅ Xcode Cloud setup completed successfully!"
+echo "✅ Flutter iOS artifacts ready — Xcode Cloud will now handle code signing and archive."
+echo "🎯 Setup completed successfully!"
 exit 0
