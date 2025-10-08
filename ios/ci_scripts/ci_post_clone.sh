@@ -1,5 +1,5 @@
 #!/bin/bash
-# Xcode Cloud post-clone setup script (for ios/ci_scripts/)
+# 🚀 Xcode Cloud post-clone setup script for Flutter iOS
 set -e
 
 echo "🏠 Moving to repository root..."
@@ -11,27 +11,28 @@ if [ ! -d "$HOME/flutter" ]; then
 else
   echo "✅ Flutter SDK already cached"
 fi
-export PATH="$PATH:$HOME/flutter/bin"
+
+export FLUTTER_ROOT="$HOME/flutter"
+export PATH="$PATH:$FLUTTER_ROOT/bin"
+echo "🔧 FLUTTER_ROOT set to: $FLUTTER_ROOT"
 
 echo "🧩 Flutter doctor..."
 flutter doctor -v
 
-echo "📲 Pre-caching iOS artifacts..."
+echo "📲 Pre-caching Flutter iOS artifacts..."
 flutter precache --ios
 
-echo "📚 Running flutter pub get..."
-# ✅ Ensure this runs from project root
+echo "📚 Getting Flutter packages..."
 flutter pub get
 
-# ✅ Verify Generated.xcconfig exists before proceeding
+# ✅ Double-check that iOS build files are generated
 if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
-  echo "⚠️ Generated.xcconfig not found yet, retrying..."
-  sleep 5
-  flutter pub get
+  echo "⚠️ Missing Generated.xcconfig, running flutter build ios to regenerate..."
+  flutter build ios --simulator --no-codesign
 fi
 
 if [ ! -f "ios/Flutter/Generated.xcconfig" ]; then
-  echo "❌ ERROR: Generated.xcconfig still missing after flutter pub get"
+  echo "❌ ERROR: ios/Flutter/Generated.xcconfig not found even after build."
   exit 1
 else
   echo "✅ Generated.xcconfig found!"
@@ -40,36 +41,44 @@ fi
 echo "🍺 Installing CocoaPods..."
 HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods || true
 
-echo "📦 Running pod install..."
-
-# ✅ Always run pod install from the real iOS directory
 IOS_DIR="$CI_PRIMARY_REPOSITORY_PATH/ios"
 cd "$IOS_DIR"
 
-# Sanity check: print where we are
 echo "🧭 Current directory: $(pwd)"
-echo "📂 Contents:"
-ls -la Flutter
+echo "📂 Listing ios/Flutter directory:"
+ls -la Flutter || echo "⚠️ No Flutter dir found yet"
 
-# Ensure platform line exists
+# ✅ Ensure the platform line is set
 if ! grep -q "platform :ios" Podfile 2>/dev/null; then
   echo "platform :ios, '15.0'" | cat - Podfile > temp && mv temp Podfile
 fi
 
-# Clean Pods (optional but safer)
-rm -rf Pods Podfile.lock
+# ✅ Ensure workspace is explicitly defined (avoids xcodebuild confusion)
+if ! grep -q "workspace" Podfile 2>/dev/null; then
+  echo "workspace 'Runner.xcworkspace'" >> Podfile
+fi
 
-# Force re-generation of xcconfig if needed
-if [ ! -f "Flutter/Generated.xcconfig" ]; then
-  echo "⚠️ Generated.xcconfig missing in ios folder — forcing re-generation..."
+echo "🚀 Cleaning and re-installing Pods..."
+rm -rf Pods Podfile.lock
+pod repo update
+pod install --verbose
+
+echo "✅ iOS dependencies installed successfully!"
+
+# ✅ Sanity: check Flutter.framework exists
+if [ ! -d "Flutter/Flutter.framework" ]; then
+  echo "⚠️ Flutter.framework missing — forcing build to embed engine..."
   cd "$CI_PRIMARY_REPOSITORY_PATH"
-  flutter pub get
+  flutter build ios --release --no-codesign
   cd "$IOS_DIR"
 fi
 
-echo "🚀 Running pod install..."
-pod repo update
-pod install
+if [ -d "Flutter/Flutter.framework" ]; then
+  echo "🎯 Flutter.framework found, all good!"
+else
+  echo "❌ Flutter.framework still missing — build will likely fail."
+  exit 1
+fi
 
-echo "✅ iOS setup complete!"
-
+echo "✅ Xcode Cloud setup completed successfully!"
+exit 0
