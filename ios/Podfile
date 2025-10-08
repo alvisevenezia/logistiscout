@@ -8,18 +8,30 @@ project 'Runner', {
   'Release' => :release,
 }
 
+# ✅ Corrected version of flutter_root for Xcode Cloud
 def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __dir__)
+  # Use absolute path based on current working directory (handles Xcode Cloud)
+  generated_xcode_build_settings_path = File.expand_path(File.join('ios', 'Flutter', 'Generated.xcconfig'), Dir.pwd)
+
   unless File.exist?(generated_xcode_build_settings_path)
-    raise "#{generated_xcode_build_settings_path} must exist. Run 'flutter pub get' first."
+    # fallback path for local Flutter builds
+    alt_path = File.expand_path(File.join('Flutter', 'Generated.xcconfig'), Dir.pwd)
+    if File.exist?(alt_path)
+      generated_xcode_build_settings_path = alt_path
+    else
+      raise "❌ Could not find Generated.xcconfig at expected paths. Run 'flutter pub get' first."
+    end
   end
+
   File.foreach(generated_xcode_build_settings_path) do |line|
     matches = line.match(/FLUTTER_ROOT=(.*)/)
     return matches[1].strip if matches
   end
+
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}"
 end
 
+# Require Flutter's podhelper.rb
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
@@ -33,8 +45,11 @@ target 'Runner' do
   post_install do |installer|
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
+        # Automatic signing setup
         config.build_settings['CODE_SIGN_STYLE'] = 'Automatic'
         config.build_settings['DEVELOPMENT_TEAM'] = 'U2Y98D8Y2H'
+
+        # Minimum deployment target
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       end
     end
