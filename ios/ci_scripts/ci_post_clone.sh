@@ -41,19 +41,35 @@ echo "🍺 Installing CocoaPods..."
 HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods || true
 
 echo "📦 Running pod install..."
-# ✅ go to ios folder (not ci_scripts)
-cd ios
 
-# Ensure minimum iOS platform is defined
+# ✅ Always run pod install from the real iOS directory
+IOS_DIR="$CI_PRIMARY_REPOSITORY_PATH/ios"
+cd "$IOS_DIR"
+
+# Sanity check: print where we are
+echo "🧭 Current directory: $(pwd)"
+echo "📂 Contents:"
+ls -la Flutter
+
+# Ensure platform line exists
 if ! grep -q "platform :ios" Podfile 2>/dev/null; then
   echo "platform :ios, '15.0'" | cat - Podfile > temp && mv temp Podfile
 fi
 
-# Clean any old pods
+# Clean Pods (optional but safer)
 rm -rf Pods Podfile.lock
 
+# Force re-generation of xcconfig if needed
+if [ ! -f "Flutter/Generated.xcconfig" ]; then
+  echo "⚠️ Generated.xcconfig missing in ios folder — forcing re-generation..."
+  cd "$CI_PRIMARY_REPOSITORY_PATH"
+  flutter pub get
+  cd "$IOS_DIR"
+fi
+
+echo "🚀 Running pod install..."
 pod repo update
 pod install
 
 echo "✅ iOS setup complete!"
-exit 0
+
