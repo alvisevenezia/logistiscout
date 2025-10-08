@@ -36,7 +36,10 @@ end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
+ENV['FLUTTER_FRAMEWORK_DIR'] = File.join(flutter_root, 'bin', 'cache', 'artifacts', 'engine', 'ios-release')
+
 install! 'cocoapods', :deterministic_uuids => false
+
 
 target 'Runner' do
   use_frameworks!

@@ -83,3 +83,20 @@ cd "$IOS_DIR"
 echo "✅ Flutter iOS artifacts ready — Xcode Cloud will now handle code signing and archive."
 echo "🎯 Setup completed successfully!"
 exit 0
+
+echo "⚙️ Prebuilding Flutter iOS engine frameworks..."
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+
+# Supprime les anciens artefacts s’ils existent
+rm -rf ios/Flutter/Flutter.xcframework ios/Flutter/Flutter.framework
+
+# Force Flutter à générer les frameworks arm64 pour iOS device
+flutter build ios --release --no-codesign
+
+# Vérifie que le framework existe
+if [ -d "ios/Flutter/Flutter.xcframework" ] || [ -d "ios/Flutter/Flutter.framework" ]; then
+  echo "✅ Flutter.framework successfully generated."
+else
+  echo "❌ Flutter.framework missing after build."
+  exit 1
+fi
