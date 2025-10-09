@@ -40,7 +40,6 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   path: ^1.9.1
-  mobile_scanner: ^7.0.0
   shared_preferences: ^2.1.0
   http: ^1.4.0
   flutter_colorpicker: ^1.0.3
