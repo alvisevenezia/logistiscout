@@ -21,6 +21,17 @@ class Event {
 
   bool isUpcoming(DateTime now) => date.isAfter(now);
 
+  List<DateTime> get dateRange {
+    final List<DateTime> out = [];
+    var d = DateTime(date.year, date.month, date.day);
+    final end = DateTime(dateFin.year, dateFin.month, dateFin.day);
+    while (!d.isAfter(end)) {
+      out.add(d);
+      d = d.add(const Duration(days: 1));
+    }
+    return out;
+  }
+
   Event copyWith({
     int? id,
     String? nom,

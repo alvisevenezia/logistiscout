@@ -87,19 +87,6 @@ class ContactPage extends StatelessWidget {
               ),
             ),
 
-            // Téléphone
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.phone),
-                title: const Text('Téléphone'),
-                subtitle: const Text('06 27 09 40 97'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.open_in_new),
-                  onPressed: () => _launch('tel:+33627094097'),
-                ),
-              ),
-            ),
-
             // Groupe SGDF
             Card(
               child: ListTile(

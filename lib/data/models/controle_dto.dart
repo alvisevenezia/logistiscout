@@ -1,4 +1,4 @@
-// lib/data/models/controle_dto.dart
+// lib/data/modals/controle_dto.dart
 class ControleDto {
   final int? id;
   final int tenteId;

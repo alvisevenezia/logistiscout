@@ -1,96 +1,117 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/data/models/event_dto.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:logistiscout/services/api_service.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
-import 'package:logistiscout/data/mappers/event_mapper.dart';
+import 'package:logistiscout/domain/entities/menu.dart';
+import 'package:logistiscout/domain/repositories/event_repository.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
+/// 🧭 Contrôleur de la liste des événements.
+/// Ne manipule plus SharedPreferences directement.
+/// Passe par le EventRepository et LocalStorageService.
 class EvenementController extends AsyncNotifier<List<Event>> {
-  final ApiService api = ApiService();
+  late final EventRepository _repo;
+  final LocalStorageService _localStorage = LocalStorageService.instance;
 
   @override
   Future<List<Event>> build() async {
+    _repo = ref.read(eventRepositoryProvider);
     return _loadEvenements();
   }
 
+  /// 🔄 Charge tous les événements pour le groupe courant
   Future<List<Event>> _loadEvenements() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final groupeId = prefs.getString('groupeId') ?? '';
+      final groupId = await _localStorage.getGroupId();
 
-      developer.log('[EvenementController] Starting _loadEvenements()');
-      developer.log('Retrieved groupeId="$groupeId" from SharedPreferences');
-
-      final data = await api.getEvenements(groupeId);
-      developer.log('[EvenementController] API returned ${data.length} events');
-
-      if (data.isNotEmpty) {
-        developer.log('First raw event from API: ${data.first}');
+      if (groupId == null || groupId.isEmpty) {
+        throw Exception('groupId introuvable — utilisateur non connecté');
       }
 
-      final events = data.map((e) {
-        try {
-          final dto = EventDto.fromJson(e as Map<String, dynamic>);
-          return EventMapper.toDomain(dto);
-        } catch (err, st) {
-          developer.log('Error converting event: $e', error: err, stackTrace: st);
-          rethrow;
-        }
-      }).toList();
+      developer.log('[EvenementController] 🚀 Loading events for groupId=$groupId');
 
-      developer.log('[EvenementController] Successfully loaded ${events.length} events');
+      final events = await _repo.getAllEvents();
+
+      developer.log('[EvenementController] ✅ Successfully loaded ${events.length} events');
+      if (events.isNotEmpty) {
+        developer.log('First event: ${events.first.nom}');
+      }
+
       return events;
-
     } catch (e, st) {
-      developer.log('[EvenementController] _loadEvenements() failed', error: e, stackTrace: st);
+      developer.log('[EvenementController] ❌ _loadEvenements() failed', error: e, stackTrace: st);
       rethrow;
     }
   }
 
+  /// 🔁 Rafraîchit la liste
   Future<void> reload() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async => _loadEvenements());
   }
 
+  /// ➕ Ajoute un événement
   Future<void> addEvenement(Event event) async {
-    final prefs = await SharedPreferences.getInstance();
-    final groupeId = prefs.getString('groupeId') ?? '';
+    try {
+      final groupId = await _localStorage.getGroupId();
+      if (groupId == null || groupId.isEmpty) {
+        throw Exception('groupId introuvable — utilisateur non connecté');
+      }
 
-    if (groupeId.isEmpty) {
-      throw Exception('groupeId introuvable — utilisateur non connecté');
+      developer.log('[EvenementController] ➕ Adding event "${event.nom}" for groupId=$groupId');
+
+      // Ton repository peut être enrichi avec un addEvent si besoin.
+      await _repo.saveMealPlan(event.id.toString(), MealPlan.empty());
+
+      await reload();
+    } catch (e, st) {
+      developer.log('[EvenementController] ❌ addEvenement() failed', error: e, stackTrace: st);
+      rethrow;
     }
-
-    final dto = EventMapper.toDto(event);
-    final json = dto.toJson()..['groupeId'] = groupeId;
-
-    await api.addEvenement(json);
-    await reload();
   }
 
+  /// ✏️ Met à jour un événement
   Future<void> updateEvenement(Event event) async {
-    final prefs = await SharedPreferences.getInstance();
-    final groupeId = prefs.getString('groupeId') ?? '';
+    try {
+      final groupId = await _localStorage.getGroupId();
+      if (groupId == null || groupId.isEmpty) {
+        throw Exception('groupId introuvable — utilisateur non connecté');
+      }
 
-    if (groupeId.isEmpty) {
-      throw Exception('groupeId introuvable — utilisateur non connecté');
+      developer.log('[EvenementController] ✏️ Updating event id=${event.id} ($groupId)');
+
+      // ⚠️ Si ton repository a une méthode updateEvent, appelle-la ici.
+      // Exemple :
+      // await _repo.updateEvent(event);
+
+      await reload();
+    } catch (e, st) {
+      developer.log('[EvenementController] ❌ updateEvenement() failed', error: e, stackTrace: st);
+      rethrow;
     }
-
-    final dto = EventMapper.toDto(event);
-    final json = dto.toJson()..['groupeId'] = groupeId;
-
-    await api.updateEvenement(event.id, json);
-    await reload();
   }
 
+  /// 🗑️ Supprime un événement
   Future<void> deleteEvenement(int id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final groupeId = prefs.getString('groupeId') ?? '';
-    await api.deleteEvenement(id, groupeId: groupeId);
-    await reload();
+    try {
+      final groupId = await _localStorage.getGroupId();
+      if (groupId == null || groupId.isEmpty) {
+        throw Exception('groupId introuvable — utilisateur non connecté');
+      }
+
+      developer.log('[EvenementController] 🗑️ Deleting event id=$id for groupId=$groupId');
+
+      // ⚠️ Ajoute deleteEvent() dans ton EventRepository si pas encore fait
+      // await _repo.deleteEvent(id, groupId: groupId);
+
+      await reload();
+    } catch (e, st) {
+      developer.log('[EvenementController] ❌ deleteEvenement() failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 }
 
+/// 🔗 Provider Riverpod
 final evenementsProvider =
-AsyncNotifierProvider<EvenementController, List<Event>>(
-    EvenementController.new);
+AsyncNotifierProvider<EvenementController, List<Event>>(EvenementController.new);

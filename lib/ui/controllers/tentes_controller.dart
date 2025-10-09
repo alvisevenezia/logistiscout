@@ -1,37 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/data/mappers/tente_mapper.dart';
 import 'package:logistiscout/data/models/tente_dto.dart';
+import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../data/mappers/tente_mapper.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
+import 'dart:developer' as developer;
 
 class TentesController extends AsyncNotifier<List<Tente>> {
-  final ApiService api = ApiService();
+  late final TenteRepository _repo;
 
   @override
   Future<List<Tente>> build() async {
+    _repo = TenteRepositoryImpl(ApiService());
     return _loadTentes();
   }
 
-  Future<String> _requireGroupeId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final groupeId = prefs.getString('groupeId');
-    if (groupeId == null || groupeId.isEmpty) {
-      throw Exception("Aucun groupe n’est sélectionné. Impossible de continuer.");
-    }
-    return groupeId;
-  }
-
   Future<List<Tente>> _loadTentes() async {
-    final groupeId = await _requireGroupeId();
+    try {
+      developer.log('[TentesController] Loading tents...');
+      final groupId = await LocalStorageService.instance.getGroupId();
+      if (groupId == null) {
+        throw Exception('Aucun groupe sélectionné.');
+      }
 
-    final data = await api.getTentes(groupeId);
+      final data = await _repo.getAllTentes();
+      developer.log('[TentesController] Loaded ${data.length} tents');
 
-    final dtos = data.map((e) => TenteDto.fromJson(e)).toList();
-    final tentes = dtos.map(mapTenteDtoToDomain).toList()
-      ..sort((a, b) => a.nom.compareTo(b.nom));
+      data.sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
 
-    return tentes;
+      return data;
+    } catch (e, st) {
+      developer.log('[TentesController] _loadTentes() failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<void> reload() async {
@@ -40,27 +43,41 @@ class TentesController extends AsyncNotifier<List<Tente>> {
   }
 
   Future<void> deleteTente(int id) async {
-    final groupeId = await _requireGroupeId();
-    await api.deleteTente(id, groupeId: groupeId);
-    await reload();
+    try {
+      final groupId = await LocalStorageService.instance.getGroupId();
+      if (groupId == null) throw Exception('Groupe introuvable.');
+      await _repo.deleteTente(id, groupId);
+      await reload();
+    } catch (e, st) {
+      developer.log('[TentesController] deleteTente() failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<void> createTente(Tente tente) async {
-    final groupeId = await _requireGroupeId();
-    final dto = mapTenteDomainToDto(tente);
-    final json = dto.toJson()..['groupeId'] = groupeId;
+    try {
+      final groupId = await LocalStorageService.instance.getGroupId();
+      if (groupId == null) throw Exception('Groupe introuvable.');
 
-    await api.createTente(json);
-    await reload();
+      await _repo.createTente(groupId, tente);
+      await reload();
+    } catch (e, st) {
+      developer.log('[TentesController] createTente() failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<void> updateTente(Tente tente) async {
-    final groupeId = await _requireGroupeId();
-    final dto = mapTenteDomainToDto(tente);
-    final json = dto.toJson()..['groupeId'] = groupeId;
+    try {
+      final groupId = await LocalStorageService.instance.getGroupId();
+      if (groupId == null) throw Exception('Groupe introuvable.');
 
-    await api.updateTente(tente.id, json);
-    await reload();
+      await _repo.updateTente(groupId, tente);
+      await reload();
+    } catch (e, st) {
+      developer.log('[TentesController] updateTente() failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 }
 

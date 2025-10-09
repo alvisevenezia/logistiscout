@@ -1,4 +1,4 @@
-// data/models/tente_dto.dart
+// data/modals/tente_dto.dart
 class TenteDto {
   final int id;
   final String nom;

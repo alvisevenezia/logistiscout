@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
+import 'package:logistiscout/ui/pages/evenement_detail_page.dart';
 import '../controllers/tentes_controller.dart';
 
 class EvenementsPage extends ConsumerStatefulWidget {
@@ -160,14 +161,20 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                               await _showEventDialog(context, ctrl, event: evt);
                             } else if (value == 'delete') {
                               await ctrl.deleteEvenement(evt.id);
+                            } else if (value == 'menus') {
+                              _openEventDetail(context, evt, openMenus: true); // ✅
                             }
                           },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(value: 'edit', child: Text('Modifier')),
-                            const PopupMenuItem(value: 'delete', child: Text('Supprimer')),
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                            PopupMenuItem(value: 'delete', child: Text('Supprimer')),
+                            PopupMenuDivider(),
+                            PopupMenuItem(value: 'menus', child: Text('Ouvrir Menus')),
                           ],
                         ),
+                        onTap: () => _openEventDetail(context, evt), // ✅ tap simple → détail normal
                       ),
+
                     );
                   },
                 );
@@ -210,6 +217,18 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
       default:
         return 'Unité inconnue';
     }
+  }
+
+  void _openEventDetail(BuildContext context, Event evt, {bool openMenus = false}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EvenementDetailPage(
+          eventId: evt.id.toString(),
+          openMenusDirectly: openMenus,
+        ),
+      ),
+    );
   }
 
 
@@ -393,43 +412,76 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             return const Text('Aucune tente disponible.');
                           }
 
-                          // ✅ Trier les tentes par nom
-                          final sortedTentes = [...tentes]
-                            ..sort((a, b) =>
-                                a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
+                          // 🕒 Récupération des tentes déjà prises pour le créneau
+                          final indispoFuture = ref.watch(evenementsProvider.future).then((events) {
+                            final indispo = <int>{};
+                            for (final evt in events) {
+                              final chevauche = debut.isBefore(evt.dateFin) && fin.isAfter(evt.date);
+                              if (chevauche) {
+                                indispo.addAll(evt.tentesAssociees);
+                              }
+                            }
+                            return indispo;
+                          });
 
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final t in sortedTentes)
-                                FilterChip(
-                                  label: Text(t.nom),
-                                  labelStyle: const TextStyle(fontSize: 13),
-                                  backgroundColor: Colors.grey.shade100,
-                                  selectedColor:
-                                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                  side: BorderSide(
-                                      color: selectedTenteIds.contains(t.id)
-                                          ? Theme.of(context)
+                          return FutureBuilder<Set<int>>(
+                            future: indispoFuture,
+                            builder: (context, snapshot) {
+                              final indispoIds = snapshot.data ?? {};
+
+                              final sortedTentes = [...tentes]
+                                ..sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
+
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final t in sortedTentes)
+                                    FilterChip(
+                                      label: Text(
+                                        t.nom,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: indispoIds.contains(t.id)
+                                              ? Colors.grey
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                      backgroundColor: indispoIds.contains(t.id)
+                                          ? Colors.grey.shade300
+                                          : Colors.grey.shade100,
+                                      disabledColor: Colors.grey.shade200,
+                                      selectedColor: Theme.of(context)
                                           .colorScheme
                                           .primary
-                                          .withOpacity(0.6)
-                                          : Colors.grey.shade400),
-                                  selected: selectedTenteIds.contains(t.id),
-                                  onSelected: (selected) {
-                                    setStateDialog(() {
-                                      if (selected) {
-                                        selectedTenteIds.add(t.id);
-                                      } else {
-                                        selectedTenteIds.remove(t.id);
-                                      }
-                                    });
-                                  },
-                                ),
-                            ],
+                                          .withOpacity(0.2),
+                                      side: BorderSide(
+                                        color: selectedTenteIds.contains(t.id)
+                                            ? Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.6)
+                                            : Colors.grey.shade400,
+                                      ),
+                                      selected: selectedTenteIds.contains(t.id),
+                                      onSelected: indispoIds.contains(t.id)
+                                          ? null // 🚫 Désactivé si la tente est prise
+                                          : (selected) {
+                                        setStateDialog(() {
+                                          if (selected) {
+                                            selectedTenteIds.add(t.id);
+                                          } else {
+                                            selectedTenteIds.remove(t.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              );
+                            },
                           );
                         },
+
                       ),
 
                       const SizedBox(height: 24),

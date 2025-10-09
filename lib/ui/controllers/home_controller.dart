@@ -48,8 +48,8 @@ class HomeController extends StateNotifier<HomeState> {
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final groupId = await storage.getGroupId() ?? '';
-      final evts = await evenementRepo.getEvenements(groupId);
+      final groupId = await storage.getGroupId();
+      final evts = await evenementRepo.getEvenements(groupId!);
       final tts = await tenteRepo.getAllTentes();
       state = state.copyWith(evenements: evts, tentes: tts, isLoading: false);
     } catch (e) {

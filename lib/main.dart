@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/pages/contact_page.dart';
 import 'package:logistiscout/ui/pages/evenement_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
@@ -9,12 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final String? groupeId = prefs.getString('groupeId');
+
+  final groupID = await LocalStorageService.instance.getGroupId();
 
   runApp(
     ProviderScope( // ✅ this is the key fix
-      child: MyApp(isLoggedIn: groupeId != null && groupeId.isNotEmpty),
+      child: MyApp(isLoggedIn: groupID != null && groupID.isNotEmpty),
     ),
   );
 }
