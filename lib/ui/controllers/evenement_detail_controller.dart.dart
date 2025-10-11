@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
+import 'package:logistiscout/domain/entities/ingredient.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
@@ -308,6 +309,50 @@ class EvenementDetailController extends ChangeNotifier {
       developer.log('[EvenementDetailController] ❌ duplicateMenuUC failed', error: e, stackTrace: st);
     }
   }
+
+  /// Calcule les ingrédients totaux pour tout le séjour (tous les repas, toutes les dates)
+  Future<List<IngredientTotal>> computeTotalIngredientsForEvent() async {
+    if (event == null) throw Exception("Aucun événement sélectionné");
+    developer.log('[EvenementDetailController] 🧮 Calcul des ingrédients via getMealPlanUC');
+
+    final aggregated = <String, IngredientTotal>{};
+
+    // 🔹 On parcourt tous les jours du séjour
+    final start = event!.date;
+    final end = event!.dateFin;
+    for (DateTime day = start;
+    !day.isAfter(end);
+    day = day.add(const Duration(days: 1))) {
+      for (final meal in MealType.values) {
+        try {
+          // 🔹 Récupération du plan de repas (comme dans l’onglet Menus)
+          final plan = await getMealPlanUC(event!.id.toString(), day, meal);
+          for (final item in plan.items) {
+            for (final ing in item.forPortions(plan.portions)) {
+              final key = '${ing.name}:${ing.unit}';
+              if (!aggregated.containsKey(key)) {
+                aggregated[key] = ing;
+              } else {
+                final cur = aggregated[key]!;
+                aggregated[key] = IngredientTotal(
+                  name: cur.name,
+                  unit: cur.unit,
+                  quantity: cur.quantity + ing.quantity,
+                );
+              }
+            }
+          }
+        } catch (e) {
+          developer.log('⚠️ Aucun repas pour $day - $meal : $e');
+        }
+      }
+    }
+
+    developer.log(
+        '[EvenementDetailController] ✅ Ingrédients totaux pour tout le séjour : ${aggregated.length}');
+    return aggregated.values.toList();
+  }
+
 }
 
 // === Provider ===

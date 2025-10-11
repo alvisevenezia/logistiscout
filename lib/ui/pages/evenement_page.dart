@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 import '../controllers/tentes_controller.dart';
 
 class EvenementsPage extends ConsumerStatefulWidget {
@@ -183,12 +183,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Ajouter un évènement',
         onPressed: () async {
           await _showEventDialog(context, ref.read(evenementsProvider.notifier));
         },
-        label: const Text('Nouvel événement'),
-        icon: const Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -301,7 +301,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                       Text(
                         isEditing
                             ? 'Modifier l\'événement'
-                            : 'Nouvel événement',
+                            : 'NouNouvel événement',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 16),
