@@ -175,18 +175,29 @@ class EvenementDetailController extends ChangeNotifier {
 
   // === Gestion des portions ===
   Future<void> setPortions(int portions) async {
-    if (currentPlan == null) return;
-    developer.log('[EvenementDetailController] ⚙️ setPortions() to $portions');
+    if (currentPlan == null || event == null) return;
+
+    developer.log('[EvenementDetailController] ⚙️ setPortions() → $portions');
     currentPlan = currentPlan!.copyWith(portions: portions);
     notifyListeners();
 
     try {
-      final start = DateTime.now();
-      await saveMealPlanUC(event!.id.toString(), currentPlan!);
-      final duration = DateTime.now().difference(start).inMilliseconds;
-      developer.log('[EvenementDetailController] ✅ saveMealPlanUC completed (${duration}ms)');
+      for (final item in currentPlan!.items) {
+        if (item.eventMenuId == null) continue; // Sécurité
+
+        await eventRepo.updateEventMenu(
+          item.eventMenuId!,
+          event!.id,
+          int.parse(item.recipe.id),
+          currentPlan!.date,
+          currentPlan!.meal,
+          portions,
+        );
+      }
+
+      developer.log('[EvenementDetailController] ✅ Portions updated backend');
     } catch (e, st) {
-      developer.log('[EvenementDetailController] ❌ saveMealPlanUC failed', error: e, stackTrace: st);
+      developer.log('[EvenementDetailController] ❌ setPortions failed', error: e, stackTrace: st);
     }
   }
 
@@ -217,36 +228,55 @@ class EvenementDetailController extends ChangeNotifier {
   }
 
   /// Ajoute des recettes existantes au plan de repas courant (sans les créer)
-  Future<void> addRecipesToMealPlan(List<MenuItem> items) async {
-    if (currentPlan == null) return;
-    developer.log('[EvenementDetailController] ➕ addRecipesToMealPlan(${items.length})');
+  Future<void> addRecipeToMealPlan(MenuItem item) async {
+    if (event == null || selectedDate == null) return;
 
-    final updated = List<MenuItem>.of(currentPlan!.items)..addAll(items);
-    currentPlan = currentPlan!.copyWith(items: updated);
-    notifyListeners();
+    developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan(${item.recipe.title})');
 
     try {
-      await saveMealPlanUC(event!.id.toString(), currentPlan!);
-      developer.log('[EvenementDetailController] ✅ addRecipesToMealPlan saved');
+      // 🟢 Create the link in event_menus
+      await eventRepo.addEventMenu(
+        eventId: event!.id,
+        menuId: int.parse(item.recipe.id),
+        date: selectedDate!,
+        meal: selectedMeal,
+        portions: currentPlan?.portions ?? 1,
+      );
+
+      developer.log('[EvenementDetailController] ✅ Recipe linked to meal plan');
+
+      // 🔁 Reload the plan to include the new item with eventMenuId
+      await _loadPlan(event!.id.toString());
     } catch (e, st) {
-      developer.log('[EvenementDetailController] ❌ addRecipesToMealPlan failed', error: e, stackTrace: st);
+      developer.log('[EvenementDetailController] ❌ addRecipeToMealPlan failed',
+          error: e, stackTrace: st);
     }
   }
+
 
   Future<void> removeRecipeAt(int index) async {
     if (currentPlan == null) return;
     developer.log('[EvenementDetailController] 🗑️ removeRecipeAt(index=$index)');
-    final updated = List<MenuItem>.of(currentPlan!.items)..removeAt(index);
-    currentPlan = currentPlan!.copyWith(items: updated);
-    notifyListeners();
 
     try {
-      await saveMealPlanUC(event!.id.toString(), currentPlan!);
-      developer.log('[EvenementDetailController] ✅ removeRecipeAt saved');
+      final item = currentPlan!.items[index];
+
+      // 🔥 Supprimer côté backend si on a un event_menu_id
+      if (item.eventMenuId != null) {
+        await eventRepo.deleteEventMenu(item.eventMenuId!);
+        developer.log('[EvenementDetailController] ✅ event_menu supprimé (id=${item.eventMenuId})');
+      }
+
+      // 🧹 Mise à jour locale
+      final updated = List<MenuItem>.of(currentPlan!.items)..removeAt(index);
+      currentPlan = currentPlan!.copyWith(items: updated);
+      notifyListeners();
     } catch (e, st) {
       developer.log('[EvenementDetailController] ❌ removeRecipeAt failed', error: e, stackTrace: st);
+      error = e.toString();
     }
   }
+
 
   Future<void> moveRecipe(int oldIndex, int newIndex) async {
     if (currentPlan == null) return;

@@ -77,52 +77,71 @@ class EventRepositoryImpl implements EventRepository {
 
   // === 📅 Menus planifiés (EventMenus) ===
   @override
-  @override
   Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal) async {
+    // 🔹 Get all event_menu rows for this event
     final all = await api.getEventMenus(int.parse(eventId));
 
+    // 🔹 Filter only those matching the selected date & meal
+    final dateStr = date.toIso8601String().split('T').first;
     final matching = all.where((m) =>
-    m['date'] == date.toIso8601String().split('T').first &&
+    m['date'] == dateStr &&
         m['type_repas'] == meal.name).toList();
 
-    // 🔹 On crée un item pour chaque correspondance
     final items = <MenuItem>[];
 
     for (final m in matching) {
-      final menuData = m['menu'] ?? m; // si l'API imbrique ou non le menu
+      try {
+        final eventMenuId = m['id']; // relation ID
+        final menuId = m['menu_id']; // actual recipe/menu ID
+        if (menuId == null) continue;
 
-      // ⚙️ Récupération sécurisée des ingrédients
-      final rawIngredients = (menuData['ingredients'] ?? []) as List;
-      final ingredients = rawIngredients
-          .map((i) => IngredientTotal(
-        name: i['nom'] ?? 'Ingrédient inconnu',
-        quantity: (i['quantite'] as num?)?.toDouble() ?? 0,
-        unit: i['unite'] ?? '',
-      ))
-          .toList();
+        // 🔹 Get menu (recipe) details from /menus/{id}
+        final menuData = await api.getMenu(menuId);
 
-      // ⚙️ Récupération sécurisée des infos de recette
-      final recipe = Recipe(
-        id: (menuData['id'] ?? m['menu_id'] ?? '0').toString(),
-        title: menuData['nom'] ?? 'Recette inconnue',
-        category: RecipeCategory.plat,
-      );
+        final ingredientsData = (menuData['ingredients'] as List?) ?? [];
+        final ingredients = ingredientsData.map((i) {
+          return IngredientTotal(
+            name: i['nom'] ?? 'Ingrédient inconnu',
+            quantity: (i['quantite'] as num?)?.toDouble() ?? 0,
+            unit: i['unite'] ?? '',
+          );
+        }).toList();
 
-      items.add(MenuItem(recipe: recipe, baseIngredients: ingredients));
+        // 🔹 Map menu → Recipe entity
+        final recipe = Recipe(
+          id: menuData['id'].toString(),
+          title: menuData['nom'] ?? 'Recette inconnue',
+          description: menuData['description'] ?? '',
+          instructions: menuData['instructions'] ?? '',
+          category: RecipeCategory.plat,
+          ingredients: ingredients,
+        );
+
+        // 🔹 Build MenuItem with both IDs
+        items.add(MenuItem(
+          eventMenuId: eventMenuId,
+          menuId: menuId,
+          recipe: recipe,
+          baseIngredients: ingredients,
+        ));
+      } catch (e, st) {
+        developer.log(
+          '[EventRepositoryImpl] ⚠️ Failed to load menu ${m['menu_id']}: $e',
+          stackTrace: st,
+        );
+      }
     }
-
-    // 🔹 Quantité/personnes
-    final portions = matching.isNotEmpty
-        ? (matching.first['quantite_personnes'] ?? 1)
-        : 1;
 
     return MealPlan(
       date: date,
       meal: meal,
-      portions: portions,
+      portions: matching.isNotEmpty
+          ? (matching.first['quantite_personnes'] ?? 1)
+          : 1,
       items: items,
     );
   }
+
 
 
   @override
@@ -162,6 +181,36 @@ class EventRepositoryImpl implements EventRepository {
         await api.addEventMenu(body);
       }
     }
+  }
+
+  @override
+  Future<void> updateEventMenu(
+      int eventMenuId, int eventId, int menuId, DateTime date, MealType meal, int quantite) async {
+    final payload = {
+      'event_id': eventId,
+      'menu_id': menuId,
+      'date': date.toIso8601String().split('T').first,
+      'type_repas': meal.name,
+      'quantite_personnes': quantite,
+    };
+
+    await api.updateEventMenu(eventMenuId, payload);
+  }
+
+  Future<void> addEventMenu({
+    required int eventId,
+    required int menuId,
+    required DateTime date,
+    required MealType meal,
+    required int portions,
+  }) async {
+    await api.addEventMenu({
+      'event_id': eventId,
+      'menu_id': menuId,
+      'date': date.toIso8601String().split('T').first,
+      'type_repas': meal.name,
+      'quantite_personnes': portions,
+    });
   }
 
   @override

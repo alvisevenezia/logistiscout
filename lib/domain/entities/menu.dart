@@ -6,17 +6,65 @@ enum MealType { petitDej, dejeuner, diner }
 
 @immutable
 class MenuItem {
+  /// ID de la ligne dans la table `event_menus` (relation événement ↔ menu)
+  final int? eventMenuId;
+
+  /// ID du menu (recette) référencé dans la table `menus`
+  final int? menuId; // ✅ ID de la table event_menus (backend)
   final Recipe recipe;
-  final List<IngredientTotal> baseIngredients; // pour 1 portion
+  final List<IngredientTotal> baseIngredients;
 
   const MenuItem({
+    this.eventMenuId,
+    this.menuId,
     required this.recipe,
-    this.baseIngredients = const [],
+    required this.baseIngredients,
   });
 
-  List<IngredientTotal> forPortions(int portions) =>
-      baseIngredients.map((i) => i.scale(portions.toDouble())).toList();
+  MenuItem copyWith({
+    int? eventMenuId,
+    int? menuId,
+    Recipe? recipe,
+    List<IngredientTotal>? baseIngredients,
+  }) {
+    return MenuItem(
+      eventMenuId: eventMenuId ?? this.eventMenuId,
+      menuId: menuId ?? this.menuId,
+      recipe: recipe ?? this.recipe,
+      baseIngredients: baseIngredients ?? this.baseIngredients,
+    );
+  }
+
+  @override
+  String toString() =>
+      'MenuItem(eventMenuId: $eventMenuId, menuId: $menuId, recipe: ${recipe.title})';
+
+  factory MenuItem.fromJson(Map<String, dynamic> json) {
+    return MenuItem(
+      eventMenuId: json['id'] as int?, // ✅ correspond à event_menu.id
+      recipe: Recipe.fromJson(json['menu'] ?? {}),
+      menuId: json['menu_id'] as int?, // ✅ correspond à event_menu.menu_id
+      baseIngredients: (json['menu']?['ingredients'] as List?)
+          ?.map((i) => IngredientTotal.fromJson(i))
+          .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': eventMenuId,
+    'menu_id': menuId,
+    'menu': recipe.toJson(),
+    'ingredients': baseIngredients.map((i) => i.toJson()).toList(),
+  };
+
+  List<IngredientTotal> forPortions(int portions) {
+    return baseIngredients
+        .map((i) => i.copyWith(quantity: i.quantity * portions))
+        .toList();
+  }
 }
+
 
 @immutable
 class MealPlan {
@@ -55,23 +103,23 @@ class MealPlan {
     );
   }
 
-  List<IngredientTotal> totals() {
-    final Map<String, IngredientTotal> agg = {};
-    for (final item in items) {
-      for (final ing in item.forPortions(portions)) {
-        final key = '${ing.name}:${ing.unit}';
-        if (!agg.containsKey(key)) {
-          agg[key] = ing;
-        } else {
-          final cur = agg[key]!;
-          agg[key] = IngredientTotal(
-            name: cur.name,
-            unit: cur.unit,
-            quantity: cur.quantity + ing.quantity,
-          );
+    List<IngredientTotal> totals() {
+      final Map<String, IngredientTotal> agg = {};
+      for (final item in items) {
+        for (final ing in item.forPortions(portions)) {
+          final key = '${ing.name}:${ing.unit}';
+          if (!agg.containsKey(key)) {
+            agg[key] = ing;
+          } else {
+            final cur = agg[key]!;
+            agg[key] = IngredientTotal(
+              name: cur.name,
+              unit: cur.unit,
+              quantity: cur.quantity + ing.quantity,
+            );
+          }
         }
       }
+      return agg.values.toList();
     }
-    return agg.values.toList();
-  }
 }

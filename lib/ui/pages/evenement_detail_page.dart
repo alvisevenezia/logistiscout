@@ -308,8 +308,6 @@ class EvenementDetailPage extends ConsumerWidget {
     });
   }
 
-
-
   Future<void> _openRecipeSelector(BuildContext context, WidgetRef ref) async {
     try {
       // 🧠 On récupère le repository de recettes
@@ -340,30 +338,20 @@ class EvenementDetailPage extends ConsumerWidget {
       if (result != null && result.recipes.isNotEmpty) {
         final controller = ref.read(evenementDetailProvider(eventId));
 
-        // Récupère les ingrédients réels pour chaque recette
-        final items = <MenuItem>[];
-        for (final r in result.recipes) {
-          final ingredients = await recipeRepo.getIngredientsForRecipe(r.id);
-          items.add(MenuItem(recipe: r, baseIngredients: ingredients));
+        for (final recipe in result.recipes) {
+          final ingredients = await recipeRepo.getIngredientsForRecipe(
+              recipe.id);
+          final item = MenuItem(
+            recipe: recipe,
+            baseIngredients: ingredients,
+            menuId: int.tryParse(recipe.id),
+          );
+          await controller.addRecipeToMealPlan(item);
         }
 
-        // Ajout au plan courant
-        await controller.addRecipesToMealPlan(items);
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${items.length} recette(s) ajoutée(s) ✅'),
-            action: SnackBarAction(
-              label: 'Annuler',
-              onPressed: () {
-                for (int i = 0; i < items.length; i++) {
-                  controller.removeRecipeAt(
-                    controller.currentPlan!.items.length - 1,
-                  );
-                }
-              },
-            ),
-          ),
+          SnackBar(content: Text(
+              '${result.recipes.length} recette(s) ajoutée(s) ✅')),
         );
       }
     } catch (e, st) {

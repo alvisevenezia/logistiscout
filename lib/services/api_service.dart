@@ -27,6 +27,7 @@ class ApiService {
   }
 
 
+
   /// Get the singleton (creates on first call).
   factory ApiService({String baseUrl = 'http://57.128.224.111:8000', http.Client? client}) {
     developer.log('ApiService instance requested', name: 'ApiService');
@@ -382,27 +383,41 @@ class ApiService {
   }
 
 
-  Future<void> addEventMenu(Map<String, dynamic> eventMenuJson) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/event_menus'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(eventMenuJson),
+  Future<void> addEventMenu(Map<String, dynamic> data) async {
+    final url = '$baseUrl/event_menus';
+    developer.log('🔵 POST $url body=$data', name: 'ApiService');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: await _headers(),
+      body: jsonEncode(data),
     );
-    if (response.statusCode != 201) {
-      throw Exception('Erreur ${response.statusCode} lors de la création du menu planifié');
+
+    developer.log('Response ${response.statusCode}: ${response.body}', name: 'ApiService');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Erreur lors de la création du lien event_menu: ${response.body}');
     }
   }
 
-  Future<void> updateEventMenu(int id, Map<String, dynamic> eventMenuJson) async {
-    final response = await _client.put(
-      Uri.parse('$baseUrl/event_menus/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(eventMenuJson),
+
+  Future<void> updateEventMenu(int eventMenuId, Map<String, dynamic> payload) async {
+    final url = '$baseUrl/event_menus/$eventMenuId';
+    developer.log('[ApiService] 📝 PUT $url - payload=$payload');
+
+    final response = await http.put(
+      Uri.parse(url),
+      headers: await _headers(),
+      body: jsonEncode(payload),
     );
-    if (response.statusCode != 200) {
-      throw Exception('Erreur ${response.statusCode} lors de la mise à jour du menu planifié');
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Erreur lors de la mise à jour du event_menu: ${response.body}');
     }
+
+    developer.log('[ApiService] ✅ Event menu mis à jour ($eventMenuId)');
   }
+
 
   Future<void> deleteEventMenu(int eventMenuId) async {
     final url = '$baseUrl/event_menus/$eventMenuId';
