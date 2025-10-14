@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/infos_tab.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/menus_tab.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/tents_tab.dart';
-import 'package:logistiscout/services/shopping_list_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/shopping_list_sheet.dart';
 
@@ -116,7 +115,6 @@ class _MenusBottomBar extends ConsumerWidget {
     }
 
     final plan = c.currentPlan!;
-    final shopping = ShoppingListService();
 
     return BottomAppBar(
       height: 64,

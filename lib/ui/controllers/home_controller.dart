@@ -1,8 +1,8 @@
 // presentation/controllers/accueil_controller.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/data/repositories/event_repository_impl.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/data/repositories/evenement_repository_impl.dart';
 import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
@@ -38,7 +38,7 @@ class HomeState {
 }
 
 class HomeController extends StateNotifier<HomeState> {
-  final EvenementRepository evenementRepo;
+  final EventRepositoryImpl evenementRepo;
   final TenteRepositoryImpl tenteRepo;
   final LocalStorageService storage;
 
@@ -48,8 +48,7 @@ class HomeController extends StateNotifier<HomeState> {
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final groupId = await storage.getGroupId();
-      final evts = await evenementRepo.getEvenements(groupId!);
+      final evts = await evenementRepo.getAllEvents();
       final tts = await tenteRepo.getAllTentes();
       state = state.copyWith(evenements: evts, tentes: tts, isLoading: false);
     } catch (e) {
@@ -78,7 +77,7 @@ class HomeController extends StateNotifier<HomeState> {
 final accueilControllerProvider =
 StateNotifierProvider<HomeController, HomeState>((ref) {
   return HomeController(
-    EvenementRepository(),
+    EventRepositoryImpl(ApiService()),
     TenteRepositoryImpl(ApiService()),
     LocalStorageService.instance,
   );

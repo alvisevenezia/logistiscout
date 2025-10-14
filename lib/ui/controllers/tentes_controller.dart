@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/data/mappers/tente_mapper.dart';
-import 'package:logistiscout/data/models/tente_dto.dart';
 import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
+import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
+
+import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 
 class TentesController extends AsyncNotifier<List<Tente>> {
   late final TenteRepository _repo;
@@ -83,3 +84,15 @@ class TentesController extends AsyncNotifier<List<Tente>> {
 
 final tentesProvider =
 AsyncNotifierProvider<TentesController, List<Tente>>(TentesController.new);
+
+final evenementsParTenteProvider = FutureProvider.family<List<Event>, int>((ref, tenteId) async {
+  final evenementsAsync = await ref.watch(evenementsProvider.future);
+
+  final evenements = evenementsAsync.where((evt) {
+    return evt.tentesAssociees.contains(tenteId);
+  }).toList();
+
+  evenements.sort((a, b) => b.date.compareTo(a.date));
+
+  return evenements.take(3).toList();
+});

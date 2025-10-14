@@ -198,6 +198,7 @@ class ApiService {
     }
   }
   Future<void> updateEvenement(int evenementId, Map<String, dynamic> evt) async {
+
     if (!evt.containsKey('groupeId') || evt['groupeId'] == null || evt['groupeId'].toString().isEmpty) {
       throw Exception('groupeId manquant lors de la modification d\'événement');
     }

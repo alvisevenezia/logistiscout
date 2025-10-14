@@ -7,6 +7,7 @@ import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/pages/controle_detail_page.dart';
 import 'package:logistiscout/ui/pages/controle_edit_page.dart';
 import 'package:logistiscout/ui/pages/controle_saisie_nom_page.dart';
+import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 
 class TenteDetailPage extends ConsumerStatefulWidget {
   final int tenteId;
@@ -57,6 +58,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   Widget build(BuildContext context) {
     final tentesAsync = ref.watch(tentesProvider);
     final controlesAsync = ref.watch(controleProvider(widget.tenteId));
+    final evenementsAsync = ref.watch(evenementsParTenteProvider(widget.tenteId));
 
     return Scaffold(
       appBar: AppBar(
@@ -150,7 +152,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   const SizedBox(width: 15),
                                   Expanded(
                                     child: DropdownButtonFormField<String>(
-                                      value: _types.contains(_typeTente!) ? _typeTente : 'Autre',
+                                      initialValue: _types.contains(_typeTente!) ? _typeTente : 'Autre',
                                       items: _types
                                           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                                           .toList(),
@@ -165,7 +167,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               ),
                               const SizedBox(height: 15),
                               DropdownButtonFormField<EtatTente>(
-                                value: _etat!,
+                                initialValue: _etat!,
                                 items: EtatTente.values
                                     .map((e) => DropdownMenuItem(
                                   value: e,
@@ -234,6 +236,55 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               },
                             ),
                           ),
+
+                        const SizedBox(height: 16),
+
+                        // --- Historique des sorties (Événements) ---
+                        evenementsAsync.when(
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                          error: (e, _) => Text('Erreur chargement événements : $e'),
+                          data: (evenements) {
+                            if (evenements.isEmpty) {
+                              return const _SectionCard(
+                                title: 'Historique des sorties',
+                                child: Text('Aucune sortie enregistrée pour cette tente.'),
+                              );
+                            }
+
+                            return _SectionCard(
+                              title: 'Historique des sorties',
+                              child: Column(
+                                children: evenements.map((evt) {
+                                  final enCours = evt.dateFin.isAfter(DateTime.now());
+                                  return ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: CircleAvatar(
+                                      backgroundColor: enCours ? Colors.green.shade100 : Colors.blue.shade100,
+                                      child: Icon(
+                                        enCours ? Icons.campaign : Icons.event_available,
+                                        color: enCours ? Colors.green.shade800 : Colors.blue.shade800,
+                                      ),
+                                    ),
+                                    title: Text(evt.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    subtitle: Text(
+                                      '${_fmtDate(evt.date)}'
+                                          '${' → ${_fmtDate(evt.dateFin)}'}',
+                                    ),
+                                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => EvenementDetailPage(eventId: evt.id.toString()),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          },
+                        ),
 
 
                         const SizedBox(height: 16),
@@ -550,8 +601,8 @@ class _HeaderCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: chipColor.withOpacity(.12),
-                          border: Border.all(color: chipColor.withOpacity(.35)),
+                          color: chipColor.withAlpha(30),
+                          border: Border.all(color: chipColor.withAlpha(80)),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(

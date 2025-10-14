@@ -24,7 +24,7 @@ class SegmentedMeal extends StatelessWidget {
         selected: {value},
         onSelectionChanged: (v) => onChanged(v.first),
         style: ButtonStyle(
-          padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 12)),
+          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12)),
         ),
       ),
     );

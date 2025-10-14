@@ -5,7 +5,7 @@ class RecipeSelectorSheet extends StatefulWidget {
   final List<Recipe> recipes;
   final Set<String> existingIds;
 
-  const RecipeSelectorSheet({
+  const RecipeSelectorSheet({super.key,
     required this.recipes,
     required this.existingIds,
   });

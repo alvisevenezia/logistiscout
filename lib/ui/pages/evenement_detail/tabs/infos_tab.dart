@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
@@ -6,7 +5,7 @@ import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dar
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/info_card.dart';
 
 class InfosTab extends ConsumerWidget {
-  const InfosTab();
+  const InfosTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,7 +28,7 @@ class InfosTab extends ConsumerWidget {
 
     final totalPlaces = c.allTentes
         .where((t) => evt.tentesAssociees.contains(t.id))
-        .fold<int>(0, (sum, t) => sum + (t.nbPlaces ?? 0));
+        .fold<int>(0, (sum, t) => sum + (t.nbPlaces));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -56,7 +55,7 @@ class InfosTab extends ConsumerWidget {
           _InfoRow(
             icon: Icons.chair_alt,
             label: "Tentes assignées",
-            value: "${evt.tentesAssociees.length} (${totalPlaces} places)",
+            value: "${evt.tentesAssociees.length} ($totalPlaces places)",
           ),
           const SizedBox(height: 24),
           Center(

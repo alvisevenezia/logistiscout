@@ -5,7 +5,7 @@ import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dar
 import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 
 class TentsTab extends ConsumerWidget {
-  const TentsTab();
+  const TentsTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -131,7 +131,7 @@ class _TenteCard extends StatelessWidget {
         ),
         title: Text(tente.nom),
         subtitle: Text('${tente.typeTente} • ${tente.nbPlaces} places'),
-        trailing: Text(tente.unitePreferee ?? ''),
+        trailing: Text(tente.unitePreferee),
       ),
     );
   }

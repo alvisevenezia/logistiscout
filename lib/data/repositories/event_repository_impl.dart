@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:logistiscout/data/mappers/event_mapper.dart';
 import 'package:logistiscout/data/models/event_dto.dart';
 import 'package:logistiscout/domain/entities/event.dart';
@@ -20,6 +19,41 @@ class EventRepositoryImpl implements EventRepository {
 
   // === ⚙️ Événements ===
 
+  Future<void> addEvent(Event event) async {
+    final dto = EventMapper.toDto(event);
+    await api.addEvenement(dto.toJson());
+  }
+
+  @override
+  Future<void> updateEvent(Event event) async {
+    developer.log('[EventRepository] 🔄 updateEventTentes(eventId=${event.id})');
+    final dto = EventMapper.toDto(event);
+    await api.updateEvenement(dto.id, dto.toJson());
+  }
+
+  Future<void> deleteEvent(int id, String groupeId) async {
+    await api.deleteEvenement(id, groupeId: groupeId);
+  }
+
+  @override
+  Future<void> updateEventTents(String groupId, int eventId,
+      List<int> tentIds, Event event) async {
+    developer.log('[EventRepository] 🔄 updateEventTentes(eventId=$eventId)');
+
+    final evt = {
+      'groupeId': groupId,
+      'nom': event.nom,
+      'type': event.type,
+      'date': event.date.toIso8601String(),
+      'dateFin': event.dateFin.toIso8601String(),
+      'unites': event.unites,
+      'tentesAssociees': tentIds,
+    };
+
+    await api.updateEvenement(eventId, evt);
+  }
+
+  @override
   Future<List<Event>> getAllEvents() async {
     final groupId = await LocalStorageService.instance.getGroupId();
     if (groupId == null || groupId.isEmpty) {
@@ -71,7 +105,7 @@ class EventRepositoryImpl implements EventRepository {
       type: data['type'],
       tentesAssociees: List<int>.from(data['tentesAssociees'] ?? []),
       unites: List<int>.from(data['unites'] ?? []),
-      groupeId: data['groupe_id'],
+      groupeId: data['groupeId'],
     );
   }
 
@@ -197,6 +231,7 @@ class EventRepositoryImpl implements EventRepository {
     await api.updateEventMenu(eventMenuId, payload);
   }
 
+  @override
   Future<void> addEventMenu({
     required int eventId,
     required int menuId,
@@ -218,20 +253,5 @@ class EventRepositoryImpl implements EventRepository {
     await api.deleteEventMenu(eventMenuId);
   }
 
-  Future<void> updateEventTentes(String groupId, int eventId,
-      List<int> tenteIds, Event event) async {
-    developer.log('[EventRepository] 🔄 updateEventTentes(eventId=$eventId)');
 
-    final evt = {
-      'groupeId': groupId,
-      'nom': event.nom,
-      'type': event.type,
-      'date': event.date.toIso8601String(),
-      'dateFin': event.dateFin.toIso8601String(),
-      'unites': event.unites,
-      'tentesAssociees': tenteIds,
-    };
-
-    await api.updateEvenement(eventId, evt);
-  }
 }

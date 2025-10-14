@@ -6,7 +6,7 @@ class EventDto {
   final String type;
   final List<int> tentesAssociees;
   final List<int> unites;
-  final String? groupeId;
+  final String groupeId;
 
   EventDto({
     required this.id,
@@ -16,7 +16,7 @@ class EventDto {
     required this.type,
     required this.tentesAssociees,
     required this.unites,
-    this.groupeId,
+    required this.groupeId,
   });
 
   factory EventDto.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,7 @@ class EventDto {
       type: json['type'] as String,
       tentesAssociees: List<int>.from(json['tentesAssociees'] ?? []),
       unites: List<int>.from(json['unites'] ?? []),
-      groupeId: json['groupeId']?.toString(),
+      groupeId: json['groupeId'].toString(),
     );
   }
 
@@ -40,6 +40,6 @@ class EventDto {
     'type': type,
     'tentesAssociees': tentesAssociees,
     'unites': unites,
-    if (groupeId != null) 'groupeId': groupeId,
+    'groupeId': groupeId,
   };
 }

@@ -80,9 +80,7 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
       developer.log('[EvenementController] ✏️ Updating event id=${event.id} ($groupId)');
 
-      // ⚠️ Si ton repository a une méthode updateEvent, appelle-la ici.
-      // Exemple :
-      // await _repo.updateEvent(event);
+     _repo.updateEvent(event);
 
       await reload();
     } catch (e, st) {

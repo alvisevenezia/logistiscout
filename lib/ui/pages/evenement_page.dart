@@ -110,10 +110,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                   itemBuilder: (context, index) {
                     final evt = filtered[index];
 
-                    // 🟩 Déterminer la couleur selon la première unité
                     final mainUnitId = evt.unites.isNotEmpty ? evt.unites.first : null;
                     final cardColor = mainUnitId != null
-                        ? _unitColors[mainUnitId] ?? Colors.grey.shade300
+                        ? _unitColors[mainUnitId]?.withAlpha(180) ?? Colors.grey.shade300
                         : Colors.grey.shade200;
 
                     final unitLabel = mainUnitId != null
@@ -162,7 +161,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             } else if (value == 'delete') {
                               await ctrl.deleteEvenement(evt.id);
                             } else if (value == 'menus') {
-                              _openEventDetail(context, evt, openMenus: true); // ✅
+                              _openEventDetail(context, evt, openMenus: true);
                             }
                           },
                           itemBuilder: (context) => const [
@@ -172,7 +171,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             PopupMenuItem(value: 'menus', child: Text('Ouvrir Menus')),
                           ],
                         ),
-                        onTap: () => _openEventDetail(context, evt), // ✅ tap simple → détail normal
+                        onTap: () => _openEventDetail(context, evt),
                       ),
 
                     );
@@ -245,7 +244,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     DateTime debut = event?.date ?? DateTime.now();
     DateTime fin = event?.dateFin ?? DateTime.now().add(const Duration(days: 1));
 
-    // ✅ Unités disponibles
     final unitOptions = const {
       0: 'Farfadets',
       1: 'Louveteaux/Jeannettes',
@@ -318,7 +316,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                       // 🧩 Type
                       DropdownButtonFormField<String>(
-                        value: typesEvenement.contains(typeController.text)
+                        initialValue: typesEvenement.contains(typeController.text)
                             ? typeController.text
                             : null,
                         items: typesEvenement
@@ -339,7 +337,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                       // 🏕️ Unité
                       DropdownButtonFormField<int>(
-                        value: selectedUniteId,
+                        initialValue: selectedUniteId,
                         items: unitOptions.entries
                             .map((e) => DropdownMenuItem(
                           value: e.key,
@@ -454,13 +452,13 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                       selectedColor: Theme.of(context)
                                           .colorScheme
                                           .primary
-                                          .withOpacity(0.2),
+                                          .withAlpha(45),
                                       side: BorderSide(
                                         color: selectedTenteIds.contains(t.id)
                                             ? Theme.of(context)
                                             .colorScheme
                                             .primary
-                                            .withOpacity(0.6)
+                                            .withAlpha(150)
                                             : Colors.grey.shade400,
                                       ),
                                       selected: selectedTenteIds.contains(t.id),
@@ -486,7 +484,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                       const SizedBox(height: 24),
 
-                      // ✅ Boutons d'action
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -516,14 +513,14 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                               }
 
                               final evt = Event(
-                                id: event?.id ?? 0,
+                                id: event!.id,
                                 nom: nomController.text,
                                 type: typeController.text,
                                 date: debut,
                                 dateFin: fin,
                                 tentesAssociees: selectedTenteIds,
                                 unites: [selectedUniteId!],
-                                groupeId: await LocalStorageService.instance.getGroupId(),
+                                groupeId: (await LocalStorageService.instance.getGroupId())!,
                               );
 
                               if (isEditing) {

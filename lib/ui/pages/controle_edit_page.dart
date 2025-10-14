@@ -129,7 +129,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                     .read(controleProvider(widget.tente.id).notifier)
                     .addControle(controle);
 
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Contrôle enregistré avec succès !')));
                   Navigator.pop(context, true);

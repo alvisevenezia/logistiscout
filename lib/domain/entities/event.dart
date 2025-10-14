@@ -7,6 +7,7 @@ class Event {
   final String type;
   final List<int> tentesAssociees;
   final List<int> unites;
+  final String groupeId;
 
   const Event({
     required this.id,
@@ -16,7 +17,7 @@ class Event {
     required this.type,
     required this.tentesAssociees,
     required this.unites,
-    required String? groupeId,
+    required this.groupeId,
   });
 
   bool isUpcoming(DateTime now) => date.isAfter(now);
@@ -50,7 +51,7 @@ class Event {
       type: type ?? this.type,
       tentesAssociees: tentesAssociees ?? this.tentesAssociees,
       unites: unites ?? this.unites,
-      groupeId: groupeId,
+      groupeId: groupeId ?? this.groupeId,
     );
   }
 }

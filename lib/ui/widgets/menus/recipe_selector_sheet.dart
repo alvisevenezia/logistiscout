@@ -72,7 +72,7 @@ class _RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withAlpha(10),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       )
@@ -89,8 +89,8 @@ class _RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
                     title: Text(recipe.title,
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
-                      recipe.description?.isNotEmpty == true
-                          ? recipe.description!
+                      recipe.description.isNotEmpty == true
+                          ? recipe.description
                           : _categoryLabel(recipe.category),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

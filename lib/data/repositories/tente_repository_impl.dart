@@ -1,6 +1,4 @@
 import 'package:logistiscout/data/mappers/event_mapper.dart';
-import 'package:logistiscout/data/models/event_dto.dart';
-import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/data/mappers/tente_mapper.dart';
 import 'package:logistiscout/data/models/tente_dto.dart';
@@ -60,6 +58,7 @@ class TenteRepositoryImpl implements TenteRepository {
     await api.deleteTente(id, groupeId: groupId);
   }
 
+  @override
   Future<List<Tente>> getAvailableTentes(DateTime debut, DateTime fin) async {
     final groupId = await LocalStorageService.instance.getGroupId();
     if (groupId == null) throw Exception('GroupId is null');
@@ -67,14 +66,11 @@ class TenteRepositoryImpl implements TenteRepository {
     developer.log('[TenteRepository] 🔍 getAvailableTentes(groupId=$groupId, '
         'debut=$debut, fin=$fin)');
 
-    // 1️⃣ Récupère toutes les tentes
     final allJson = await api.getTentes(groupId);
     final allTentes = allJson.map((j) => mapTenteDtoToDomain(TenteDto.fromJson(j))).toList();
 
-    // 2️⃣ Récupère tous les événements du groupe
     final eventsJson = await api.getEvenements(groupId);
 
-    // ✅ Utilise ton EventMapper existant
     final events = eventsJson
         .map((e) => EventMapper.fromJsonToDomain(e as Map<String, dynamic>))
         .toList();

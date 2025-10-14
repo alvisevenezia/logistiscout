@@ -5,7 +5,7 @@ class InfoCard extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const InfoCard({
+  const InfoCard({super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -22,7 +22,7 @@ class InfoCard extends StatelessWidget {
               .of(context)
               .colorScheme
               .primary
-              .withOpacity(0.15),
+              .withAlpha(38),
           child: Icon(icon, color: Theme
               .of(context)
               .colorScheme

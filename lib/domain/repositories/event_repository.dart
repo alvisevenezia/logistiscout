@@ -2,7 +2,7 @@ import '../entities/event.dart';
 import '../entities/menu.dart';
 
 abstract class EventRepository {
-  updateEventTentes(String groupId, int eventId, List<int> tenteIds, Event event);
+  updateEventTents(String groupId, int eventId, List<int> tentIds, Event event);
   Future<Event> getEvent(String id);
   Future<List<Event>> getAllEvents();
   Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal);
@@ -15,6 +15,7 @@ abstract class EventRepository {
   });
   Future<void> saveMealPlan(String eventId, MealPlan plan);
   Future<void> deleteEventMenu(int eventMenuId);
+  Future<void> updateEvent(Event event);
   Future<void> updateEventMenu(
     int eventMenuId,
     int eventId,

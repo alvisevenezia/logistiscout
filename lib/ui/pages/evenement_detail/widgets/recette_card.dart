@@ -26,7 +26,7 @@ class RecetteCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          recipe.description ?? 'Aucune description.',
+          recipe.description,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),

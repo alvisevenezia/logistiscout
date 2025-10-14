@@ -1,4 +1,3 @@
-// lib/ui/pages/menus/recipe_actions.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
@@ -6,13 +5,6 @@ import 'package:logistiscout/domain/entities/ingredient.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/domain/entities/menu.dart';
-import 'package:logistiscout/domain/entities/recipe.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
-import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/recipe_selector_sheet.dart';
 
 Future<void> openRecipeSelector(
@@ -25,7 +17,7 @@ Future<void> openRecipeSelector(
 
   final recipes = await recipeRepo.search();
 
-  if (recipes.isEmpty) {
+  if (recipes.isEmpty && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Aucune recette trouvée.')),
     );

@@ -34,10 +34,10 @@ class RecipeRepositoryImpl implements RecipeRepository {
   @override
   Future<void> createRecipe(Recipe recipe) async {
     final payload = {
-      'nom': recipe.title, // ✅ corrige ici
-      'description': recipe.description ?? '',
-      'instructions': recipe.instructions ?? '',
-      'type_repas': recipe.category.name, // ✅ backend attend 'type_repas'
+      'nom': recipe.title,
+      'description': recipe.description,
+      'instructions': recipe.instructions ,
+      'type_repas': recipe.category.name,
       'ingredients': recipe.ingredients
           .map((i) => {
         'nom': i.name,

@@ -76,7 +76,7 @@ class _ControleSaisieNomPageState extends State<ControleSaisieNomPage> {
 
                 // ✅ Continuer le flux
                 await widget.onNomValide(name);
-                if (mounted) Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               },
             ),
           ],

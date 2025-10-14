@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/ingredient.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
-import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
@@ -15,8 +14,6 @@ import 'package:logistiscout/domain/usecases/save_meal_plan.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
-
-import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 
 /// 🧭 Contrôleur dédié à la page Détail d’un événement.
 /// Gère les onglets (Infos, Tentes, Menus) et toute la logique des menus/recettes.
@@ -124,7 +121,7 @@ class EvenementDetailController extends ChangeNotifier {
       final groupId = await LocalStorageService.instance.getGroupId();
       if (groupId == null) throw Exception("Group ID not found");
 
-      await eventRepo.updateEventTentes(
+      await eventRepo.updateEventTents(
         groupId,
         updatedEvent.id,
         updatedIds.toList(),

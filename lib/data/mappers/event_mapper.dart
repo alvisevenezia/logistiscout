@@ -35,20 +35,18 @@ class EventMapper {
       type: entity.type,
       tentesAssociees: entity.tentesAssociees,
       unites: entity.unites,
+      groupeId: entity.groupeId,
     );
   }
 
-  /// ✅ NEW: Convert raw JSON → DTO
   static EventDto fromJson(Map<String, dynamic> json) {
     return EventDto.fromJson(json);
   }
 
-  /// ✅ NEW: Convert raw JSON → Domain directly
   static Event fromJsonToDomain(Map<String, dynamic> json) {
     return toDomain(EventDto.fromJson(json));
   }
 
-  /// Helpers for lists
   static List<Event> toDomainList(List<EventDto> dtos) =>
       dtos.map(toDomain).toList();
 

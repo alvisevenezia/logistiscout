@@ -160,7 +160,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: type,
+                initialValue: type,
                 items: const [
                   DropdownMenuItem(value: 'Canadienne', child: Text('Canadienne')),
                   DropdownMenuItem(value: 'Tipi', child: Text('Tipi')),
@@ -178,7 +178,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<EtatTente>(
-                value: etat,
+                initialValue: etat,
                 items: EtatTente.values
                     .map((e) => DropdownMenuItem(
                   value: e,
@@ -313,9 +313,9 @@ class _TenteCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: chipColor.withOpacity(.15),
+                            color: chipColor.withAlpha(30),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: chipColor.withOpacity(.35)),
+                            border: Border.all(color: chipColor.withAlpha(80)),
                           ),
                           child: Text(
                             etatTenteToString(tente.etat),
@@ -372,7 +372,7 @@ class _TypeFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     const types = ['Tous', 'Canadienne', 'Tipi', 'Marabout', 'Autre'];
     return DropdownButtonFormField<String>(
-      value: types.contains(value) ? value : 'Tous',
+      initialValue: types.contains(value) ? value : 'Tous',
       items: types
           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
           .toList(),
@@ -394,7 +394,7 @@ class _EtatFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<EtatTente?>(
-      value: value,
+      initialValue: value,
       items: [
         const DropdownMenuItem<EtatTente?>(
           value: null,
@@ -417,7 +417,6 @@ class _EtatFilter extends StatelessWidget {
   }
 }
 
-// Helpers couleurs pour l’état
 Color _etatBgColor(EtatTente e) {
   switch (e) {
     case EtatTente.ok:
