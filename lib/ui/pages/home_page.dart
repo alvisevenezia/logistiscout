@@ -10,6 +10,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+
     final state = ref.watch(accueilControllerProvider);
     final controller = ref.read(accueilControllerProvider.notifier);
 
@@ -27,6 +28,8 @@ class HomePage extends ConsumerWidget {
 
     final tentesUtiliseesIds = prochainsEvts.expand((e) => e.tentesAssociees).toSet();
     final tentesUtilisees = state.tentes.where((t) => tentesUtiliseesIds.contains(t.id)).toList();
+
+    final tentesToRepair = state.tentes.where((t) => t.etat != EtatTente.ok).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +108,14 @@ class HomePage extends ConsumerWidget {
               const Text('Aucune tente réservée pour les prochains événements.')
             else
               ...tentesUtilisees.map((t) => buildTenteCard(t)),
+            const SizedBox(height: 24),
+            Text('Tentes à réparer',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            if (tentesToRepair.isEmpty)
+              const Text('Aucune tente réservée pour les prochains événements.')
+            else
+              ...tentesToRepair.map((t) => buildTenteCard(t)),
           ],
         ),
       ),

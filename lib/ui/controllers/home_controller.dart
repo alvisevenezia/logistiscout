@@ -76,9 +76,12 @@ class HomeController extends StateNotifier<HomeState> {
 
 final accueilControllerProvider =
 StateNotifierProvider<HomeController, HomeState>((ref) {
-  return HomeController(
+  final c = HomeController(
     EventRepositoryImpl(ApiService()),
     TenteRepositoryImpl(ApiService()),
     LocalStorageService.instance,
   );
+  // Démarrage immédiat du chargement (asynchrone)
+  Future.microtask(c.loadData);
+  return c;
 });

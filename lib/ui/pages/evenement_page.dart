@@ -299,7 +299,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                       Text(
                         isEditing
                             ? 'Modifier l\'événement'
-                            : 'NouNouvel événement',
+                            : 'Nouvel événement',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 16),

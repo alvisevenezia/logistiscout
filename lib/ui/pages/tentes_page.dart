@@ -14,6 +14,8 @@ class TentesPage extends ConsumerStatefulWidget {
 class _TentesPageState extends ConsumerState<TentesPage> {
   String _query = '';
   String _typeFilter = 'Tous';
+  String _sizeFilter = 'Tous';
+  String _unitFilter = 'Non affectée';
   EtatTente? _etatFilter;
 
   @override
@@ -40,7 +42,9 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               final matchType =
               _typeFilter == 'Tous' ? true : t.typeTente == _typeFilter;
               final matchEtat = _etatFilter == null ? true : t.etat == _etatFilter;
-              return matchQuery && matchType && matchEtat;
+              final matchSize = _sizeFilter == 'Tous' ? true : t.nbPlaces.toString() == _sizeFilter;
+              final matchUnit = _unitFilter == 'Non affectée' ? true : t.unitePreferee == _unitFilter;
+              return matchQuery && matchType && matchEtat && matchSize && matchUnit;
             }).toList();
 
             return Column(
@@ -63,24 +67,47 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                         onChanged: (v) => setState(() => _query = v),
                       ),
                       const SizedBox(height: 10),
-                      Row(
+                      Column(
                         children: [
-                          Expanded(
-                            child: _TypeFilter(
-                              value: _typeFilter,
-                              onChanged: (v) => setState(() => _typeFilter = v),
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _TypeFilter(
+                                  value: _typeFilter,
+                                  onChanged: (v) => setState(() => _typeFilter = v),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _EtatFilter(
+                                  value: _etatFilter,
+                                  onChanged: (v) => setState(() => _etatFilter = v),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _EtatFilter(
-                              value: _etatFilter,
-                              onChanged: (v) => setState(() => _etatFilter = v),
-                            ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _SizeFilter(
+                                  value: _sizeFilter,
+                                  onChanged: (v) => setState(() => _sizeFilter = v),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _UnitFilter(
+                                  value: _unitFilter,
+                                  onChanged: (v) => setState(() => _unitFilter = v),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+
+                      const SizedBox(width: 8),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -363,6 +390,63 @@ class _TenteCard extends StatelessWidget {
   }
 }
 
+class _UnitFilter extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _UnitFilter({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    //TODO : fetch units from backend instead of hardcoding
+    const units = const [
+      'Non affectée',
+      'Farfadets',
+      'Louveteaux-Jeannettes',
+      'Scouts-Guides',
+      'Pionniers-Caravelles',
+      'Compagnons',
+      'Groupe'
+    ];
+    return DropdownButtonFormField<String>(
+      isExpanded: true,
+      initialValue: units.contains(value) ? value : 'Non affectée',
+      items: units
+          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+          .toList(),
+      onChanged: (v) => onChanged(v ?? 'Non affectée'),
+      decoration: const InputDecoration(
+        labelText: 'Unité',
+        isDense: true,
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+}
+
+class _SizeFilter extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _SizeFilter({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    const sizes = ["Tous","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"];
+    return DropdownButtonFormField<String>(
+      isExpanded: true,
+      initialValue: sizes.contains(value) ? value : 'Tous',
+      items: sizes
+          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+          .toList(),
+      onChanged: (v) => onChanged(v ?? 'Tous'),
+      decoration: const InputDecoration(
+        labelText: 'Taille',
+        isDense: true,
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+}
+
 class _TypeFilter extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
@@ -372,6 +456,7 @@ class _TypeFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     const types = ['Tous', 'Canadienne', 'Tipi', 'Marabout', 'Autre'];
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: types.contains(value) ? value : 'Tous',
       items: types
           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -393,7 +478,9 @@ class _EtatFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return DropdownButtonFormField<EtatTente?>(
+      isExpanded: true,
       initialValue: value,
       items: [
         const DropdownMenuItem<EtatTente?>(

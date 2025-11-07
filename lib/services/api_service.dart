@@ -28,7 +28,6 @@ class ApiService {
 
 
 
-  /// Get the singleton (creates on first call).
   factory ApiService({String baseUrl = 'http://57.128.224.111:8000', http.Client? client}) {
     developer.log('ApiService instance requested', name: 'ApiService');
     return _instance ??= ApiService._internal(baseUrl: baseUrl, client: client);
