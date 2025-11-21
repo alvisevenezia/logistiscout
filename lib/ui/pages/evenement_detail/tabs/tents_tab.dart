@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 
@@ -123,11 +124,12 @@ class _TenteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: selected ? highlightColor ?? Colors.blue.shade50 : Colors.white,
+     color: Color(Unit.fromString(tente.unitePreferee).color),
+      //color: selected ? highlightColor ?? Colors.blue.shade50 : Colors.white,
       child: ListTile(
         leading: Icon(
           selected ? Icons.check_circle : Icons.house_siding_outlined,
-          color: selected ? Colors.blue : Colors.grey,
+          color: selected ? Colors.blue : Colors.white,
         ),
         title: Text(tente.nom),
         subtitle: Text('${tente.typeTente} • ${tente.nbPlaces} places'),

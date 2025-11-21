@@ -1,6 +1,8 @@
+import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/pages/tente_detail_page.dart';
 
@@ -15,7 +17,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   String _query = '';
   String _typeFilter = 'Tous';
   String _sizeFilter = 'Tous';
-  String _unitFilter = 'Non affectée';
+  String _unitFilter = 'Tous';
   EtatTente? _etatFilter;
 
   @override
@@ -43,7 +45,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               _typeFilter == 'Tous' ? true : t.typeTente == _typeFilter;
               final matchEtat = _etatFilter == null ? true : t.etat == _etatFilter;
               final matchSize = _sizeFilter == 'Tous' ? true : t.nbPlaces.toString() == _sizeFilter;
-              final matchUnit = _unitFilter == 'Non affectée' ? true : t.unitePreferee == _unitFilter;
+              final matchUnit = _unitFilter == 'Tous' ? true : t.unitePreferee == _unitFilter;
               return matchQuery && matchType && matchEtat && matchSize && matchUnit;
             }).toList();
 
@@ -54,6 +56,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   color: Colors.white,
                   child: Column(
+                    spacing: 10,
                     children: [
                       TextField(
                         decoration: InputDecoration(
@@ -66,55 +69,50 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                         ),
                         onChanged: (v) => setState(() => _query = v),
                       ),
-                      const SizedBox(height: 10),
-                      Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _TypeFilter(
-                                  value: _typeFilter,
-                                  onChanged: (v) => setState(() => _typeFilter = v),
+                      ExpandablePanel(
+                        header: Center(child: Text("Affiner la recherche")),
+                        collapsed: const SizedBox.shrink(),
+                        expanded:Column(
+                          spacing: 10,
+                          children: [
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Expanded(
+                                  child: _TypeFilter(
+                                    value: _typeFilter,
+                                    onChanged: (v) => setState(() => _typeFilter = v),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _EtatFilter(
-                                  value: _etatFilter,
-                                  onChanged: (v) => setState(() => _etatFilter = v),
+                                Expanded(
+                                  child: _EtatFilter(
+                                    value: _etatFilter,
+                                    onChanged: (v) => setState(() => _etatFilter = v),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _SizeFilter(
-                                  value: _sizeFilter,
-                                  onChanged: (v) => setState(() => _sizeFilter = v),
+                              ],
+                            ),
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Expanded(
+                                  child: _SizeFilter(
+                                    value: _sizeFilter,
+                                    onChanged: (v) => setState(() => _sizeFilter = v),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _UnitFilter(
-                                  value: _unitFilter,
-                                  onChanged: (v) => setState(() => _unitFilter = v),
+                                Expanded(
+                                  child: _UnitFilter(
+                                    value: _unitFilter,
+                                    onChanged: (v) => setState(() => _unitFilter = v),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(width: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${filtered.length} / ${tentes.length} tentes',
-                          style: Theme.of(context).textTheme.bodySmall,
+                              ],
+                            ),
+                          ],
                         ),
                       ),
+
                     ],
                   ),
                 ),
@@ -171,7 +169,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
     String type = 'Canadienne';
     var etat = EtatTente.casse; // défaut demandé
     var integree = false;
-    String unitePreferee = '';
+    Unit unitePreferee = Unit.Tous;
 
     showDialog(
       context: context,
@@ -216,25 +214,23 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                 decoration: const InputDecoration(labelText: 'État'),
               ),
               const SizedBox(height: 8),
+              DropdownButtonFormField<Unit>(
+                initialValue: unitePreferee,
+                items: Unit.values
+                    .map((e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e.name, style: TextStyle(color: Color(e.color)),),
+                ))
+                    .toList(),
+                onChanged: (v) => unitePreferee = v ?? Unit.Tous,
+                decoration: const InputDecoration(labelText: 'Unité'),
+              ),
+              const SizedBox(height: 8),
               SwitchListTile(
                 value: integree,
                 onChanged: (v) => setState(() => integree = v),
                 title: const Text('Tapis de sol intégré'),
                 contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: couleursCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Couleurs (ex: #FF0000, #00FF00)',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                onChanged: (v) => unitePreferee = v,
-                decoration: const InputDecoration(
-                  labelText: 'Unité préférée (optionnel)',
-                ),
               ),
             ],
           ),
@@ -263,7 +259,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                 tapisSolIntegre: integree,
                 nbPlaces: int.tryParse(nbCtl.text) ?? 0,
                 typeTente: type,
-                unitePreferee: unitePreferee,
+                unitePreferee: unitePreferee.name,
                 agenda: const [],
                 historiqueControles: const [],
                 couleurs: couleursCtl.text
@@ -307,12 +303,9 @@ class _TenteCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
           child: Row(
             children: [
-              // Avatar couleur principale
               CircleAvatar(
                 radius: 22,
-                backgroundColor: tente.couleurs.isNotEmpty
-                    ? _parseColor(tente.couleurs.first)
-                    : Colors.grey.shade400,
+                backgroundColor: Color(Unit.fromString(tente.unitePreferee).color),
                 child: const Icon(Icons.cabin, color: Colors.white),
               ),
               const SizedBox(width: 12),
@@ -397,23 +390,14 @@ class _UnitFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //TODO : fetch units from backend instead of hardcoding
-    const units = const [
-      'Non affectée',
-      'Farfadets',
-      'Louveteaux-Jeannettes',
-      'Scouts-Guides',
-      'Pionniers-Caravelles',
-      'Compagnons',
-      'Groupe'
-    ];
-    return DropdownButtonFormField<String>(
+
+    return DropdownButtonFormField<Unit>(
       isExpanded: true,
-      initialValue: units.contains(value) ? value : 'Non affectée',
-      items: units
-          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+      initialValue: Unit.Tous,
+      items: Unit.values
+          .map((t) => DropdownMenuItem(value: t, child: Text(t.name, style: TextStyle(color: Color(t.color)))))
           .toList(),
-      onChanged: (v) => onChanged(v ?? 'Non affectée'),
+      onChanged: (v) => onChanged(v?.name ?? 'Non affectée'),
       decoration: const InputDecoration(
         labelText: 'Unité',
         isDense: true,

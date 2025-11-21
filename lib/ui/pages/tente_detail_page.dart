@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/pages/controle_detail_page.dart';
@@ -29,6 +30,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   EtatTente? _etat;
   bool? _estIntegree;
   List<String>? _couleursHex;
+  Unit? _unitePreferee;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
 
@@ -40,8 +42,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     _typeTente ??= (_types.contains(t.typeTente) ? t.typeTente : 'Autre');
     _etat ??= t.etat;
     _estIntegree ??= t.tapisSolIntegre;
+    _unitePreferee ??= Unit.fromString(t.unitePreferee);
 
-    // init colors as hex list
     _couleursHex ??= List<String>.from(t.couleurs);
   }
 
@@ -118,6 +120,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 etat: _etat!,
                                 tapisSolIntegre: _estIntegree!,
                                 couleurs: _couleursHex!,
+                                unitePreferee: _unitePreferee!.name,
                               );
                               await ref.read(tentesProvider.notifier).updateTente(updated);
                               if (mounted) {
@@ -177,6 +180,21 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 onChanged: (v) => setState(() => _etat = v ?? EtatTente.casse),
                                 decoration: const InputDecoration(
                                   labelText: 'État',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                              DropdownButtonFormField<Unit>(
+                                initialValue: _unitePreferee!,
+                                items: Unit.values
+                                    .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e.name),
+                                ))
+                                    .toList(),
+                                onChanged: (v) => setState(() => _unitePreferee = v),
+                                decoration: const InputDecoration(
+                                  labelText: 'Unité',
                                   border: OutlineInputBorder(),
                                 ),
                               ),
