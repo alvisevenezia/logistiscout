@@ -500,7 +500,7 @@ class _ColorChipsEditor extends StatelessWidget {
   }
 
   static String _toHex(Color c) {
-    final v = (c.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
+    final v = (c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
     return '#$v';
     // If you want ARGB: return '#${c.value.toRadixString(16).padLeft(8,'0').toUpperCase()}';
   }
