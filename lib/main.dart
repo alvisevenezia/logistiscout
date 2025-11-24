@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'pages/accueil_page.dart';
-import 'pages/tentes_page.dart';
-import 'pages/evenements_page.dart';
-import 'pages/controle_page.dart';
-import 'pages/login_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/pages/contact_page.dart';
+import 'package:logistiscout/ui/pages/evenement_page.dart';
+import 'package:logistiscout/ui/pages/home_page.dart';
+import 'package:logistiscout/ui/pages/login_page.dart';
+import 'package:logistiscout/ui/pages/tentes_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final String? groupeId = prefs.getString('groupeId');
-  runApp(MyApp(isLoggedIn: groupeId != null && groupeId.isNotEmpty));
+
+  final groupID = await LocalStorageService.instance.getGroupId();
+
+  runApp(
+    ProviderScope( // ✅ this is the key fix
+      child: MyApp(isLoggedIn: groupID != null && groupID.isNotEmpty),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,8 +35,7 @@ class MyApp extends StatelessWidget {
         '/accueil': (context) => const _MainNavigation(),
       },
       theme: ThemeData(
-        colorScheme: ColorScheme(
-          brightness: Brightness.light,
+        colorScheme: const ColorScheme.light(
           primary: Color(0xFF003a5d),
           onPrimary: Colors.white,
           secondary: Color(0xFF0077b3),
@@ -48,7 +53,7 @@ class MyApp extends StatelessWidget {
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Color(0xFF003a5d),
-          foregroundColor: Color(0xFFffffff),
+          foregroundColor: Colors.white,
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
@@ -70,6 +75,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class _MainNavigation extends StatefulWidget {
   const _MainNavigation();
   @override
@@ -79,10 +85,10 @@ class _MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<_MainNavigation> {
   int _selectedIndex = 0;
   static const List<Widget> _pages = <Widget>[
-    AccueilPage(),
+    HomePage(),
     TentesPage(),
     EvenementsPage(),
-    ControlePage(),
+    ContactPage()
   ];
 
   // Ajout d'une méthode pour valider la capacité des canadiennes
@@ -115,8 +121,8 @@ class _MainNavigationState extends State<_MainNavigation> {
             label: 'Événements',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner),
-            label: 'Contrôle',
+            icon: Icon(Icons.contact_support),
+            label: 'Contact',
           ),
         ],
         type: BottomNavigationBarType.fixed,

@@ -9,13 +9,12 @@ Gestion du matériel scout, des groupes, des événements et des contrôles.
 - Gestion des événements (rencontres, WE, camps) avec réservation de matériel
 - Contrôle et checklist détaillée pour chaque tente
 - Empêche la double réservation de tentes sur la même période
-- Interface Flutter responsive
 
 ## Démarrage rapide
 
 1. **Prérequis**
    - Flutter SDK installé ([voir la doc Flutter](https://docs.flutter.dev/get-started/install))
-   - Un appareil ou un émulateur Android/iOS
+   - Android Studio avec les extensions Flutter et Dart
 
 2. **Installation des dépendances**
    ```bash
@@ -28,7 +27,7 @@ Gestion du matériel scout, des groupes, des événements et des contrôles.
    ```
 
 4. **Premier lancement**
-   - L'application demande l'ID et le mot de passe du groupe scout (aucune vérification serveur par défaut, tout couple est accepté).
+   - L'application demande l'ID et le mot de passe du groupe scout.
    - Ces identifiants sont mémorisés localement.
 
 ## Structure du projet
@@ -37,11 +36,7 @@ Gestion du matériel scout, des groupes, des événements et des contrôles.
 - `android/`, `ios/`, `web/`, `linux/`, `macos/`, `windows/` : plateformes supportées
 
 ## API serveur
-Voir le fichier [`openapi.yaml`](openapi.yaml) pour la documentation complète des endpoints nécessaires à une synchronisation serveur.
-
-## Personnalisation
-- Pour ajouter une vérification réelle des identifiants groupe, il faut connecter l'app à un serveur conforme à l'OpenAPI fourni.
-- Pour gérer plusieurs groupes sur un même appareil, il suffit de réinitialiser les identifiants dans les préférences locales.
+Voir le fichier [`openapi.yaml`](openapi.yaml) pour la documentation des endpoints 
 
 ## Contribution
 Les PR et suggestions sont les bienvenues !

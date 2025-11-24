@@ -1,0 +1,5 @@
+package com.wanto.logistiscout
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
