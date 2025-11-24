@@ -1,25 +1,24 @@
-// lib/data/mappers/controle_mapper.dart
 import 'package:logistiscout/data/models/controle_dto.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 
-Controle mapControleDtoToDomain(ControleDto dto) {
-  return Controle(
+Control mapControlDtoToDomain(ControlDto dto) {
+  return Control(
     id: dto.id,
-    tenteId: dto.tenteId,
+    tentId: dto.tentId,
     userId: dto.userId,
     date: DateTime.parse(dto.date),
     checklist: dto.checklist,
-    remarques: dto.remarques,
+    comment: dto.comments,
   );
 }
 
-ControleDto mapControleDomainToDto(Controle controle) {
-  return ControleDto(
+ControlDto mapControlDomainToDto(Control controle) {
+  return ControlDto(
     id: controle.id,
-    tenteId: controle.tenteId,
+    tentId: controle.tentId,
     userId: controle.userId,
     date: controle.date.toIso8601String(),
     checklist: controle.checklist,
-    remarques: controle.remarques,
+    comments: controle.comment,
   );
 }

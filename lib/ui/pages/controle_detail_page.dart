@@ -3,8 +3,8 @@ import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 
 class ControleDetailPage extends StatelessWidget {
-  final Controle controle;
-  final Tente tente;
+  final Control controle;
+  final Tent tente;
 
   const ControleDetailPage({
     super.key,
@@ -35,7 +35,7 @@ class ControleDetailPage extends StatelessWidget {
                   tente.nom,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: Text('${tente.typeTente} • ${tente.nbPlaces} places'),
+                subtitle: Text('${tente.tentType} • ${tente.nbPlaces} places'),
               ),
             ),
 
@@ -61,11 +61,11 @@ class ControleDetailPage extends StatelessWidget {
                     _InfoRow(label: 'Date', value: _formatDate(controle.date)),
                     _InfoRow(label: 'Utilisateur (ID)', value: controle.userId.toString()),
                     const SizedBox(height: 10),
-                    if (controle.remarques.isNotEmpty) ...[
+                    if (controle.comment.isNotEmpty) ...[
                       Text('Remarques :',
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
-                      Text(controle.remarques),
+                      Text(controle.comment),
                     ],
                   ],
                 ),

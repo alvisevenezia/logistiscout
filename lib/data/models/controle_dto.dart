@@ -1,36 +1,36 @@
 // lib/data/modals/controle_dto.dart
-class ControleDto {
+class ControlDto {
   final int? id;
-  final int tenteId;
+  final int tentId;
   final int userId;
   final String date; // stored as ISO 8601 string
   final Map<String, dynamic> checklist;
-  final String remarques;
+  final String comments;
 
-  ControleDto({
+  ControlDto({
     this.id,
-    required this.tenteId,
+    required this.tentId,
     required this.userId,
     required this.date,
     required this.checklist,
-    required this.remarques,
+    required this.comments,
   });
 
-  factory ControleDto.fromJson(Map<String, dynamic> json) => ControleDto(
+  factory ControlDto.fromJson(Map<String, dynamic> json) => ControlDto(
     id: json['id'],
-    tenteId: json['tenteId'],
+    tentId: json['tenteId'],
     userId: json['userId'],
     date: json['date'],
     checklist: Map<String, dynamic>.from(json['checklist'] ?? {}),
-    remarques: json['remarques'] ?? '',
+    comments: json['remarques'] ?? '',
   );
 
   Map<String, dynamic> toJson() => {
     if (id != null) 'id': id,
-    'tenteId': tenteId,
+    'tenteId': tentId,
     'userId': userId,
     'date': date,
     'checklist': checklist,
-    'remarques': remarques,
+    'remarques': comments,
   };
 }

@@ -21,7 +21,7 @@ class _ControleSaisieNomPageState extends State<ControleSaisieNomPage> {
   }
 
   Future<void> _loadSavedName() async {
-    final savedName = await LocalStorageService.instance.getControleurName();
+    final savedName = await LocalStorageService.instance.getControllerName();
     if (mounted) {
       setState(() {
         if (savedName != null && savedName.isNotEmpty) {
@@ -72,7 +72,7 @@ class _ControleSaisieNomPageState extends State<ControleSaisieNomPage> {
                 }
 
                 // ✅ Enregistrer le nom
-                await LocalStorageService.instance.saveControleurName(name);
+                await LocalStorageService.instance.saveControllerName(name);
 
                 // ✅ Continuer le flux
                 await widget.onNomValide(name);

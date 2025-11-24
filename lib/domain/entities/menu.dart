@@ -6,11 +6,8 @@ enum MealType { petitDej, dejeuner, diner }
 
 @immutable
 class MenuItem {
-  /// ID de la ligne dans la table `event_menus` (relation événement ↔ menu)
   final int? eventMenuId;
-
-  /// ID du menu (recette) référencé dans la table `menus`
-  final int? menuId; // ✅ ID de la table event_menus (backend)
+  final int? menuId;
   final Recipe recipe;
   final List<IngredientTotal> baseIngredients;
 
@@ -41,9 +38,9 @@ class MenuItem {
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
-      eventMenuId: json['id'] as int?, // ✅ correspond à event_menu.id
+      eventMenuId: json['id'] as int?,
       recipe: Recipe.fromJson(json['menu'] ?? {}),
-      menuId: json['menu_id'] as int?, // ✅ correspond à event_menu.menu_id
+      menuId: json['menu_id'] as int?,
       baseIngredients: (json['menu']?['ingredients'] as List?)
           ?.map((i) => IngredientTotal.fromJson(i))
           .toList() ??

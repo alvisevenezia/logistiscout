@@ -5,9 +5,9 @@ class Event {
   final DateTime date;
   final DateTime dateFin;
   final String type;
-  final List<int> tentesAssociees;
+  final List<int> associatedTents;
   final List<int> unites;
-  final String groupeId;
+  final String groupId;
 
   const Event({
     required this.id,
@@ -15,9 +15,9 @@ class Event {
     required this.date,
     required this.dateFin,
     required this.type,
-    required this.tentesAssociees,
+    required this.associatedTents,
     required this.unites,
-    required this.groupeId,
+    required this.groupId,
   });
 
   bool isUpcoming(DateTime now) => date.isAfter(now);
@@ -39,9 +39,9 @@ class Event {
     DateTime? date,
     DateTime? dateFin,
     String? type,
-    List<int>? tentesAssociees,
+    List<int>? associatedTents,
     List<int>? unites,
-    String? groupeId,
+    String? groupId,
   }) {
     return Event(
       id: id ?? this.id,
@@ -49,9 +49,9 @@ class Event {
       date: date ?? this.date,
       dateFin: dateFin ?? this.dateFin,
       type: type ?? this.type,
-      tentesAssociees: tentesAssociees ?? this.tentesAssociees,
+      associatedTents: associatedTents ?? this.associatedTents,
       unites: unites ?? this.unites,
-      groupeId: groupeId ?? this.groupeId,
+      groupId: groupId ?? this.groupId,
     );
   }
 }

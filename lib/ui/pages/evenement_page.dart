@@ -148,7 +148,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                               Text('🗂️ Type : ${evt.type}'),
                               Text('🏕️ Unité : $unitLabel'),
                               Text(
-                                '⛺ Tentes : ${evt.tentesAssociees.isEmpty ? "Aucune" : evt.tentesAssociees.join(", ")}',
+                                '⛺ Tentes : ${evt.associatedTents.isEmpty ? "Aucune" : evt.associatedTents.join(", ")}',
                               ),
                             ],
                           ),
@@ -258,7 +258,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     event?.unites.isNotEmpty == true ? event!.unites.first : null;
 
     // ✅ IDs des tentes sélectionnées
-    List<int> selectedTenteIds = List.from(event?.tentesAssociees ?? []);
+    List<int> selectedTenteIds = List.from(event?.associatedTents ?? []);
 
     await showModalBottomSheet(
       context: context,
@@ -416,7 +416,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             for (final evt in events) {
                               final chevauche = debut.isBefore(evt.dateFin) && fin.isAfter(evt.date);
                               if (chevauche) {
-                                indispo.addAll(evt.tentesAssociees);
+                                indispo.addAll(evt.associatedTents);
                               }
                             }
                             return indispo;
@@ -518,9 +518,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                 type: typeController.text,
                                 date: debut,
                                 dateFin: fin,
-                                tentesAssociees: selectedTenteIds,
+                                associatedTents: selectedTenteIds,
                                 unites: [selectedUniteId!],
-                                groupeId: (await LocalStorageService.instance.getGroupId())!,
+                                groupId: (await LocalStorageService.instance.getGroupId())!,
                               );
 
                               if (isEditing) {

@@ -11,12 +11,10 @@ import 'package:logistiscout/domain/usecases/get_meal_plan.dart';
 import 'package:logistiscout/domain/usecases/save_meal_plan.dart';
 import 'package:logistiscout/domain/usecases/duplicate_menu.dart';
 
-/// 🌐 API
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
 });
 
-/// 🧱 Repositories
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
   final api = ref.read(apiServiceProvider);
   return EventRepositoryImpl(api);
@@ -27,7 +25,6 @@ final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return RecipeRepositoryImpl(api);
 });
 
-/// ⚙️ Use Cases
 final getEventUseCaseProvider = Provider<GetEvent>((ref) {
   final repo = ref.read(eventRepositoryProvider);
   return GetEvent(repo);
@@ -48,7 +45,7 @@ final duplicateMenuUseCaseProvider = Provider<DuplicateMenu>((ref) {
   return DuplicateMenu(repo);
 });
 
-final tenteRepositoryProvider = Provider<TenteRepository>((ref) {
+final tenteRepositoryProvider = Provider<TentRepository>((ref) {
   final api = ref.read(apiServiceProvider);
   return TenteRepositoryImpl(api);
 });

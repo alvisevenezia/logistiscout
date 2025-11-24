@@ -1,42 +1,42 @@
-import 'package:logistiscout/data/controle.dart';
 import 'package:logistiscout/data/models/tente_dto.dart';
-import 'package:logistiscout/data/reservation.dart';
+import 'package:logistiscout/domain/entities/reservation.dart';
+import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 
-Tente mapTenteDtoToDomain(TenteDto dto) {
-  return Tente(
+Tent mapTentDtoToDomain(TentDto dto) {
+  return Tent(
     id: dto.id,
     nom: dto.nom,
     uniteId: dto.uniteId,
-    etat: etatTenteFromString(dto.etat), // could map to enum
-    remarques: dto.remarques,
-    tapisSolIntegre: dto.estIntegree,
+    state: tentStateFromString(dto.state), // could map to enum
+    comments: dto.comments,
+    isFloorEmbedded: dto.isFloorEmbedded,
     nbPlaces: dto.nbPlaces,
-    typeTente: dto.typeTente,
-    unitePreferee: dto.unitePreferee,
+    tentType: dto.tentType,
+    assignedUnit: dto.assignedUnit,
     agenda: dto.agenda.map((r) => Reservation.fromJson(r)).toList(),
-    historiqueControles:
-    dto.historiqueControles.map((c) => Controle.fromJson(c)).toList(),
-    couleurs: dto.couleurs,
-    groupeId: dto.groupeId,
+    controlHistory:
+    dto.controlHistory.map((c) => Control.fromJson(c)).toList(),
+    colors: dto.colors,
+    groupId: dto.groupId,
   );
 }
 
-TenteDto mapTenteDomainToDto(Tente entity) {
-  return TenteDto(
+TentDto mapTentDomainToDto(Tent entity) {
+  return TentDto(
     id: entity.id,
     nom: entity.nom,
     uniteId: entity.uniteId,
-    etat: etatTenteToString(entity.etat), // ✅ converts enum → String
-    remarques: entity.remarques,
-    estIntegree: entity.tapisSolIntegre,
+    state: tentStateToString(entity.state),
+    comments: entity.comments,
+    isFloorEmbedded: entity.isFloorEmbedded,
     nbPlaces: entity.nbPlaces,
-    typeTente: entity.typeTente,
-    unitePreferee: entity.unitePreferee,
+    tentType: entity.tentType,
+    assignedUnit: entity.assignedUnit,
     agenda: entity.agenda.map((r) => r.toJson()).toList(),
-    historiqueControles:
-    entity.historiqueControles.map((c) => c.toJson()).toList(),
-    couleurs: entity.couleurs,
-    groupeId: entity.groupeId,
+    controlHistory:
+    entity.controlHistory.map((c) => c.toJson()).toList(),
+    colors: entity.colors,
+    groupId: entity.groupId,
   );
 }

@@ -26,10 +26,10 @@ class HomePage extends ConsumerWidget {
     final now = DateTime.now();
     final prochainsEvts = evtsAVenir.where((e) => e.date.isAfter(now)).take(3).toList();
 
-    final tentesUtiliseesIds = prochainsEvts.expand((e) => e.tentesAssociees).toSet();
+    final tentesUtiliseesIds = prochainsEvts.expand((e) => e.associatedTents).toSet();
     final tentesUtilisees = state.tentes.where((t) => tentesUtiliseesIds.contains(t.id)).toList();
 
-    final tentesToRepair = state.tentes.where((t) => t.etat != EtatTente.ok).toList();
+    final tentesToRepair = state.tentes.where((t) => t.state != TentState.good).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -134,11 +134,11 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget buildTenteCard(Tente tente) {
+  Widget buildTenteCard(Tent tente) {
     return Card(
       child: ListTile(
         title: Text(tente.nom),
-        subtitle: Text('Unité : ${tente.unitePreferee}'),
+        subtitle: Text('Unité : ${tente.assignedUnit}'),
       ),
     );
   }

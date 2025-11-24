@@ -27,26 +27,23 @@ class ApiService {
   }
 
 
-
   factory ApiService({String baseUrl = 'http://57.128.224.111:8000', http.Client? client}) {
     developer.log('ApiService instance requested', name: 'ApiService');
     return _instance ??= ApiService._internal(baseUrl: baseUrl, client: client);
   }
 
-  /// For tests or environment switches (optional).
   static void reconfigure({required String baseUrl, http.Client? client}) {
     _instance = ApiService._internal(baseUrl: baseUrl, client: client);
   }
 
   final String baseUrl;
   final http.Client _client;
-  // Authentification groupe
-  Future<Map<String, dynamic>?> loginGroupe(String userlogin, String mdp) async {
-    developer.log('POST /auth/login {userlogin: $userlogin, mdp: ***}', name: 'ApiService');
+  Future<Map<String, dynamic>?> loginGroup(String userLogin, String mdp) async {
+    developer.log('POST /auth/login {userlogin: $userLogin, mdp: ***}', name: 'ApiService');
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'userlogin': userlogin, 'mdp': mdp}),
+      body: jsonEncode({'userlogin': userLogin, 'mdp': mdp}),
     );
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode == 200) {
@@ -55,11 +52,11 @@ class ApiService {
     return null;
   }
 
-  Future<void> registerGroupe(Map<String, dynamic> groupeData) async {
+  Future<void> registerGroup(Map<String, dynamic> groupData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/create_group'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(groupeData),
+      body: jsonEncode(groupData),
     );
 
     if (response.statusCode != 201) {
@@ -67,8 +64,7 @@ class ApiService {
     }
   }
 
-  // Groupes
-  Future<List<dynamic>> getGroupes() async {
+  Future<List<dynamic>> getGroupList() async {
     developer.log('GET /groupes', name: 'ApiService');
     final response = await http.get(Uri.parse('$baseUrl/groupes'));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -77,9 +73,9 @@ class ApiService {
     }
     throw Exception('Erreur chargement groupes');
   }
-  Future<Map<String, dynamic>> getGroupe(String groupeId) async {
-    developer.log('GET /groupes/$groupeId', name: 'ApiService');
-    final response = await http.get(Uri.parse('$baseUrl/groupes/$groupeId'));
+  Future<Map<String, dynamic>> getGroup(String groupId) async {
+    developer.log('GET /groupes/$groupId', name: 'ApiService');
+    final response = await http.get(Uri.parse('$baseUrl/groupes/$groupId'));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -87,11 +83,10 @@ class ApiService {
     throw Exception('Erreur chargement groupe');
   }
 
-  // Tentes
-  Future<List<dynamic>> getTentes(String groupeId) async {
-    final url = '$baseUrl/tentes?groupeId=$groupeId';
+  Future<List<dynamic>> getTentList(String groupId) async {
+    final url = '$baseUrl/tentes?groupeId=$groupId';
     developer.log('GET $url', name: 'ApiService');
-    if (groupeId.isEmpty) {
+    if (groupId.isEmpty) {
       developer.log('groupeId est null ou vide !', name: 'ApiService', error: 'groupeId manquant');
       throw Exception('groupeId manquant');
     }
@@ -102,10 +97,10 @@ class ApiService {
     }
     throw Exception('Erreur chargement tentes');
   }
-  Future<Map<String, dynamic>> getTente(int tenteId, {String? groupeId}) async {
-    final url = groupeId != null && groupeId.isNotEmpty
-        ? '$baseUrl/tentes/$tenteId?groupeId=$groupeId'
-        : '$baseUrl/tentes/$tenteId';
+  Future<Map<String, dynamic>> getTent(int tentId, {String? groupId}) async {
+    final url = groupId != null && groupId.isNotEmpty
+        ? '$baseUrl/tentes/$tentId?groupeId=$groupId'
+        : '$baseUrl/tentes/$tentId';
     developer.log('GET $url', name: 'ApiService');
     final response = await http.get(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -114,42 +109,40 @@ class ApiService {
     }
     throw Exception('Erreur chargement tente');
   }
-  Future<void> createTente(Map<String, dynamic> tente) async {
-    // S'assurer que le champ groupeId est bien présent
-    if (!tente.containsKey('groupeId') || tente['groupeId'] == null || tente['groupeId'].toString().isEmpty) {
+  Future<void> createTent(Map<String, dynamic> tent) async {
+    if (!tent.containsKey('groupeId') || tent['groupeId'] == null || tent['groupeId'].toString().isEmpty) {
       throw Exception('groupeId manquant lors de l\'ajout de tente');
     }
-    developer.log('POST /tentes {tente: $tente}', name: 'ApiService');
+    developer.log('POST /tentes {tente: $tent}', name: 'ApiService');
     final response = await http.post(
       Uri.parse('$baseUrl/tentes'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(tente),
+      body: jsonEncode(tent),
     );
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode != 201) {
       throw Exception('Erreur ajout tente');
     }
   }
-  Future<void> updateTente(int tenteId, Map<String, dynamic> tente) async {
-    // S'assurer que le champ groupeId est bien présent
-    if (!tente.containsKey('groupeId') || tente['groupeId'] == null || tente['groupeId'].toString().isEmpty) {
+  Future<void> updateTent(int tentId, Map<String, dynamic> tent) async {
+    if (!tent.containsKey('groupeId') || tent['groupeId'] == null || tent['groupeId'].toString().isEmpty) {
       throw Exception('groupeId manquant lors de la modification de tente');
     }
-    final groupeId = tente['groupeId'];
-    final url = '$baseUrl/tentes/$tenteId?groupeId=$groupeId';
-    developer.log('PUT $url {tente: $tente}', name: 'ApiService');
+    final groupeId = tent['groupeId'];
+    final url = '$baseUrl/tentes/$tentId?groupeId=$groupeId';
+    developer.log('PUT $url {tente: $tent}', name: 'ApiService');
     final response = await http.put(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(tente),
+      body: jsonEncode(tent),
     );
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode != 200) {
       throw Exception('Erreur modification tente: ${response.body}');
     }
   }
-  Future<void> deleteTente(int tenteId, {required String groupeId}) async {
-    final url = '$baseUrl/tentes/$tenteId?groupeId=$groupeId';
+  Future<void> deleteTent(int tentId, {required String groupId}) async {
+    final url = '$baseUrl/tentes/$tentId?groupeId=$groupId';
     developer.log('DELETE $url', name: 'ApiService');
     final response = await http.delete(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -158,20 +151,19 @@ class ApiService {
     }
   }
 
-  // Événements
-  Future<List<dynamic>> getEvenements(String groupeId) async {
-    developer.log('GET /evenements?groupeId=$groupeId', name: 'ApiService');
-    final response = await http.get(Uri.parse('$baseUrl/evenements?groupeId=$groupeId'));
+  Future<List<dynamic>> getEventList(String groupId) async {
+    developer.log('GET /evenements?groupeId=$groupId', name: 'ApiService');
+    final response = await http.get(Uri.parse('$baseUrl/evenements?groupeId=$groupId'));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
     throw Exception('Erreur chargement événements');
   }
-  Future<Map<String, dynamic>> getEvenement(int evenementId, {String? groupeId}) async {
-    final url = groupeId != null && groupeId.isNotEmpty
-        ? '$baseUrl/evenements/$evenementId?groupeId=$groupeId'
-        : '$baseUrl/evenements/$evenementId';
+  Future<Map<String, dynamic>> getEvent(int eventId, {String? groupId}) async {
+    final url = groupId != null && groupId.isNotEmpty
+        ? '$baseUrl/evenements/$eventId?groupeId=$groupId'
+        : '$baseUrl/evenements/$eventId';
     developer.log('GET $url', name: 'ApiService');
     final response = await http.get(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -180,14 +172,14 @@ class ApiService {
     }
     throw Exception('Erreur chargement événement');
   }
-  Future<void> addEvenement(Map<String, dynamic> evt) async {
+  Future<void> addEvent(Map<String, dynamic> evt) async {
     if (!evt.containsKey('groupeId') || evt['groupeId'] == null || evt['groupeId'].toString().isEmpty) {
       throw Exception('groupeId manquant lors de la modification d\'événement');
     }
-    final groupeId = evt['groupeId'];
+    final groupId = evt['groupeId'];
     developer.log('POST /evenements {evt: $evt}', name: 'ApiService');
     final response = await http.post(
-      Uri.parse('$baseUrl/evenements?groupeId=$groupeId'),
+      Uri.parse('$baseUrl/evenements?groupeId=$groupId'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(evt),
     );
@@ -196,13 +188,13 @@ class ApiService {
       throw Exception('Erreur ajout événement');
     }
   }
-  Future<void> updateEvenement(int evenementId, Map<String, dynamic> evt) async {
+  Future<void> updateEvent(int eventId, Map<String, dynamic> evt) async {
 
     if (!evt.containsKey('groupeId') || evt['groupeId'] == null || evt['groupeId'].toString().isEmpty) {
       throw Exception('groupeId manquant lors de la modification d\'événement');
     }
-    final groupeId = evt['groupeId'];
-    final url = '$baseUrl/evenements/$evenementId?groupeId=$groupeId';
+    final groupId = evt['groupeId'];
+    final url = '$baseUrl/evenements/$eventId?groupeId=$groupId';
     developer.log('PUT $url {evt: $evt}', name: 'ApiService');
     final response = await http.put(
       Uri.parse(url),
@@ -214,8 +206,8 @@ class ApiService {
       throw Exception('Erreur modification événement: ${response.body}');
     }
   }
-  Future<void> deleteEvenement(int evenementId, {required String groupeId}) async {
-    final url = '$baseUrl/evenements/$evenementId?groupeId=$groupeId';
+  Future<void> deleteEvent(int eventId, {required String groupId}) async {
+    final url = '$baseUrl/evenements/$eventId?groupeId=$groupId';
     developer.log('DELETE $url', name: 'ApiService');
     final response = await http.delete(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -224,9 +216,8 @@ class ApiService {
     }
   }
 
-  // Récupère les événements sur une période donnée
-  Future<List<dynamic>> getEvenementsParPeriode(String groupeId, DateTime debut, DateTime fin) async {
-    final url = '$baseUrl/evenements?groupeId=$groupeId&debut=${debut.toIso8601String()}&fin=${fin.toIso8601String()}';
+  Future<List<dynamic>> getEventListByPeriod(String groupId, DateTime start, DateTime end) async {
+    final url = '$baseUrl/evenements?groupeId=$groupId&debut=${start.toIso8601String()}&fin=${end.toIso8601String()}';
     developer.log('GET $url', name: 'ApiService');
     final response = await http.get(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -236,11 +227,10 @@ class ApiService {
     throw Exception('Erreur chargement événements par période');
   }
 
-  // Réservations
-  Future<List<dynamic>> getReservations({int? tenteId, int? evenementId}) async {
+  Future<List<dynamic>> getReservationList({int? tentId, int? eventId}) async {
     String url = '$baseUrl/reservations?';
-    if (tenteId != null) url += 'tenteId=$tenteId&';
-    if (evenementId != null) url += 'evenementId=$evenementId&';
+    if (tentId != null) url += 'tenteId=$tentId&';
+    if (eventId != null) url += 'evenementId=$eventId&';
     developer.log('GET $url', name: 'ApiService');
     final response = await http.get(Uri.parse(url));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
@@ -262,23 +252,22 @@ class ApiService {
     }
   }
 
-  // Contrôles
-  Future<List<dynamic>> getControles(int tenteId) async {
-    developer.log('GET /controles?tenteId=$tenteId', name: 'ApiService');
-    final response = await http.get(Uri.parse('$baseUrl/controles?tenteId=$tenteId'));
+  Future<List<dynamic>> getControlList(int tentId) async {
+    developer.log('GET /controles?tenteId=$tentId', name: 'ApiService');
+    final response = await http.get(Uri.parse('$baseUrl/controles?tenteId=$tentId'));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
     throw Exception('Erreur chargement contrôles');
   }
-  Future<void> addControle(Map<String, dynamic> controle) async {
+  Future<void> addControl(Map<String, dynamic> control) async {
     final url = Uri.parse('$baseUrl/controles');
-    developer.log('POST $url {controle: $controle}', name: 'ApiService');
+    developer.log('POST $url {controle: $control}', name: 'ApiService');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(controle), // On envoie un map sans id
+      body: jsonEncode(control), // On envoie un map sans id
     );
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode == 201) {
@@ -288,31 +277,28 @@ class ApiService {
     }
   }
 
-  Future<void> updateControle(int controleId, Map<String, dynamic> controle) async {
-    developer.log('PUT /controles/$controleId {controle: $controle}', name: 'ApiService');
+  Future<void> updateControl(int controlId, Map<String, dynamic> control) async {
+    developer.log('PUT /controles/$controlId {controle: $control}', name: 'ApiService');
     final response = await http.put(
-      Uri.parse('$baseUrl/controles/$controleId'),
+      Uri.parse('$baseUrl/controles/$controlId'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(controle),
+      body: jsonEncode(control),
     );
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode != 200) {
       throw Exception('Erreur modification contrôle');
     }
   }
-  Future<void> deleteControle(int controleId) async {
-    developer.log('DELETE /controles/$controleId', name: 'ApiService');
-    final response = await http.delete(Uri.parse('$baseUrl/controles/$controleId'));
+  Future<void> deleteControl(int controlId) async {
+    developer.log('DELETE /controles/$controlId', name: 'ApiService');
+    final response = await http.delete(Uri.parse('$baseUrl/controles/$controlId'));
     developer.log('Response: ${response.statusCode} - ${response.body}', name: 'ApiService');
     if (response.statusCode != 204) {
       throw Exception('Erreur suppression contrôle');
     }
   }
-// ==========================================================
-// 🍽️ MENUS (Recettes)
-// ==========================================================
 
-  Future<List<dynamic>> getMenus() async {
+  Future<List<dynamic>> getMenuList() async {
     final response = await _client.get(Uri.parse('$baseUrl/menus'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
@@ -321,12 +307,12 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getMenu(int id) async {
-    final response = await _client.get(Uri.parse('$baseUrl/menus/$id'));
+  Future<Map<String, dynamic>> getMenu(int menuId) async {
+    final response = await _client.get(Uri.parse('$baseUrl/menus/$menuId'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw Exception('Erreur ${response.statusCode} en récupérant le menu $id');
+      throw Exception('Erreur ${response.statusCode} en récupérant le menu $menuId');
     }
   }
 
@@ -341,9 +327,9 @@ class ApiService {
     }
   }
 
-  Future<void> updateMenu(int id, Map<String, dynamic> menuJson) async {
+  Future<void> updateMenu(int menuId, Map<String, dynamic> menuJson) async {
     final response = await _client.put(
-      Uri.parse('$baseUrl/menus/$id'),
+      Uri.parse('$baseUrl/menus/$menuId'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(menuJson),
     );
@@ -352,18 +338,14 @@ class ApiService {
     }
   }
 
-  Future<void> deleteMenu(int id) async {
-    final response = await _client.delete(Uri.parse('$baseUrl/menus/$id'));
+  Future<void> deleteMenu(int menuId) async {
+    final response = await _client.delete(Uri.parse('$baseUrl/menus/$menuId'));
     if (response.statusCode != 204) {
       throw Exception('Erreur ${response.statusCode} lors de la suppression du menu');
     }
   }
 
-// ==========================================================
-// 📅 EVENT MENUS (Planification de repas)
-// ==========================================================
-
-  Future<List<dynamic>> getEventMenus(int eventId) async {
+  Future<List<dynamic>> getEventMenuList(int eventId) async {
     final url = Uri.parse('$baseUrl/event_menus?event_id=$eventId');
     developer.log('[ApiService] 🔵 GET $url');
 

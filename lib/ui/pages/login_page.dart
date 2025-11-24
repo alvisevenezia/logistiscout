@@ -112,7 +112,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     );
                     if (success && mounted) {
                       // 🔹 Vérifie si le nom du contrôleur est déjà enregistré
-                      final savedName = await LocalStorageService.instance.getControleurName();
+                      final savedName = await LocalStorageService.instance.getControllerName();
 
                       if (savedName == null || savedName.isEmpty) {
                         // 🟢 Si pas encore défini, on affiche la page pour le saisir

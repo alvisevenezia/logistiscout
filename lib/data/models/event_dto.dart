@@ -4,9 +4,9 @@ class EventDto {
   final String date;    // keep as String because API sends ISO string
   final String dateFin; // same
   final String type;
-  final List<int> tentesAssociees;
+  final List<int> associatedTents;
   final List<int> unites;
-  final String groupeId;
+  final String groupId;
 
   EventDto({
     required this.id,
@@ -14,9 +14,9 @@ class EventDto {
     required this.date,
     required this.dateFin,
     required this.type,
-    required this.tentesAssociees,
+    required this.associatedTents,
     required this.unites,
-    required this.groupeId,
+    required this.groupId,
   });
 
   factory EventDto.fromJson(Map<String, dynamic> json) {
@@ -26,9 +26,9 @@ class EventDto {
       date: json['date'] as String,
       dateFin: json['dateFin'] as String,
       type: json['type'] as String,
-      tentesAssociees: List<int>.from(json['tentesAssociees'] ?? []),
+      associatedTents: List<int>.from(json['tentesAssociees'] ?? []),
       unites: List<int>.from(json['unites'] ?? []),
-      groupeId: json['groupeId'].toString(),
+      groupId: json['groupId'].toString(),
     );
   }
 
@@ -38,8 +38,8 @@ class EventDto {
     'date': date,
     'dateFin': dateFin,
     'type': type,
-    'tentesAssociees': tentesAssociees,
+    'tentesAssociees': associatedTents,
     'unites': unites,
-    'groupeId': groupeId,
+    'groupId': groupId,
   };
 }

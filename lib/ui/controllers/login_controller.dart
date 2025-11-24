@@ -13,7 +13,7 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
   Future<bool> login(String userlogin, String mdp) async {
     state = const AsyncLoading();
     try {
-      final response = await _api.loginGroupe(userlogin.trim(), mdp.trim());
+      final response = await _api.loginGroup(userlogin.trim(), mdp.trim());
 
       developer.log('[LoginController] API response: $response');
 

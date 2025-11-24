@@ -5,7 +5,7 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 
 class ControleEditPage extends ConsumerStatefulWidget {
-  final Tente tente;
+  final Tent tente;
   final String nomControleur;
 
   const ControleEditPage({
@@ -85,7 +85,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Attendu : ${_expectedSardines(widget.tente.typeTente)}',
+                  'Attendu : ${_expectedSardines(widget.tente.tentType)}',
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
@@ -116,11 +116,11 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                   'nom_controleur': widget.nomControleur.trim(),
                 };
 
-                final controle = Controle(
+                final controle = Control(
                   id: null,
-                  tenteId: widget.tente.id,
+                  tentId: widget.tente.id,
                   date: DateTime.now(),
-                  remarques: remarquesController.text.trim(),
+                  comment: remarquesController.text.trim(),
                   checklist: payload,
                   userId: 0
                 );

@@ -18,7 +18,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   String _typeFilter = 'Tous';
   String _sizeFilter = 'Tous';
   String _unitFilter = 'Tous';
-  EtatTente? _etatFilter;
+  TentState? _etatFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +39,13 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               final matchQuery = q.isEmpty
                   ? true
                   : t.nom.toLowerCase().contains(q) ||
-                  t.typeTente.toLowerCase().contains(q) ||
-                  t.unitePreferee.toLowerCase().contains(q);
+                  t.tentType.toLowerCase().contains(q) ||
+                  t.assignedUnit.toLowerCase().contains(q);
               final matchType =
-              _typeFilter == 'Tous' ? true : t.typeTente == _typeFilter;
-              final matchEtat = _etatFilter == null ? true : t.etat == _etatFilter;
+              _typeFilter == 'Tous' ? true : t.tentType == _typeFilter;
+              final matchEtat = _etatFilter == null ? true : t.state == _etatFilter;
               final matchSize = _sizeFilter == 'Tous' ? true : t.nbPlaces.toString() == _sizeFilter;
-              final matchUnit = _unitFilter == 'Tous' ? true : t.unitePreferee == _unitFilter;
+              final matchUnit = _unitFilter == 'Tous' ? true : t.assignedUnit == _unitFilter;
               return matchQuery && matchType && matchEtat && matchSize && matchUnit;
             }).toList();
 
@@ -167,7 +167,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
     final nbCtl = TextEditingController(text: '6');
     final couleursCtl = TextEditingController();
     String type = 'Canadienne';
-    var etat = EtatTente.casse; // défaut demandé
+    var etat = TentState.broken; // défaut demandé
     var integree = false;
     Unit unitePreferee = Unit.Tous;
 
@@ -202,15 +202,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                 decoration: const InputDecoration(labelText: 'Nombre de places'),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<EtatTente>(
+              DropdownButtonFormField<TentState>(
                 initialValue: etat,
-                items: EtatTente.values
+                items: TentState.values
                     .map((e) => DropdownMenuItem(
                   value: e,
-                  child: Text(etatTenteToString(e)),
+                  child: Text(tentStateToString(e)),
                 ))
                     .toList(),
-                onChanged: (v) => etat = v ?? EtatTente.casse,
+                onChanged: (v) => etat = v ?? TentState.broken,
                 decoration: const InputDecoration(labelText: 'État'),
               ),
               const SizedBox(height: 8),
@@ -250,24 +250,24 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                 return;
               }
 
-              final newTente = Tente(
+              final newTente = Tent(
                 id: -1,
                 nom: nomCtl.text.trim(),
                 uniteId: null,
-                etat: etat,
-                remarques: '',
-                tapisSolIntegre: integree,
+                state: etat,
+                comments: '',
+                isFloorEmbedded: integree,
                 nbPlaces: int.tryParse(nbCtl.text) ?? 0,
-                typeTente: type,
-                unitePreferee: unitePreferee.name,
+                tentType: type,
+                assignedUnit: unitePreferee.name,
                 agenda: const [],
-                historiqueControles: const [],
-                couleurs: couleursCtl.text
+                controlHistory: const [],
+                colors: couleursCtl.text
                     .split(',')
                     .map((e) => e.trim())
                     .where((e) => e.isNotEmpty)
                     .toList(),
-                groupeId: '',
+                groupId: '',
               );
 
               await ref.read(tentesProvider.notifier).createTente(newTente);
@@ -283,14 +283,14 @@ class _TentesPageState extends ConsumerState<TentesPage> {
 // ======= Widgets & helpers UI =======
 
 class _TenteCard extends StatelessWidget {
-  final Tente tente;
+  final Tent tente;
   final VoidCallback onOpen;
   const _TenteCard({required this.tente, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
-    final bg = _etatBgColor(tente.etat);
-    final chipColor = _etatChipColor(tente.etat);
+    final bg = _etatBgColor(tente.state);
+    final chipColor = _etatChipColor(tente.state);
 
     return Card(
       elevation: 2,
@@ -305,7 +305,7 @@ class _TenteCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: Color(Unit.fromString(tente.unitePreferee).color),
+                backgroundColor: Color(Unit.fromString(tente.assignedUnit).color),
                 child: const Icon(Icons.cabin, color: Colors.white),
               ),
               const SizedBox(width: 12),
@@ -338,7 +338,7 @@ class _TenteCard extends StatelessWidget {
                             border: Border.all(color: chipColor.withAlpha(80)),
                           ),
                           child: Text(
-                            etatTenteToString(tente.etat),
+                            tentStateToString(tente.state),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -350,16 +350,16 @@ class _TenteCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${tente.typeTente} • ${tente.nbPlaces} places'
-                          '${tente.unitePreferee.isNotEmpty ? ' • ${tente.unitePreferee}' : ''}',
+                      '${tente.tentType} • ${tente.nbPlaces} places'
+                          '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
                     // Bandeau de petites pastilles couleur scotch
-                    if (tente.couleurs.isNotEmpty)
+                    if (tente.colors.isNotEmpty)
                       Wrap(
                         spacing: 4,
-                        children: tente.couleurs.take(6).map((c) {
+                        children: tente.colors.take(6).map((c) {
                           return Container(
                             width: 16,
                             height: 10,
@@ -456,25 +456,25 @@ class _TypeFilter extends StatelessWidget {
 }
 
 class _EtatFilter extends StatelessWidget {
-  final EtatTente? value;
-  final ValueChanged<EtatTente?> onChanged;
+  final TentState? value;
+  final ValueChanged<TentState?> onChanged;
   const _EtatFilter({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
 
-    return DropdownButtonFormField<EtatTente?>(
+    return DropdownButtonFormField<TentState?>(
       isExpanded: true,
       initialValue: value,
       items: [
-        const DropdownMenuItem<EtatTente?>(
+        const DropdownMenuItem<TentState?>(
           value: null,
           child: Text('Tous les états'),
         ),
-        ...EtatTente.values.map(
-              (e) => DropdownMenuItem<EtatTente?>(
+        ...TentState.values.map(
+              (e) => DropdownMenuItem<TentState?>(
             value: e,
-            child: Text(etatTenteToString(e)),
+            child: Text(tentStateToString(e)),
           ),
         ),
       ],
@@ -488,22 +488,22 @@ class _EtatFilter extends StatelessWidget {
   }
 }
 
-Color _etatBgColor(EtatTente e) {
+Color _etatBgColor(TentState e) {
   switch (e) {
-    case EtatTente.ok:
+    case TentState.good:
       return Colors.green.shade50;
-    case EtatTente.casse:
+    case TentState.broken:
       return Colors.orange.shade50;
     default:
       return Colors.red.shade50;
   }
 }
 
-Color _etatChipColor(EtatTente e) {
+Color _etatChipColor(TentState e) {
   switch (e) {
-    case EtatTente.ok:
+    case TentState.good:
       return Colors.green.shade700;
-    case EtatTente.casse:
+    case TentState.broken:
       return Colors.orange.shade700;
     default:
       return Colors.red.shade700;

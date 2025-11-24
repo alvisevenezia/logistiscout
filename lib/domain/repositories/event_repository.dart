@@ -21,7 +21,7 @@ abstract class EventRepository {
     int eventId,
     int menuId,
     DateTime date,
-    MealType meal, int quantite
+    MealType meal, int quantity
   );
   Future<void> duplicateMealPlans(
       String eventId,

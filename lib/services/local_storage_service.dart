@@ -12,7 +12,6 @@ class LocalStorageService {
 
   Future<SharedPreferences> get _prefs async => await SharedPreferences.getInstance();
 
-  // === 🧩 Group ID ===
   Future<void> saveGroupId(String groupId) async {
     final prefs = await _prefs;
     await prefs.setString(_groupIdKey, groupId);
@@ -26,7 +25,6 @@ class LocalStorageService {
     return id;
   }
 
-  // === 👤 Username ===
   Future<void> saveUsername(String username) async {
     final prefs = await _prefs;
     await prefs.setString(_usernameKey, username);
@@ -37,7 +35,6 @@ class LocalStorageService {
     return prefs.getString(_usernameKey);
   }
 
-  // === 🪪 Token ===
   Future<void> saveToken(String token) async {
     final prefs = await _prefs;
     await prefs.setString(_tokenKey, token);
@@ -57,7 +54,6 @@ class LocalStorageService {
     developer.log('[LocalStorageService] 🧽 Cleared token');
   }
 
-  // === 🧹 Clear all ===
   Future<void> clearAll() async {
     final prefs = await _prefs;
     await prefs.clear();
@@ -71,13 +67,12 @@ class LocalStorageService {
     developer.log('[LocalStorageService] 🧽 Cleared group-related keys');
   }
 
-  // === 🧑‍💼 Contrôleur ===
-  Future<void> saveControleurName(String name) async {
+  Future<void> saveControllerName(String name) async {
     final prefs = await _prefs;
     await prefs.setString(_controleurKey, name);
   }
 
-  Future<String?> getControleurName() async {
+  Future<String?> getControllerName() async {
     final prefs = await _prefs;
     return prefs.getString(_controleurKey);
   }

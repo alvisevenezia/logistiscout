@@ -36,7 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
     };
 
     try {
-      await api.registerGroupe(body); // 👈 méthode à ajouter dans ApiService
+      await api.registerGroup(body); // 👈 méthode à ajouter dans ApiService
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Groupe créé avec succès 🎉")),

@@ -33,7 +33,7 @@ class RecipeTile extends StatelessWidget {
           spacing: 6,
           children: [
             Chip(label: Text(recipe.category.name)),
-            if (recipe.tags.contains(Tag.vege))
+            if (recipe.tags.contains(Tag.vegetarian))
               const Chip(label: Text('Végétarien')),
           ],
         ),

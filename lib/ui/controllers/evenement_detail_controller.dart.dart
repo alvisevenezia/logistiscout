@@ -24,7 +24,7 @@ class EvenementDetailController extends ChangeNotifier {
   final SaveMealPlan saveMealPlanUC;
   final DuplicateMenu duplicateMenuUC;
   final RecipeRepository recipeRepo;
-  final TenteRepository tenteRepo;
+  final TentRepository tenteRepo;
   final EventRepository eventRepo;
 
   // === État interne ===
@@ -34,7 +34,7 @@ class EvenementDetailController extends ChangeNotifier {
   MealType selectedMeal = MealType.dejeuner;
   bool loading = false;
   String? error;
-  List<Tente> allTentes = [];
+  List<Tent> allTentes = [];
 
   EvenementDetailController({
     required this.getEventUC,
@@ -57,7 +57,7 @@ class EvenementDetailController extends ChangeNotifier {
       event = await getEventUC(eventId);
       developer.log('[EvenementDetailController] ✅ Event loaded: ${event?.nom}');
       await loadTentes();
-      allTentes = await tenteRepo.getAllTentes();
+      allTentes = await tenteRepo.getAllTent();
       developer.log('[EvenementDetailController] ✅ Loaded ${allTentes.length} tentes');
       selectedDate = event?.date;
       await _loadPlan(eventId);
@@ -71,7 +71,7 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 // --- Nouveaux champs pour la gestion des tentes ---
-  List<Tente> availableTentes = [];
+  List<Tent> availableTentes = [];
   Set<int> selectedTenteIds = {};
 
   /// Charge toutes les tentes assignées + dispo
@@ -81,8 +81,8 @@ class EvenementDetailController extends ChangeNotifier {
       loading = true;
       notifyListeners();
 
-      allTentes = await tenteRepo.getAllTentes();
-      availableTentes = await tenteRepo.getAvailableTentes(event!.date, event!.dateFin);
+      allTentes = await tenteRepo.getAllTent();
+      availableTentes = await tenteRepo.getAvailableTent(event!.date, event!.dateFin);
       developer.log('[EvenementDetailController] ✅ Loaded ${availableTentes.length} available tents');
     } catch (e, st) {
       developer.log('[EvenementDetailController] ❌ loadTentes failed', error: e, stackTrace: st);
@@ -108,12 +108,12 @@ class EvenementDetailController extends ChangeNotifier {
     if (event == null) return;
 
     try {
-      final updatedIds = Set<int>.from(event!.tentesAssociees);
+      final updatedIds = Set<int>.from(event!.associatedTents);
       for (final id in selectedTenteIds) {
         updatedIds.contains(id) ? updatedIds.remove(id) : updatedIds.add(id);
       }
 
-      final updatedEvent = event!.copyWith(tentesAssociees: updatedIds.toList());
+      final updatedEvent = event!.copyWith(associatedTents: updatedIds.toList());
       event = updatedEvent;
       selectedTenteIds.clear();
       notifyListeners();

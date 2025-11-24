@@ -1,64 +1,64 @@
 // data/modals/tente_dto.dart
-class TenteDto {
+class TentDto {
   final int id;
   final String nom;
   final int? uniteId;
-  final String etat;
-  final String remarques;
-  final bool estIntegree;
+  final String state;
+  final String comments;
+  final bool isFloorEmbedded;
   final int nbPlaces;
-  final String typeTente;
-  final String unitePreferee;
+  final String tentType;
+  final String assignedUnit;
   final List<Map<String, dynamic>> agenda; // raw reservations JSON
-  final List<Map<String, dynamic>> historiqueControles; // raw controles JSON
-  final List<String> couleurs;
-  final String groupeId;
+  final List<Map<String, dynamic>> controlHistory; // raw controles JSON
+  final List<String> colors;
+  final String groupId;
 
-  TenteDto({
+  TentDto({
     required this.id,
     required this.nom,
     required this.uniteId,
-    required this.etat,
-    required this.remarques,
-    required this.estIntegree,
+    required this.state,
+    required this.comments,
+    required this.isFloorEmbedded,
     required this.nbPlaces,
-    required this.typeTente,
-    required this.unitePreferee,
+    required this.tentType,
+    required this.assignedUnit,
     required this.agenda,
-    required this.historiqueControles,
-    required this.couleurs,
-    required this.groupeId,
+    required this.controlHistory,
+    required this.colors,
+    required this.groupId,
   });
 
-  factory TenteDto.fromJson(Map<String, dynamic> json) => TenteDto(
+  factory TentDto.fromJson(Map<String, dynamic> json) => TentDto(
     id: json['id'] as int,
     nom: json['nom'] ?? '',
     uniteId: json['uniteId'] == null ? null : int.tryParse(json['uniteId'].toString()),
-    etat: json['etat'] ?? '',
-    remarques: json['remarques'] ?? '',
-    estIntegree: (json['estIntegree'] ?? json['tapisSolIntegre']) == true,
+    state: json['etat'] ?? '',
+    comments: json['remarques'] ?? '',
+    isFloorEmbedded: json['estIntegree'] == true,
     nbPlaces: json['nbPlaces'] is int ? json['nbPlaces'] : int.tryParse('${json['nbPlaces']}') ?? 0,
-    typeTente: json['typeTente'] ?? '',
-    unitePreferee: json['unitePreferee'] ?? '',
+    tentType: json['typeTente'] ?? '',
+    assignedUnit: json['unitePreferee'] ?? '',
     agenda: List<Map<String, dynamic>>.from(json['agenda'] ?? const []),
-    historiqueControles: List<Map<String, dynamic>>.from(json['historiqueControles'] ?? const []),
-    couleurs: (json['couleurs'] as List<dynamic>? ?? []).map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList(),
-    groupeId: json['groupeId']?.toString() ?? '',
+    controlHistory: List<Map<String, dynamic>>.from(json['controlHistory'] ?? const []),
+    colors: (json['couleurs'] as List<dynamic>? ?? []).map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList(),
+    groupId: json['groupeId']?.toString() ?? '',
   );
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'nom': nom,
     'uniteId': uniteId,
-      'etat': etat,
-    'remarques': remarques,
-    'estIntegree': estIntegree,
+    'state': state,
+    'remarques': comments,
+    'estIntegree': isFloorEmbedded,
     'nbPlaces': nbPlaces,
-    'typeTente': typeTente,
-    'unitePreferee': unitePreferee,
+    'tentType': tentType,
+    'unitePreferee': assignedUnit,
     'agenda': agenda,
-    'historiqueControles': historiqueControles,
-    'couleurs': couleurs,
-    'groupeId': groupeId,
+    'controlHistory': controlHistory,
+    'couleurs': colors,
+    'groupeId': groupId,
   };
 }

@@ -15,7 +15,7 @@ class RecipeRepositoryImpl implements RecipeRepository {
     Set<Allergen>? allergens,
     Set<Tag>? tags,
   }) async {
-    final data = await api.getMenus();
+    final data = await api.getMenuList();
 
     final filtered = data.where((menu) {
       final name = (menu['nom'] ?? '').toString().toLowerCase();

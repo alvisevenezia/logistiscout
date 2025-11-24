@@ -2,7 +2,6 @@ import 'package:logistiscout/data/models/event_dto.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 
 class EventMapper {
-  /// Convert DTO → Domain
   static Event toDomain(EventDto dto) {
     DateTime safeParse(String? value) {
       if (value == null || value.isEmpty) return DateTime.now();
@@ -19,13 +18,12 @@ class EventMapper {
       date: safeParse(dto.date),
       dateFin: safeParse(dto.dateFin),
       type: dto.type,
-      tentesAssociees: dto.tentesAssociees,
+      associatedTents: dto.associatedTents,
       unites: dto.unites,
-      groupeId: dto.groupeId,
+      groupId: dto.groupId,
     );
   }
 
-  /// Convert Domain → DTO
   static EventDto toDto(Event entity) {
     return EventDto(
       id: entity.id,
@@ -33,9 +31,9 @@ class EventMapper {
       date: entity.date.toIso8601String(),
       dateFin: entity.dateFin.toIso8601String(),
       type: entity.type,
-      tentesAssociees: entity.tentesAssociees,
+      associatedTents: entity.associatedTents,
       unites: entity.unites,
-      groupeId: entity.groupeId,
+      groupId: entity.groupId,
     );
   }
 

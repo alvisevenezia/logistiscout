@@ -27,24 +27,24 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
   // local editable state (nullable until we see data)
   String? _typeTente;
-  EtatTente? _etat;
+  TentState? _etat;
   bool? _estIntegree;
   List<String>? _couleursHex;
   Unit? _unitePreferee;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
 
-  void _ensureControllersAndState(Tente t) {
+  void _ensureControllersAndState(Tent t) {
     _nomCtl ??= TextEditingController(text: t.nom);
     _nbCtl ??= TextEditingController(text: t.nbPlaces.toString());
-    _remarquesCtl ??= TextEditingController(text: t.remarques);
+    _remarquesCtl ??= TextEditingController(text: t.comments);
 
-    _typeTente ??= (_types.contains(t.typeTente) ? t.typeTente : 'Autre');
-    _etat ??= t.etat;
-    _estIntegree ??= t.tapisSolIntegre;
-    _unitePreferee ??= Unit.fromString(t.unitePreferee);
+    _typeTente ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
+    _etat ??= t.state;
+    _estIntegree ??= t.isFloorEmbedded;
+    _unitePreferee ??= Unit.fromString(t.assignedUnit);
 
-    _couleursHex ??= List<String>.from(t.couleurs);
+    _couleursHex ??= List<String>.from(t.colors);
   }
 
   @override
@@ -80,7 +80,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erreur : $e')),
         data: (tentes) {
-          final tente = tentes.where((t) => t.id == widget.tenteId).cast<Tente?>().firstOrNull;
+          final tente = tentes.where((t) => t.id == widget.tenteId).cast<Tent?>().firstOrNull;
           if (tente == null) {
             return const Center(child: Text('Tente introuvable.'));
           }
@@ -95,13 +95,11 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
               return Column(
                 children: [
-                  // 🟢 HEADER FIXE
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: _HeaderCard(tente: tente),
                   ),
 
-                  // 🟢 CONTENU DÉFILABLE
                   Expanded(
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -116,11 +114,11 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               final updated = tente.copyWith(
                                 nom: _nomCtl!.text.trim(),
                                 nbPlaces: int.tryParse(_nbCtl!.text) ?? tente.nbPlaces,
-                                typeTente: _typeTente!,
-                                etat: _etat!,
-                                tapisSolIntegre: _estIntegree!,
-                                couleurs: _couleursHex!,
-                                unitePreferee: _unitePreferee!.name,
+                                tentType: _typeTente!,
+                                state: _etat!,
+                                isFloorEmbedded: _estIntegree!,
+                                colors: _couleursHex!,
+                                assignedUnit: _unitePreferee!.name,
                               );
                               await ref.read(tentesProvider.notifier).updateTente(updated);
                               if (mounted) {
@@ -169,15 +167,15 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 ],
                               ),
                               const SizedBox(height: 15),
-                              DropdownButtonFormField<EtatTente>(
+                              DropdownButtonFormField<TentState>(
                                 initialValue: _etat!,
-                                items: EtatTente.values
+                                items: TentState.values
                                     .map((e) => DropdownMenuItem(
                                   value: e,
-                                  child: Text(etatTenteToString(e)),
+                                  child: Text(tentStateToString(e)),
                                 ))
                                     .toList(),
-                                onChanged: (v) => setState(() => _etat = v ?? EtatTente.casse),
+                                onChanged: (v) => setState(() => _etat = v ?? TentState.broken),
                                 decoration: const InputDecoration(
                                   labelText: 'État',
                                   border: OutlineInputBorder(),
@@ -234,8 +232,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 style: const TextStyle(fontWeight: FontWeight.w600),
                               ),
                               subtitle: Text(
-                                dernierControle.remarques.isNotEmpty
-                                    ? 'Remarques : ${dernierControle.remarques}'
+                                dernierControle.comment.isNotEmpty
+                                    ? 'Remarques : ${dernierControle.comment}'
                                     : 'Aucune remarque',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -328,7 +326,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   label: const Text('Enregistrer la remarque'),
                                   onPressed: () async {
                                     final updated = tente.copyWith(
-                                      remarques: _remarquesCtl!.text.trim(),
+                                      comment: _remarquesCtl!.text.trim(),
                                     );
                                     await ref.read(tentesProvider.notifier).updateTente(updated);
                                     if (mounted) {
@@ -573,16 +571,13 @@ class _RowLabel extends StatelessWidget {
   }
 }
 
-
-/// Header card and support widgets (same as before)…
-
 class _HeaderCard extends StatelessWidget {
-  final Tente tente;
+  final Tent tente;
   const _HeaderCard({required this.tente});
 
   @override
   Widget build(BuildContext context) {
-    final chipColor = _chipColor(tente.etat);
+    final chipColor = _chipColor(tente.state);
 
     return Card(
       elevation: 1.5,
@@ -593,9 +588,7 @@ class _HeaderCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: tente.couleurs.isNotEmpty
-                  ? _parseColor(tente.couleurs.first)
-                  : Colors.blueGrey,
+              backgroundColor: Color(Unit.fromString(tente.assignedUnit).color),
               child: const Icon(Icons.cabin, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 14),
@@ -624,7 +617,7 @@ class _HeaderCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          etatTenteToString(tente.etat),
+                          tentStateToString(tente.state),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -636,15 +629,15 @@ class _HeaderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${tente.typeTente} • ${tente.nbPlaces} places'
-                        '${tente.unitePreferee.isNotEmpty ? ' • ${tente.unitePreferee}' : ''}',
+                    '${tente.tentType} • ${tente.nbPlaces} places'
+                        '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  if (tente.couleurs.isNotEmpty) ...[
+                  if (tente.colors.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 4,
-                      children: tente.couleurs.take(6).map((c) {
+                      children: tente.colors.take(6).map((c) {
                         return Container(
                           width: 16,
                           height: 10,
@@ -666,11 +659,11 @@ class _HeaderCard extends StatelessWidget {
     );
   }
 
-  static Color _chipColor(EtatTente e) {
+  static Color _chipColor(TentState e) {
     switch (e) {
-      case EtatTente.ok :
+      case TentState.good :
         return Colors.green.shade700;
-      case EtatTente.casse:
+      case TentState.broken:
         return Colors.orange.shade700;
       default:
         return Colors.red.shade700;

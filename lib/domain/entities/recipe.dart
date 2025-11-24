@@ -1,18 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'ingredient.dart'; // ✅ make sure this defines IngredientTotal or similar
+import 'ingredient.dart';
 
 enum RecipeCategory { entree, plat, dessert, boisson }
 enum Allergen { gluten, lactose, arachide, soja, oeuf, poisson }
-enum Tag { vege, sansPorc }
+enum Tag {
+  vegetarian,
+  noPork
+}
 
 @immutable
 class Recipe {
   final String id;
   final String title;
-  final String description;        // 🆕 short text
-  final String instructions;       // 🆕 full preparation text
+  final String description;
+  final String instructions;
   final RecipeCategory category;
-  final List<IngredientTotal> ingredients; // 🆕 list of ingredients with qty/unit
+  final List<IngredientTotal> ingredients;
   final Set<Allergen> allergens;
   final Set<Tag> tags;
 
@@ -50,7 +53,7 @@ class Recipe {
     );
   }
 
-  // 🧱 Serialization (optional — useful for saving locally or via API)
+
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
       id: json['id'].toString(),
@@ -75,7 +78,7 @@ class Recipe {
       tags: (json['tags'] as List<dynamic>?)
           ?.map((t) => Tag.values.firstWhere(
             (e) => e.name == t,
-        orElse: () => Tag.vege,
+        orElse: () => Tag.vegetarian,
       ))
           .toSet() ??
           const {},

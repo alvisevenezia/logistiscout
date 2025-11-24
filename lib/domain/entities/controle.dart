@@ -1,61 +1,80 @@
-// lib/domain/entities/controle.dart
-
-class Controle {
+class Control {
   final int? id;
-  final int tenteId;
+  final int tentId;
   final int userId;
   final DateTime date;
   final Map<String, dynamic> checklist;
-  final String remarques;
+  final String comment;
 
-  const Controle({
+  const Control({
     this.id,
-    required this.tenteId,
+    required this.tentId,
     required this.userId,
     required this.date,
     required this.checklist,
-    required this.remarques,
+    required this.comment,
   });
 
-  Controle copyWith({
+  Control copyWith({
     int? id,
-    int? tenteId,
+    int? tentId,
     int? userId,
     DateTime? date,
     Map<String, dynamic>? checklist,
-    String? remarques,
+    String? comment,
   }) {
-    return Controle(
+    return Control(
       id: id ?? this.id,
-      tenteId: tenteId ?? this.tenteId,
+      tentId: tentId ?? this.tentId,
       userId: userId ?? this.userId,
       date: date ?? this.date,
       checklist: checklist ?? this.checklist,
-      remarques: remarques ?? this.remarques,
+      comment: comment ?? this.comment,
     );
   }
 
   @override
   String toString() {
-    return 'Controle(id: $id, tenteId: $tenteId, userId: $userId, date: $date, remarques: $remarques)';
+    return 'Controle(id: $id, tenteId: $tentId, userId: $userId, date: $date, remarques: $comment)';
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tentId': tentId,
+      'userId': userId,
+      'date': date.toString(),
+      'checklist': checklist,
+      'comment': comment,
+    };
+  }
+
+  factory Control.fromJson(Map<String, dynamic> json) {
+    return Control(
+      id: json['id'],
+      tentId: json['tentId'],
+      userId: json['userId'],
+      date: DateTime.parse(json['date']),
+      checklist: json['checklist'],
+      comment: json['comment'] ?? '',
+    );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Controle &&
+    return other is Control &&
         other.id == id &&
-        other.tenteId == tenteId &&
+        other.tentId == tentId &&
         other.userId == userId &&
         other.date == date &&
-        other.remarques == remarques;
+        other.comment == comment;
   }
 
   @override
   int get hashCode =>
       id.hashCode ^
-      tenteId.hashCode ^
+      tentId.hashCode ^
       userId.hashCode ^
       date.hashCode ^
-      remarques.hashCode;
+      comment.hashCode;
 }

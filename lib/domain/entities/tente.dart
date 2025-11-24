@@ -1,111 +1,106 @@
 // domain/entities/tente.dart
-import 'package:logistiscout/data/controle.dart';
-import 'package:logistiscout/data/reservation.dart';
+import 'package:logistiscout/domain/entities/reservation.dart';
+import 'package:logistiscout/domain/entities/controle.dart';
 
-class Tente {
+class Tent {
   final int id;
   final String nom;
   final int? uniteId;
-  final EtatTente etat; // enum in domain if you want
-  final String remarques;
-  final bool tapisSolIntegre;
+  final TentState state; // enum in domain if you want
+  final String comments;
+  final bool isFloorEmbedded;
   final int nbPlaces;
-  final String typeTente;
-  final String unitePreferee;
+  final String tentType;
+  final String assignedUnit;
   final List<Reservation> agenda;
-  final List<Controle> historiqueControles;
-  final List<String> couleurs;
-  final String groupeId;
+  final List<Control> controlHistory;
+  final List<String> colors;
+  final String groupId;
 
-  const Tente({
+  const Tent({
     required this.id,
     required this.nom,
     required this.uniteId,
-    required this.etat,
-    required this.remarques,
-    required this.tapisSolIntegre,
+    required this.state,
+    required this.comments,
+    required this.isFloorEmbedded,
     required this.nbPlaces,
-    required this.typeTente,
-    required this.unitePreferee,
+    required this.tentType,
+    required this.assignedUnit,
     required this.agenda,
-    required this.historiqueControles,
-    required this.couleurs,
-    required this.groupeId,
+    required this.controlHistory,
+    required this.colors,
+    required this.groupId,
   });
 
-  Tente copyWith({
+  Tent copyWith({
     int? id,
     String? nom,
     int? uniteId,
-    EtatTente? etat,
-    String? remarques,
-    bool? tapisSolIntegre,
+    TentState? state,
+    String? comment,
+    bool? isFloorEmbedded,
     int? nbPlaces,
-    String? typeTente,
-    String? unitePreferee,
+    String? tentType,
+    String? assignedUnit,
     List<Reservation>? agenda,
-    List<Controle>? historiqueControles,
-    List<String>? couleurs,
-    String? groupeId,
+    List<Control>? controlHistory,
+    List<String>? colors,
+    String? groupId,
   }) {
-    return Tente(
+    return Tent(
       id: id ?? this.id,
       nom: nom ?? this.nom,
       uniteId: uniteId ?? this.uniteId,
-      etat: etat ?? this.etat,
-      remarques: remarques ?? this.remarques,
-      tapisSolIntegre: tapisSolIntegre ?? this.tapisSolIntegre,
+      state: state ?? this.state,
+      comments: comment ?? this.comments,
+      isFloorEmbedded: isFloorEmbedded ?? this.isFloorEmbedded,
       nbPlaces: nbPlaces ?? this.nbPlaces,
-      typeTente: typeTente ?? this.typeTente,
-      unitePreferee: unitePreferee ?? this.unitePreferee,
+      tentType: tentType ?? this.tentType,
+      assignedUnit: assignedUnit ?? this.assignedUnit,
       agenda: agenda ?? this.agenda,
-      historiqueControles: historiqueControles ?? this.historiqueControles,
-      couleurs: couleurs ?? this.couleurs,
-      groupeId: groupeId ?? this.groupeId,
+      controlHistory: controlHistory ?? this.controlHistory,
+      colors: colors ?? this.colors,
+      groupId: groupId ?? this.groupId,
     );
   }
 }
 
-enum EtatTente { ok, maintenance, casse, inconnu }
+enum TentState { good,
+  repair,
+  broken,
+  lost }
 
-/// Converts API string (or display label) to enum
-EtatTente etatTenteFromString(String etat) {
-  final normalized = etat.trim().toLowerCase();
+TentState tentStateFromString(String state) {
+  final normalized = state.trim().toLowerCase();
 
   switch (normalized) {
-    case 'ok':
     case 'bon':
-      return EtatTente.ok;
+      return TentState.good;
 
-    case 'maintenance':
-    case 'a réparer':
     case 'à réparer':
-      return EtatTente.maintenance;
+      return TentState.repair;
 
     case 'hs':
-    case 'cassé':
-    case 'casse':
-      return EtatTente.casse;
+      return TentState.broken;
 
-    case 'inconnu':
     case 'perdue':
-      return EtatTente.inconnu;
+      return TentState.lost;
 
     default:
-      return EtatTente.casse; // valeur par défaut
+      return TentState.good;
   }
 }
 
-/// Converts enum to a readable French label
-String etatTenteToString(EtatTente e) {
+String tentStateToString(TentState e) {
   switch (e) {
-    case EtatTente.ok:
+    case TentState.good:
       return 'Bon';
-    case EtatTente.maintenance:
+    case TentState.repair:
       return 'À réparer';
-    case EtatTente.casse:
+    case TentState.broken:
       return 'HS';
-    case EtatTente.inconnu:
+    case TentState.lost:
       return 'Perdue';
   }
 }

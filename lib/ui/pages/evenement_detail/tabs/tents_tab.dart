@@ -19,12 +19,12 @@ class TentsTab extends ConsumerWidget {
 
     final event = c.event!;
     final assigned = c.allTentes
-        .where((t) => event.tentesAssociees.contains(t.id))
+        .where((t) => event.associatedTents.contains(t.id))
         .toList()
       ..sort((a, b) => a.nom.compareTo(b.nom));
 
     final available = c.availableTentes
-        .where((t) => !event.tentesAssociees.contains(t.id))
+        .where((t) => !event.associatedTents.contains(t.id))
         .toList()
       ..sort((a, b) => a.nom.compareTo(b.nom));
 
@@ -71,7 +71,7 @@ class TentsTab extends ConsumerWidget {
 class _TenteSection extends StatelessWidget {
   final String title;
   final Color color;
-  final List<Tente> tentes;
+  final List<Tent> tentes;
   final EvenementDetailController controller;
 
   const _TenteSection({
@@ -111,7 +111,7 @@ class _TenteSection extends StatelessWidget {
 
 
 class _TenteCard extends StatelessWidget {
-  final Tente tente;
+  final Tent tente;
   final bool selected;
   final Color? highlightColor;
 
@@ -124,7 +124,7 @@ class _TenteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-     color: Color(Unit.fromString(tente.unitePreferee).color),
+     color: Color(Unit.fromString(tente.assignedUnit).color),
       //color: selected ? highlightColor ?? Colors.blue.shade50 : Colors.white,
       child: ListTile(
         leading: Icon(
@@ -132,8 +132,8 @@ class _TenteCard extends StatelessWidget {
           color: selected ? Colors.blue : Colors.white,
         ),
         title: Text(tente.nom),
-        subtitle: Text('${tente.typeTente} • ${tente.nbPlaces} places'),
-        trailing: Text(tente.unitePreferee),
+        subtitle: Text('${tente.tentType} • ${tente.nbPlaces} places'),
+        trailing: Text(tente.assignedUnit),
       ),
     );
   }

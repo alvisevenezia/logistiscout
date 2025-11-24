@@ -27,7 +27,7 @@ class InfosTab extends ConsumerWidget {
         : "Non spécifiée";
 
     final totalPlaces = c.allTentes
-        .where((t) => evt.tentesAssociees.contains(t.id))
+        .where((t) => evt.associatedTents.contains(t.id))
         .fold<int>(0, (sum, t) => sum + (t.nbPlaces));
 
     return SingleChildScrollView(
@@ -55,7 +55,7 @@ class InfosTab extends ConsumerWidget {
           _InfoRow(
             icon: Icons.chair_alt,
             label: "Tentes assignées",
-            value: "${evt.tentesAssociees.length} ($totalPlaces places)",
+            value: "${evt.associatedTents.length} ($totalPlaces places)",
           ),
           const SizedBox(height: 24),
           Center(

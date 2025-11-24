@@ -1,34 +1,33 @@
-// lib/data/repositories/controle_repository.dart
 import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/data/models/controle_dto.dart';
 import 'package:logistiscout/data/mappers/controle_mapper.dart';
 import 'package:logistiscout/services/api_service.dart';
 
-class ControleRepository {
+class ControlRepository {
   final ApiService api;
 
-  ControleRepository({ApiService? api}) : api = api ?? ApiService();
+  ControlRepository({ApiService? api}) : api = api ?? ApiService();
 
-  Future<List<Controle>> getControles(int tenteId) async {
-    final data = await api.getControles(tenteId);
-    final dtos = data.map((e) => ControleDto.fromJson(e)).toList();
-    return dtos.map(mapControleDtoToDomain).toList();
+  Future<List<Control>> getControlList(int tentId) async {
+    final data = await api.getControlList(tentId);
+    final dtos = data.map((e) => ControlDto.fromJson(e)).toList();
+    return dtos.map(mapControlDtoToDomain).toList();
   }
 
-  Future<void> addControle(Controle controle) async {
-    final dto = mapControleDomainToDto(controle);
-    await api.addControle(dto.toJson());
+  Future<void> addControl(Control control) async {
+    final dto = mapControlDomainToDto(control);
+    await api.addControl(dto.toJson());
   }
 
-  Future<void> updateControle(Controle controle) async {
-    if (controle.id == null) {
+  Future<void> updateControl(Control control) async {
+    if (control.id == null) {
       throw Exception('Cannot update a controle without an ID');
     }
-    final dto = mapControleDomainToDto(controle);
-    await api.updateControle(controle.id!, dto.toJson());
+    final dto = mapControlDomainToDto(control);
+    await api.updateControl(control.id!, dto.toJson());
   }
 
-  Future<void> deleteControle(int id) async {
-    await api.deleteControle(id);
+  Future<void> deleteControl(int id) async {
+    await api.deleteControl(id);
   }
 }

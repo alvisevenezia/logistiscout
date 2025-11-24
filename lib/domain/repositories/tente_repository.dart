@@ -1,10 +1,10 @@
 import 'package:logistiscout/domain/entities/tente.dart';
 
-abstract class TenteRepository {
-  Future<Tente> getTente(int id);
-  Future<List<Tente>> getAllTentes();
-  Future<void> createTente(String groupId, Tente tente);
-  Future<void> updateTente(String groupId, Tente tente);
-  Future<void> deleteTente(int id, String groupId);
-  Future<List<Tente>> getAvailableTentes(DateTime debut, DateTime fin);
+abstract class TentRepository {
+  Future<Tent> getTent(int id);
+  Future<List<Tent>> getAllTent();
+  Future<void> createTent(String groupId, Tent tent);
+  Future<void> updateTent(String groupId, Tent tent);
+  Future<void> deleteTent(int id, String groupId);
+  Future<List<Tent>> getAvailableTent(DateTime start, DateTime end);
 }

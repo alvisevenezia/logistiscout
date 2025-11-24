@@ -1,14 +1,14 @@
 enum Unit {
 
-  Farfadets(name: "Farfadets", color: 0xFF81C784),
-  Louvetaux(name: "Louveteaux-Jeanettes", color: 0xFFFFB74D),
-  Scouts(name: "Scouts-Guides", color: 0xFF64B5F6),
-  Pionnier(name: "Pionniers-Caravelles", color: 0xFFE57373),
-  Compagnons(name: "Compagnons", color: 0xFF00790a),
-  Maitrise(name: "Maitrise", color: 0xFFBA68C8),
-  Groupe(name: "Groupe", color: 0xFF90A4AE),
-  Aucun(name: "Aucun", color: 0xFFB0BEC5),
-  Tous(name: "Tous", color: 0xFF455A64)
+  Farfadets(name: "Farfadets", color: 0xFF65bc99),
+  Louvetaux(name: "Louveteaux-Jeanettes", color: 0xFFFF8300),
+  Scouts(name: "Scouts-Guides", color: 0xFF0077b3),
+  Pionnier(name: "Pionniers-Caravelles", color: 0xFFd03f15),
+  Compagnons(name: "Compagnons", color: 0xFF007254),
+  Maitrise(name: "Maitrise", color: 0xFF6e74aa),
+  Groupe(name: "Groupe", color: 0xFF420068),
+  Aucun(name: "Aucun", color: 0xFF000000),
+  Tous(name: "Tous", color: 0xFF909010)
   ;
 
   const Unit({

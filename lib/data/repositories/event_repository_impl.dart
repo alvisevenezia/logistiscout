@@ -10,29 +10,25 @@ import 'dart:developer' as developer;
 
 import '../../domain/entities/ingredient.dart';
 
-/// Implémentation concrète du EventRepository.
-/// Connecte les use cases au backend FastAPI via ApiService.
 class EventRepositoryImpl implements EventRepository {
   final ApiService api;
 
   EventRepositoryImpl(this.api);
 
-  // === ⚙️ Événements ===
-
   Future<void> addEvent(Event event) async {
     final dto = EventMapper.toDto(event);
-    await api.addEvenement(dto.toJson());
+    await api.addEvent(dto.toJson());
   }
 
   @override
   Future<void> updateEvent(Event event) async {
     developer.log('[EventRepository] 🔄 updateEventTentes(eventId=${event.id})');
     final dto = EventMapper.toDto(event);
-    await api.updateEvenement(dto.id, dto.toJson());
+    await api.updateEvent(dto.id, dto.toJson());
   }
 
   Future<void> deleteEvent(int id, String groupeId) async {
-    await api.deleteEvenement(id, groupeId: groupeId);
+    await api.deleteEvent(id, groupId: groupeId);
   }
 
   @override
@@ -50,7 +46,7 @@ class EventRepositoryImpl implements EventRepository {
       'tentesAssociees': tentIds,
     };
 
-    await api.updateEvenement(eventId, evt);
+    await api.updateEvent(eventId, evt);
   }
 
   @override
@@ -63,7 +59,7 @@ class EventRepositoryImpl implements EventRepository {
     developer.log(
         '[EventRepositoryImpl] 🔍 Fetching all events for groupId=$groupId');
 
-    final data = await api.getEvenements(groupId);
+    final data = await api.getEventList(groupId);
 
     if (data.isEmpty) {
       developer.log(
@@ -92,7 +88,7 @@ class EventRepositoryImpl implements EventRepository {
     if (groupId == null) {
       throw Exception('GroupId is null');
     }
-    final all = await api.getEvenements(groupId);
+    final all = await api.getEventList(groupId);
     final data = all.firstWhere(
           (e) => e['id'].toString() == id,
       orElse: () => throw Exception('Événement $id introuvable'),
@@ -101,11 +97,11 @@ class EventRepositoryImpl implements EventRepository {
       id: data['id'],
       nom: data['nom'],
       date: DateTime.parse(data['date']),
-      dateFin: DateTime.parse(data['dateFin']),
+      dateFin: DateTime.parse(data['endDate']),
       type: data['type'],
-      tentesAssociees: List<int>.from(data['tentesAssociees'] ?? []),
+      associatedTents: List<int>.from(data['tentesAssociees'] ?? []),
       unites: List<int>.from(data['unites'] ?? []),
-      groupeId: data['groupeId'],
+      groupId: data['groupeId'],
     );
   }
 
@@ -113,7 +109,7 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal) async {
     // 🔹 Get all event_menu rows for this event
-    final all = await api.getEventMenus(int.parse(eventId));
+    final all = await api.getEventMenuList(int.parse(eventId));
 
     // 🔹 Filter only those matching the selected date & meal
     final dateStr = date.toIso8601String().split('T').first;
@@ -219,13 +215,13 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> updateEventMenu(
-      int eventMenuId, int eventId, int menuId, DateTime date, MealType meal, int quantite) async {
+      int eventMenuId, int eventId, int menuId, DateTime date, MealType meal, int quantity) async {
     final payload = {
       'event_id': eventId,
       'menu_id': menuId,
       'date': date.toIso8601String().split('T').first,
       'type_repas': meal.name,
-      'quantite_personnes': quantite,
+      'quantite_personnes': quantity,
     };
 
     await api.updateEventMenu(eventMenuId, payload);

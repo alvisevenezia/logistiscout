@@ -11,7 +11,7 @@ import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 
 class HomeState {
   final List<Event> evenements;
-  final List<Tente> tentes;
+  final List<Tent> tentes;
   final bool isLoading;
   final String? error;
 
@@ -24,7 +24,7 @@ class HomeState {
 
   HomeState copyWith({
     List<Event>? evenements,
-    List<Tente>? tentes,
+    List<Tent>? tentes,
     bool? isLoading,
     String? error,
   }) {
@@ -49,7 +49,7 @@ class HomeController extends StateNotifier<HomeState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final evts = await evenementRepo.getAllEvents();
-      final tts = await tenteRepo.getAllTentes();
+      final tts = await tenteRepo.getAllTent();
       state = state.copyWith(evenements: evts, tentes: tts, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
