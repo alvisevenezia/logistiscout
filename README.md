@@ -1,6 +1,6 @@
 # LogistiScout
 
-Gestion du matériel scout, des groupes, des événements et des contrôles.
+Applciation poru la gestion du matériel scout, des groupes et de la logistique des événements
 
 ## Fonctionnalités principales
 - Authentification par groupe (ID + mot de passe)

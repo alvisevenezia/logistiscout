@@ -14,11 +14,7 @@ import 'package:logistiscout/domain/usecases/save_meal_plan.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
-
-/// 🧭 Contrôleur dédié à la page Détail d’un événement.
-/// Gère les onglets (Infos, Tentes, Menus) et toute la logique des menus/recettes.
 class EvenementDetailController extends ChangeNotifier {
-  // === Dépendances (use cases) ===
   final GetEvent getEventUC;
   final GetMealPlan getMealPlanUC;
   final SaveMealPlan saveMealPlanUC;
@@ -27,7 +23,6 @@ class EvenementDetailController extends ChangeNotifier {
   final TentRepository tenteRepo;
   final EventRepository eventRepo;
 
-  // === État interne ===
   Event? event;
   MealPlan? currentPlan;
   DateTime? selectedDate;
@@ -57,7 +52,7 @@ class EvenementDetailController extends ChangeNotifier {
       event = await getEventUC(eventId);
       developer.log('[EvenementDetailController] ✅ Event loaded: ${event?.nom}');
       await loadTentes();
-      allTentes = await tenteRepo.getAllTent();
+      allTentes = await tenteRepo.getTentList();
       developer.log('[EvenementDetailController] ✅ Loaded ${allTentes.length} tentes');
       selectedDate = event?.date;
       await _loadPlan(eventId);
@@ -81,7 +76,7 @@ class EvenementDetailController extends ChangeNotifier {
       loading = true;
       notifyListeners();
 
-      allTentes = await tenteRepo.getAllTent();
+      allTentes = await tenteRepo.getTentList();
       availableTentes = await tenteRepo.getAvailableTent(event!.date, event!.dateFin);
       developer.log('[EvenementDetailController] ✅ Loaded ${availableTentes.length} available tents');
     } catch (e, st) {

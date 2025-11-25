@@ -9,24 +9,23 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
 
   LoginController(this._api) : super(const AsyncData(null));
 
-  /// Performs login and saves credentials
-  Future<bool> login(String userlogin, String mdp) async {
+  Future<bool> login(String userLogin, String mdp) async {
     state = const AsyncLoading();
     try {
-      final response = await _api.loginGroup(userlogin.trim(), mdp.trim());
+      final response = await _api.loginGroup(userLogin.trim(), mdp.trim());
 
       developer.log('[LoginController] API response: $response');
 
-      if (response == null || response['id'] == null) {
+      if (response['id'] == null) {
         throw Exception('Identifiants incorrects ou groupe introuvable');
       }
 
-      await _localStorage.saveUsername(userlogin);
+      await _localStorage.saveUsername(userLogin);
       await _localStorage.saveGroupId(response['id'].toString());
       await _localStorage.saveToken(response['token']);
 
       developer.log('[LoginController] ✅ Login successful');
-      developer.log('[LoginController] userlogin=$userlogin, groupId=${response['id']}, token=${response['token']}');
+      developer.log('[LoginController] userlogin=$userLogin, groupId=${response['id']}, token=${response['token']}');
 
       state = const AsyncData(null);
       return true;
