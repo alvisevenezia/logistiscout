@@ -126,8 +126,8 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 );
 
                 await ref
-                    .read(controleProvider(widget.tente.id).notifier)
-                    .addControle(controle);
+                    .read(controlProvider(widget.tente.id).notifier)
+                    .addControl(controle);
 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

@@ -2,44 +2,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/data/repositories/controle_repository.dart';
 
-/// Riverpod FamilyAsyncNotifier controller for managing contrôles of a specific tente
-class ControleController extends FamilyAsyncNotifier<List<Control>, int> {
+class ControlController extends FamilyAsyncNotifier<List<Control>, int> {
   final _repo = ControlRepository();
 
   @override
-  Future<List<Control>> build(int tenteId) async {
-    return _repo.getControlList(tenteId);
+  Future<List<Control>> build(int tentId) async {
+    return _repo.getControlList(tentId);
   }
 
-  /// Reload all contrôles for this tente
   Future<void> reload() async {
-    final tenteId = arg; // Built-in getter for FamilyAsyncNotifier
+    final tentId = arg;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async => _repo.getControlList(tenteId));
+    state = await AsyncValue.guard(() async => _repo.getControlList(tentId));
   }
 
-  /// Add a new contrôle
-  Future<void> addControle(Control controle) async {
-    await _repo.addControl(controle);
+  Future<void> addControl(Control control) async {
+    await _repo.addControl(control);
     await reload();
   }
 
-  /// Update an existing contrôle
-  Future<void> updateControle(Control controle) async {
-    if (controle.id == null) return;
-    await _repo.updateControl(controle);
+  Future<void> updateControl(Control control) async {
+    if (control.id == null) return;
+    await _repo.updateControl(control);
     await reload();
   }
 
-  /// Delete a contrôle
-  Future<void> deleteControle(int controleId) async {
-    await _repo.deleteControl(controleId);
+  Future<void> deleteControl(int controlId) async {
+    await _repo.deleteControl(controlId);
     await reload();
   }
 }
 
-/// ✅ Correct provider family type
-final controleProvider =
-AsyncNotifierProvider.family<ControleController, List<Control>, int>(
-  ControleController.new,
+final controlProvider =
+AsyncNotifierProvider.family<ControlController, List<Control>, int>(
+  ControlController.new,
 );

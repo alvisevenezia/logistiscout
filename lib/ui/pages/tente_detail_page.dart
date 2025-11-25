@@ -59,7 +59,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   @override
   Widget build(BuildContext context) {
     final tentesAsync = ref.watch(tentesProvider);
-    final controlesAsync = ref.watch(controleProvider(widget.tenteId));
+    final controlesAsync = ref.watch(controlProvider(widget.tenteId));
     final evenementsAsync = ref.watch(evenementsParTenteProvider(widget.tenteId));
 
     return Scaffold(
@@ -71,7 +71,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
             tooltip: 'Rafraîchir',
             onPressed: () async {
               await ref.read(tentesProvider.notifier).reload();
-              await ref.read(controleProvider(widget.tenteId).notifier).reload();
+              await ref.read(controlProvider(widget.tenteId).notifier).reload();
             },
           ),
         ],
@@ -381,7 +381,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                             ),
                                           ),
                                         );
-                                        await ref.read(controleProvider(tente.id).notifier).reload();
+                                        await ref.read(controlProvider(tente.id).notifier).reload();
                                       },
                                     ),
                                   ),

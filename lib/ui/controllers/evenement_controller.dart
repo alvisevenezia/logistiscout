@@ -6,9 +6,6 @@ import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
-/// 🧭 Contrôleur de la liste des événements.
-/// Ne manipule plus SharedPreferences directement.
-/// Passe par le EventRepository et LocalStorageService.
 class EvenementController extends AsyncNotifier<List<Event>> {
   late final EventRepository _repo;
   final LocalStorageService _localStorage = LocalStorageService.instance;
@@ -19,7 +16,6 @@ class EvenementController extends AsyncNotifier<List<Event>> {
     return _loadEvenements();
   }
 
-  /// 🔄 Charge tous les événements pour le groupe courant
   Future<List<Event>> _loadEvenements() async {
     try {
       final groupId = await _localStorage.getGroupId();
@@ -44,13 +40,11 @@ class EvenementController extends AsyncNotifier<List<Event>> {
     }
   }
 
-  /// 🔁 Rafraîchit la liste
   Future<void> reload() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async => _loadEvenements());
   }
 
-  /// ➕ Ajoute un événement
   Future<void> addEvenement(Event event) async {
     try {
       final groupId = await _localStorage.getGroupId();
@@ -70,7 +64,6 @@ class EvenementController extends AsyncNotifier<List<Event>> {
     }
   }
 
-  /// ✏️ Met à jour un événement
   Future<void> updateEvenement(Event event) async {
     try {
       final groupId = await _localStorage.getGroupId();
@@ -89,7 +82,6 @@ class EvenementController extends AsyncNotifier<List<Event>> {
     }
   }
 
-  /// 🗑️ Supprime un événement
   Future<void> deleteEvenement(int id) async {
     try {
       final groupId = await _localStorage.getGroupId();
@@ -99,9 +91,6 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
       developer.log('[EvenementController] 🗑️ Deleting event id=$id for groupId=$groupId');
 
-      // ⚠️ Ajoute deleteEvent() dans ton EventRepository si pas encore fait
-      // await _repo.deleteEvent(id, groupId: groupId);
-
       await reload();
     } catch (e, st) {
       developer.log('[EvenementController] ❌ deleteEvenement() failed', error: e, stackTrace: st);
@@ -110,6 +99,5 @@ class EvenementController extends AsyncNotifier<List<Event>> {
   }
 }
 
-/// 🔗 Provider Riverpod
 final evenementsProvider =
 AsyncNotifierProvider<EvenementController, List<Event>>(EvenementController.new);

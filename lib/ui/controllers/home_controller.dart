@@ -57,19 +57,15 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   Future<void> logout(WidgetRef ref) async {
-    // 1️⃣ Supprimer les données locales
     await LocalStorageService.instance.clearAll();
 
-    // 2️⃣ Réinitialiser ton propre état
     if (mounted) {
-      state = const HomeState(); // ✅ et pas AsyncData
+      state = const HomeState();
     }
 
-    // 3️⃣ Invalider les autres providers pour vider le cache
     ref.invalidate(evenementsProvider);
     ref.invalidate(tentesProvider);
 
-    // ⚠️ Ne pas t’invalider toi-même ici, sinon "after dispose" error
   }
 }
 
@@ -81,7 +77,6 @@ StateNotifierProvider<HomeController, HomeState>((ref) {
     TenteRepositoryImpl(ApiService()),
     LocalStorageService.instance,
   );
-  // Démarrage immédiat du chargement (asynchrone)
   Future.microtask(c.loadData);
   return c;
 });

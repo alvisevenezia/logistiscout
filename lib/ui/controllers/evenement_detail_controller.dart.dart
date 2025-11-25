@@ -30,6 +30,8 @@ class EvenementDetailController extends ChangeNotifier {
   bool loading = false;
   String? error;
   List<Tent> allTentes = [];
+  List<Tent> availableTentes = [];
+  Set<int> selectedTenteIds = {};
 
   EvenementDetailController({
     required this.getEventUC,
@@ -41,7 +43,6 @@ class EvenementDetailController extends ChangeNotifier {
     required this.eventRepo,
   });
 
-  // === Initialisation ===
   Future<void> init(String eventId) async {
     loading = true;
     error = null;
@@ -65,11 +66,7 @@ class EvenementDetailController extends ChangeNotifier {
       notifyListeners();
     }
   }
-// --- Nouveaux champs pour la gestion des tentes ---
-  List<Tent> availableTentes = [];
-  Set<int> selectedTenteIds = {};
 
-  /// Charge toutes les tentes assignées + dispo
   Future<void> loadTentes() async {
     if (event == null) return;
     try {
@@ -88,7 +85,6 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  /// Sélectionne ou désélectionne une tente
   void toggleTenteSelection(int id) {
     if (selectedTenteIds.contains(id)) {
       selectedTenteIds.remove(id);
@@ -98,7 +94,6 @@ class EvenementDetailController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Applique la bascule assigné/dispo et sync backend
   Future<void> applyTenteChanges() async {
     if (event == null) return;
 
@@ -153,7 +148,6 @@ class EvenementDetailController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // === Navigation et changement d’état ===
   Future<void> changeDate(DateTime date) async {
     developer.log('[EvenementDetailController] 🔄 changeDate() → $date');
     selectedDate = date;
@@ -166,7 +160,6 @@ class EvenementDetailController extends ChangeNotifier {
     await _loadPlan(event!.id.toString());
   }
 
-  // === Gestion des portions ===
   Future<void> setPortions(int portions) async {
     if (currentPlan == null || event == null) return;
 
@@ -194,7 +187,6 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  // === Gestion des recettes ===
   Future<void> addRecipes(List<MenuItem> items) async {
     if (items.isEmpty) return;
     developer.log('[EvenementDetailController] ➕ createRecipes(${items.length})');
@@ -220,14 +212,13 @@ class EvenementDetailController extends ChangeNotifier {
     developer.log('[EvenementDetailController] ✅ $successCount/${items.length} recettes créées avec succès');
   }
 
-  /// Ajoute des recettes existantes au plan de repas courant (sans les créer)
   Future<void> addRecipeToMealPlan(MenuItem item) async {
     if (event == null || selectedDate == null) return;
 
     developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan(${item.recipe.title})');
 
     try {
-      // 🟢 Create the link in event_menus
+
       await eventRepo.addEventMenu(
         eventId: event!.id,
         menuId: int.parse(item.recipe.id),
@@ -238,7 +229,6 @@ class EvenementDetailController extends ChangeNotifier {
 
       developer.log('[EvenementDetailController] ✅ Recipe linked to meal plan');
 
-      // 🔁 Reload the plan to include the new item with eventMenuId
       await _loadPlan(event!.id.toString());
     } catch (e, st) {
       developer.log('[EvenementDetailController] ❌ addRecipeToMealPlan failed',
@@ -254,7 +244,6 @@ class EvenementDetailController extends ChangeNotifier {
     try {
       final item = currentPlan!.items[index];
 
-      // 🔥 Supprimer côté backend si on a un event_menu_id
       if (item.eventMenuId != null) {
         await eventRepo.deleteEventMenu(item.eventMenuId!);
         developer.log('[EvenementDetailController] ✅ event_menu supprimé (id=${item.eventMenuId})');
@@ -288,7 +277,6 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  // === Duplication ===
   Future<void> duplicateTo(List<MapEntry<DateTime, MealType>> targets) async {
     if (currentPlan == null) return;
     developer.log('[EvenementDetailController] 📄 duplicateTo() → ${targets.length} targets');
@@ -302,14 +290,11 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  /// Calcule les ingrédients totaux pour tout le séjour (tous les repas, toutes les dates)
   Future<List<IngredientTotal>> computeTotalIngredientsForEvent() async {
     if (event == null) throw Exception("Aucun événement sélectionné");
     developer.log('[EvenementDetailController] 🧮 Calcul des ingrédients via getMealPlanUC');
 
     final aggregated = <String, IngredientTotal>{};
-
-    // 🔹 On parcourt tous les jours du séjour
     final start = event!.date;
     final end = event!.dateFin;
     for (DateTime day = start;
@@ -317,7 +302,6 @@ class EvenementDetailController extends ChangeNotifier {
     day = day.add(const Duration(days: 1))) {
       for (final meal in MealType.values) {
         try {
-          // 🔹 Récupération du plan de repas (comme dans l’onglet Menus)
           final plan = await getMealPlanUC(event!.id.toString(), day, meal);
           for (final item in plan.items) {
             for (final ing in item.forPortions(plan.portions)) {
@@ -347,7 +331,6 @@ class EvenementDetailController extends ChangeNotifier {
 
 }
 
-// === Provider ===
 final evenementDetailProvider =
 ChangeNotifierProvider.family<EvenementDetailController, String>((ref, eventId) {
   final getEventUC = ref.read(getEventUseCaseProvider);
