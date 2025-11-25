@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
+import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
@@ -26,17 +27,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     'Autre',
   ];
 
-  // 🎨 Couleurs associées aux unités
-  final Map<int, Color> _unitColors = const {
-    0: Color(0xFF65BC99), // Farfadets
-    1: Color(0xFFFF8300), // Louveteaux
-    2: Color(0xFF0077b3), // Éclaireurs
-    3: Color(0xFFd03f15), // Pionniers
-    4: Color(0xFF007254), // Routiers
-    5: Color(0xFF6e74aa), // Maitrise
-    6: Color(0xFF455A64), // Groupe complet
-  };
-
   @override
   Widget build(BuildContext context) {
     final asyncEvents = ref.watch(evenementsProvider);
@@ -54,7 +44,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
       ),
       body: Column(
         children: [
-          // 🔍 Barre de recherche + filtre
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(
@@ -110,13 +99,13 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                   itemBuilder: (context, index) {
                     final evt = filtered[index];
 
-                    final mainUnitId = evt.unites.isNotEmpty ? evt.unites.first : null;
-                    final cardColor = mainUnitId != null
-                        ? _unitColors[mainUnitId]?.withAlpha(180) ?? Colors.grey.shade300
+                    final mainUnit = evt.unites.isNotEmpty ? evt.unites.first : null;
+                    final cardColor = mainUnit != null
+                        ? Color(mainUnit.color)
                         : Colors.grey.shade200;
 
-                    final unitLabel = mainUnitId != null
-                        ? _unitName(mainUnitId)
+                    final unitLabel = mainUnit != null
+                        ? mainUnit.name
                         : 'Aucune unité';
 
                     return Card(
@@ -192,31 +181,8 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     );
   }
 
-  // 🧭 Formattage date
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-
-  // 🔤 Nom lisible pour une unité
-  String _unitName(int id) {
-    switch (id) {
-      case  0:
-        return 'Farfadets';
-      case 1:
-        return 'Louveteaux/Jeannettes';
-      case 2:
-        return 'Scouts/Guides';
-      case 3:
-        return 'Pionniers/Caravelles';
-      case 4:
-        return 'Compagnons';
-      case 5:
-        return 'Maitrise';
-      case 6:
-        return 'Groupe complet';
-      default:
-        return 'Unité inconnue';
-    }
-  }
 
   void _openEventDetail(BuildContext context, Event evt, {bool openMenus = false}) {
     Navigator.push(
@@ -244,20 +210,8 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     DateTime debut = event?.date ?? DateTime.now();
     DateTime fin = event?.dateFin ?? DateTime.now().add(const Duration(days: 1));
 
-    final unitOptions = const {
-      0: 'Farfadets',
-      1: 'Louveteaux/Jeannettes',
-      2: 'Scouts/Guides',
-      3: 'Pionniers/Caravelles',
-      4: 'Compagnons',
-      5: 'Maitrise',
-      6: 'Groupe complet',
-    };
+    Unit? selectedUniteId = event?.unites.first;
 
-    int? selectedUniteId =
-    event?.unites.isNotEmpty == true ? event!.unites.first : null;
-
-    // ✅ IDs des tentes sélectionnées
     List<int> selectedTenteIds = List.from(event?.associatedTents ?? []);
 
     await showModalBottomSheet(
@@ -270,7 +224,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
       builder: (context) {
         return Consumer(
           builder: (context, ref, _) {
-            final asyncTentes = ref.watch(tentesProvider);
+            final asyncTentList = ref.watch(tentesProvider);
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -336,12 +290,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                       const SizedBox(height: 12),
 
                       // 🏕️ Unité
-                      DropdownButtonFormField<int>(
+                      DropdownButtonFormField<Unit>(
                         initialValue: selectedUniteId,
-                        items: unitOptions.entries
+                        items: Unit.values
                             .map((e) => DropdownMenuItem(
-                          value: e.key,
-                          child: Text(e.value),
+                          value: e,
+                          child: Text(e.name, style: TextStyle(color: Color(e.color)),),
                         ))
                             .toList(),
                         onChanged: (value) {
@@ -401,7 +355,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 8),
 
-                      asyncTentes.when(
+                      asyncTentList.when(
                         loading: () => const Center(
                             child: CircularProgressIndicator(strokeWidth: 2)),
                         error: (e, _) => Text('Erreur : $e'),
@@ -410,7 +364,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             return const Text('Aucune tente disponible.');
                           }
 
-                          // 🕒 Récupération des tentes déjà prises pour le créneau
                           final indispoFuture = ref.watch(evenementsProvider.future).then((events) {
                             final indispo = <int>{};
                             for (final evt in events) {

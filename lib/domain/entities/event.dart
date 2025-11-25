@@ -1,4 +1,6 @@
 // domain/entities/evenement.dart
+import 'package:logistiscout/domain/entities/unit.dart';
+
 class Event {
   final int id;
   final String nom;
@@ -6,7 +8,7 @@ class Event {
   final DateTime dateFin;
   final String type;
   final List<int> associatedTents;
-  final List<int> unites;
+  final List<Unit> unites;
   final String groupId;
 
   const Event({
@@ -40,7 +42,7 @@ class Event {
     DateTime? dateFin,
     String? type,
     List<int>? associatedTents,
-    List<int>? unites,
+    List<Unit>? unites,
     String? groupId,
   }) {
     return Event(

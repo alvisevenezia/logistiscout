@@ -23,7 +23,7 @@ class InfosTab extends ConsumerWidget {
 
     final duration = evt.date.difference(evt.dateFin).inDays.abs() + 1;
     final unitNames = evt.unites.isNotEmpty
-        ? evt.unites.map((id) => _unitName(id)).join(", ")
+        ? evt.unites.map((unit) => unit.name).join(", ")
         : "Non spécifiée";
 
     final totalPlaces = c.allTentes
@@ -77,26 +77,6 @@ class InfosTab extends ConsumerWidget {
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
-  String _unitName(int id) {
-    switch (id) {
-      case 0:
-        return 'Farfadets';
-      case 1:
-        return 'Louveteaux/Jeannettes';
-      case 2:
-        return 'Scouts/Guides';
-      case 3:
-        return 'Pionniers/Caravelles';
-      case 4:
-        return 'Compagnons';
-      case 5:
-        return 'Maitrise';
-      case 6:
-        return 'Groupe complet';
-      default:
-        return 'Unité inconnue';
-    }
-  }
 }
 
 class _InfoRow extends StatelessWidget {

@@ -1,3 +1,5 @@
+import 'package:logistiscout/domain/entities/unit.dart';
+
 class EventDto {
   final int id;
   final String nom;
@@ -5,7 +7,7 @@ class EventDto {
   final String dateFin; // same
   final String type;
   final List<int> associatedTents;
-  final List<int> unites;
+  final List<Unit> unites;
   final String groupId;
 
   EventDto({
@@ -27,7 +29,9 @@ class EventDto {
       dateFin: json['dateFin'] as String,
       type: json['type'] as String,
       associatedTents: List<int>.from(json['tentesAssociees'] ?? []),
-      unites: List<int>.from(json['unites'] ?? []),
+      unites: (json['unites'] as List<dynamic>? ?? [])
+          .map((u) => Unit.fromInt(u))
+          .toList(),
       groupId: json['groupId'].toString(),
     );
   }

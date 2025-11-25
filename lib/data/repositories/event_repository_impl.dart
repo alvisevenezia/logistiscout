@@ -101,7 +101,9 @@ class EventRepositoryImpl implements EventRepository {
       dateFin: DateTime.parse(data['dateFin']),
       type: data['type'],
       associatedTents: List<int>.from(data['tentesAssociees'] ?? []),
-      unites: List<Unit>.from(data['unites'] ?? []),
+      unites: (data['unites'] as List<dynamic>? ?? [])
+          .map((u) => Unit.fromInt(u))
+          .toList(),
       groupId: data['groupeId'],
     );
   }

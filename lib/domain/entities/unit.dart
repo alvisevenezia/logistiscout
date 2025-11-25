@@ -15,10 +15,15 @@ enum Unit {
     required this.name,
     required this.color,
 
-});
+  });
 
   final String name;
   final int color;
+
+  static Unit fromInt(int unitId) {
+    return Unit.values[unitId];
+
+  }
 
   static Unit fromString(String unitStr) {
     return Unit.values.firstWhere(
