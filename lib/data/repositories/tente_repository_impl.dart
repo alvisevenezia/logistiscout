@@ -13,15 +13,7 @@ class TenteRepositoryImpl implements TentRepository {
   TenteRepositoryImpl(this.api);
 
   @override
-  Future<Tent> getTent(int id) async {
-    developer.log('[TenteRepository] getTente($id)');
-    final json = await api.getTent(id);
-    final dto = TentDto.fromJson(json);
-    return mapTentDtoToDomain(dto);
-  }
-
-  @override
-  Future<List<Tent>> getAllTent() async {
+  Future<List<Tent>> getTentList() async {
     final groupId = await LocalStorageService.instance.getGroupId();
     if (groupId == null) throw Exception('GroupId is null');
 

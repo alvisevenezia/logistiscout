@@ -37,7 +37,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   void _ensureControllersAndState(Tent t) {
     _nomCtl ??= TextEditingController(text: t.nom);
     _nbCtl ??= TextEditingController(text: t.nbPlaces.toString());
-    _remarquesCtl ??= TextEditingController(text: t.comments);
+    _remarquesCtl ??= TextEditingController(text: t.comment);
 
     _typeTente ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
     _etat ??= t.state;

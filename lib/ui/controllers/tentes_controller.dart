@@ -26,7 +26,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
         throw Exception('Aucun groupe sélectionné.');
       }
 
-      final data = await _repo.getAllTent();
+      final data = await _repo.getTentList();
       developer.log('[TentesController] Loaded ${data.length} tents');
 
       data.sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));

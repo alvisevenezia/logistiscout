@@ -49,7 +49,7 @@ class HomeController extends StateNotifier<HomeState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final evts = await evenementRepo.getAllEvents();
-      final tts = await tenteRepo.getAllTent();
+      final tts = await tenteRepo.getTentList();
       state = state.copyWith(evenements: evts, tentes: tts, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

@@ -169,7 +169,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
     String type = 'Canadienne';
     var etat = TentState.broken; // défaut demandé
     var integree = false;
-    Unit unitePreferee = Unit.Tous;
+    Unit unitePreferee = Unit.tous;
 
     showDialog(
       context: context,
@@ -222,7 +222,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                   child: Text(e.name, style: TextStyle(color: Color(e.color)),),
                 ))
                     .toList(),
-                onChanged: (v) => unitePreferee = v ?? Unit.Tous,
+                onChanged: (v) => unitePreferee = v ?? Unit.tous,
                 decoration: const InputDecoration(labelText: 'Unité'),
               ),
               const SizedBox(height: 8),
@@ -255,7 +255,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                 nom: nomCtl.text.trim(),
                 uniteId: null,
                 state: etat,
-                comments: '',
+                comment: '',
                 isFloorEmbedded: integree,
                 nbPlaces: int.tryParse(nbCtl.text) ?? 0,
                 tentType: type,
@@ -393,7 +393,7 @@ class _UnitFilter extends StatelessWidget {
 
     return DropdownButtonFormField<Unit>(
       isExpanded: true,
-      initialValue: Unit.Tous,
+      initialValue: Unit.tous,
       items: Unit.values
           .map((t) => DropdownMenuItem(value: t, child: Text(t.name, style: TextStyle(color: Color(t.color)))))
           .toList(),

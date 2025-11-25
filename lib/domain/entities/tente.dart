@@ -1,4 +1,3 @@
-// domain/entities/tente.dart
 import 'package:logistiscout/domain/entities/reservation.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 
@@ -6,8 +5,8 @@ class Tent {
   final int id;
   final String nom;
   final int? uniteId;
-  final TentState state; // enum in domain if you want
-  final String comments;
+  final TentState state;
+  final String comment;
   final bool isFloorEmbedded;
   final int nbPlaces;
   final String tentType;
@@ -22,7 +21,7 @@ class Tent {
     required this.nom,
     required this.uniteId,
     required this.state,
-    required this.comments,
+    required this.comment,
     required this.isFloorEmbedded,
     required this.nbPlaces,
     required this.tentType,
@@ -53,7 +52,7 @@ class Tent {
       nom: nom ?? this.nom,
       uniteId: uniteId ?? this.uniteId,
       state: state ?? this.state,
-      comments: comment ?? this.comments,
+      comment: comment ?? this.comment,
       isFloorEmbedded: isFloorEmbedded ?? this.isFloorEmbedded,
       nbPlaces: nbPlaces ?? this.nbPlaces,
       tentType: tentType ?? this.tentType,
@@ -76,7 +75,7 @@ TentState tentStateFromString(String state) {
 
   switch (normalized) {
     case 'bon':
-      return TentState.good;
+      return TentState.good;  
 
     case 'à réparer':
       return TentState.repair;

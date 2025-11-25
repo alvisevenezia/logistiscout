@@ -97,7 +97,7 @@ class EventRepositoryImpl implements EventRepository {
       id: data['id'],
       nom: data['nom'],
       date: DateTime.parse(data['date']),
-      dateFin: DateTime.parse(data['endDate']),
+      dateFin: DateTime.parse(data['dateFin']),
       type: data['type'],
       associatedTents: List<int>.from(data['tentesAssociees'] ?? []),
       unites: List<int>.from(data['unites'] ?? []),

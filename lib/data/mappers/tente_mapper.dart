@@ -9,7 +9,7 @@ Tent mapTentDtoToDomain(TentDto dto) {
     nom: dto.nom,
     uniteId: dto.uniteId,
     state: tentStateFromString(dto.state), // could map to enum
-    comments: dto.comments,
+    comment: dto.comments,
     isFloorEmbedded: dto.isFloorEmbedded,
     nbPlaces: dto.nbPlaces,
     tentType: dto.tentType,
@@ -28,7 +28,7 @@ TentDto mapTentDomainToDto(Tent entity) {
     nom: entity.nom,
     uniteId: entity.uniteId,
     state: tentStateToString(entity.state),
-    comments: entity.comments,
+    comments: entity.comment,
     isFloorEmbedded: entity.isFloorEmbedded,
     nbPlaces: entity.nbPlaces,
     tentType: entity.tentType,
