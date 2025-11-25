@@ -3,6 +3,7 @@ import 'package:logistiscout/data/models/event_dto.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
+import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
@@ -100,18 +101,15 @@ class EventRepositoryImpl implements EventRepository {
       dateFin: DateTime.parse(data['dateFin']),
       type: data['type'],
       associatedTents: List<int>.from(data['tentesAssociees'] ?? []),
-      unites: List<int>.from(data['unites'] ?? []),
+      unites: List<Unit>.from(data['unites'] ?? []),
       groupId: data['groupeId'],
     );
   }
 
-  // === 📅 Menus planifiés (EventMenus) ===
   @override
   Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal) async {
-    // 🔹 Get all event_menu rows for this event
-    final all = await api.getEventMenuList(int.parse(eventId));
 
-    // 🔹 Filter only those matching the selected date & meal
+    final all = await api.getEventMenuList(int.parse(eventId));
     final dateStr = date.toIso8601String().split('T').first;
     final matching = all.where((m) =>
     m['date'] == dateStr &&
@@ -121,11 +119,10 @@ class EventRepositoryImpl implements EventRepository {
 
     for (final m in matching) {
       try {
-        final eventMenuId = m['id']; // relation ID
-        final menuId = m['menu_id']; // actual recipe/menu ID
+        final eventMenuId = m['id'];
+        final menuId = m['menu_id'];
         if (menuId == null) continue;
 
-        // 🔹 Get menu (recipe) details from /menus/{id}
         final menuData = await api.getMenu(menuId);
 
         final ingredientsData = (menuData['ingredients'] as List?) ?? [];
@@ -137,7 +134,6 @@ class EventRepositoryImpl implements EventRepository {
           );
         }).toList();
 
-        // 🔹 Map menu → Recipe entity
         final recipe = Recipe(
           id: menuData['id'].toString(),
           title: menuData['nom'] ?? 'Recette inconnue',
@@ -147,7 +143,6 @@ class EventRepositoryImpl implements EventRepository {
           ingredients: ingredients,
         );
 
-        // 🔹 Build MenuItem with both IDs
         items.add(MenuItem(
           eventMenuId: eventMenuId,
           menuId: menuId,
@@ -176,7 +171,6 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> saveMealPlan(String eventId, MealPlan plan) async {
-    // On reconstruit un body conforme au backend
     for (final item in plan.items) {
       final body = {
         'event_id': int.parse(eventId),
