@@ -45,6 +45,11 @@ jobs:
           
       - name: Build appbundle
         run: flutter build appbundle --release
+        
+      - name: List build outputs (debug)
+        run: |
+          echo "PWD=$(pwd)"
+          ls -R build/app/outputs/bundle || echo "No bundle folder"
 
       - name: Upload to Google Play (Open testing)
         uses: r0adkll/upload-google-play@v1
