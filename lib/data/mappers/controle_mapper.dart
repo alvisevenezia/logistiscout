@@ -12,13 +12,13 @@ Control mapControlDtoToDomain(ControlDto dto) {
   );
 }
 
-ControlDto mapControlDomainToDto(Control controle) {
+ControlDto mapControlDomainToDto(Control control) {
   return ControlDto(
-    id: controle.id,
-    tentId: controle.tentId,
-    userId: controle.userId,
-    date: controle.date.toIso8601String(),
-    checklist: controle.checklist,
-    comments: controle.comment,
+    id: control.id,
+    tentId: control.tentId,
+    userId: control.userId,
+    date: control.date.toIso8601String(),
+    checklist: control.checklist,
+    comments: control.comment,
   );
 }

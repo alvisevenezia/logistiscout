@@ -54,8 +54,7 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
       developer.log('[EvenementController] ➕ Adding event "${event.nom}" for groupId=$groupId');
 
-      // Ton repository peut être enrichi avec un addEvent si besoin.
-      await _repo.saveMealPlan(event.id.toString(), MealPlan.empty());
+      await _repo.createEvent(event);
 
       await reload();
     } catch (e, st) {

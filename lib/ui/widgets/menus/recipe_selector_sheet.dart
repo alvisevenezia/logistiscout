@@ -81,17 +81,14 @@ class _RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.green.shade100,
-                      child: Icon(
-                        _categoryIcon(recipe.category),
-                        color: Colors.green.shade700,
-                      ),
+                      child: recipe.menuType.icon,
                     ),
                     title: Text(recipe.title,
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       recipe.description.isNotEmpty == true
                           ? recipe.description
-                          : _categoryLabel(recipe.category),
+                          : recipe.menuType.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -141,29 +138,4 @@ class _RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
     );
   }
 
-  IconData _categoryIcon(RecipeCategory category) {
-    switch (category) {
-      case RecipeCategory.entree:
-        return Icons.local_dining;
-      case RecipeCategory.plat:
-        return Icons.restaurant;
-      case RecipeCategory.dessert:
-        return Icons.icecream;
-      case RecipeCategory.boisson:
-        return Icons.local_cafe;
-    }
-  }
-
-  String _categoryLabel(RecipeCategory category) {
-    switch (category) {
-      case RecipeCategory.entree:
-        return 'Entrée';
-      case RecipeCategory.plat:
-        return 'Plat principal';
-      case RecipeCategory.dessert:
-        return 'Dessert';
-      case RecipeCategory.boisson:
-        return 'Boisson';
-    }
-  }
 }

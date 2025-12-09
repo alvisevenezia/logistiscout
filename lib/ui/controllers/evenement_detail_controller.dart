@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/ingredient.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
+import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
@@ -25,7 +26,7 @@ class EvenementDetailController extends ChangeNotifier {
 
   Event? event;
   MealPlan? currentPlan;
-  DateTime? selectedDate;
+  int dayOffset = 0;
   MealType selectedMeal = MealType.dejeuner;
   bool loading = false;
   String? error;
@@ -43,7 +44,7 @@ class EvenementDetailController extends ChangeNotifier {
     required this.eventRepo,
   });
 
-  Future<void> init(String eventId) async {
+  Future<void> init(int eventId) async {
     loading = true;
     error = null;
     developer.log('[EvenementDetailController] 🟡 init() starting (eventId=$eventId)');
@@ -55,7 +56,6 @@ class EvenementDetailController extends ChangeNotifier {
       await loadTentes();
       allTentes = await tenteRepo.getTentList();
       developer.log('[EvenementDetailController] ✅ Loaded ${allTentes.length} tentes');
-      selectedDate = event?.date;
       await _loadPlan(eventId);
     } catch (e, st) {
       error = e.toString();
@@ -125,18 +125,18 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadPlan(String eventId) async {
-    if (selectedDate == null) {
+  Future<void> _loadPlan(int eventId) async {
+    if (this.dayOffset == null) {
       developer.log('[EvenementDetailController] ⚠️ _loadPlan() skipped: selectedDate is null');
       return;
     }
 
     developer.log('[EvenementDetailController] 🔵 _loadPlan() start (eventId=$eventId, '
-        'date=$selectedDate, meal=$selectedMeal)');
+        'date=$this.dayOffset, meal=$selectedMeal, offset=$dayOffset), dayOffset=$dayOffset');
 
     try {
       final start = DateTime.now();
-      currentPlan = await getMealPlanUC(eventId, selectedDate!, selectedMeal);
+      currentPlan = await getMealPlanUC(eventId,dayOffset, selectedMeal);
       final duration = DateTime.now().difference(start).inMilliseconds;
 
       developer.log('[EvenementDetailController] ✅ _loadPlan() success '
@@ -148,16 +148,16 @@ class EvenementDetailController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> changeDate(DateTime date) async {
-    developer.log('[EvenementDetailController] 🔄 changeDate() → $date');
-    selectedDate = date;
-    await _loadPlan(event!.id.toString());
+  Future<void> changeOffset(int newOffest) async {
+    developer.log('[EvenementDetailController] 🔄 changeDate() → $newOffest');
+    dayOffset = newOffest;
+    await _loadPlan(event!.id);
   }
 
   Future<void> changeMeal(MealType meal) async {
     developer.log('[EvenementDetailController] 🔄 changeMeal() → $meal');
     selectedMeal = meal;
-    await _loadPlan(event!.id.toString());
+    await _loadPlan(event!.id);
   }
 
   Future<void> setPortions(int portions) async {
@@ -169,14 +169,14 @@ class EvenementDetailController extends ChangeNotifier {
 
     try {
       for (final item in currentPlan!.items) {
-        if (item.eventMenuId == null) continue; // Sécurité
+        if (item.eventId == null) continue; // Sécurité
 
         await eventRepo.updateEventMenu(
-          item.eventMenuId!,
-          event!.id,
-          int.parse(item.recipe.id),
-          currentPlan!.date,
-          currentPlan!.meal,
+          item.eventId!,
+          event!.id!,
+          item.recipeId,
+          currentPlan!.dayNumber,
+          currentPlan!.mealType,
           portions,
         );
       }
@@ -187,21 +187,21 @@ class EvenementDetailController extends ChangeNotifier {
     }
   }
 
-  Future<void> addRecipes(List<MenuItem> items) async {
-    if (items.isEmpty) return;
-    developer.log('[EvenementDetailController] ➕ createRecipes(${items.length})');
+  Future<void> createRecipes(List<Recipe> recipes) async {
+    if (recipes.isEmpty) return;
+    developer.log('[EvenementDetailController] ➕ createRecipes(${recipes.length})');
 
     final recipeRepo = this.recipeRepo;
     int successCount = 0;
 
-    for (final item in items) {
+    for (final recipe in recipes) {
       try {
-        await recipeRepo.createRecipe(item.recipe);
+        await recipeRepo.createRecipe(recipe);
         successCount++;
-        developer.log('✅ Recette "${item.recipe.title}" créée sur le backend');
+        developer.log('✅ Recette "${recipe.title}" créée sur le backend');
       } catch (e, st) {
         developer.log(
-          '[EvenementDetailController] ❌ Échec création recette "${item.recipe.title}"',
+          '[EvenementDetailController] ❌ Échec création recette "${recipe.title}"',
           error: e,
           stackTrace: st,
         );
@@ -209,27 +209,27 @@ class EvenementDetailController extends ChangeNotifier {
       }
     }
 
-    developer.log('[EvenementDetailController] ✅ $successCount/${items.length} recettes créées avec succès');
+    developer.log('[EvenementDetailController] ✅ $successCount/${recipes.length} recettes créées avec succès');
   }
 
-  Future<void> addRecipeToMealPlan(MenuItem item) async {
-    if (event == null || selectedDate == null) return;
+  Future<void> addMenuItemToMealPlan(MenuItem item) async {
+    if (event == null || dayOffset == null) return;
 
-    developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan(${item.recipe.title})');
+    developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan(${item})');
 
     try {
 
       await eventRepo.addEventMenu(
         eventId: event!.id,
-        menuId: int.parse(item.recipe.id),
-        date: selectedDate!,
+        menuId: item.recipeId,
+        dayNumber: dayOffset,
         meal: selectedMeal,
         portions: currentPlan?.portions ?? 1,
       );
 
       developer.log('[EvenementDetailController] ✅ Recipe linked to meal plan');
 
-      await _loadPlan(event!.id.toString());
+      await _loadPlan(event!.id);
     } catch (e, st) {
       developer.log('[EvenementDetailController] ❌ addRecipeToMealPlan failed',
           error: e, stackTrace: st);
@@ -244,9 +244,9 @@ class EvenementDetailController extends ChangeNotifier {
     try {
       final item = currentPlan!.items[index];
 
-      if (item.eventMenuId != null) {
-        await eventRepo.deleteEventMenu(item.eventMenuId!);
-        developer.log('[EvenementDetailController] ✅ event_menu supprimé (id=${item.eventMenuId})');
+      if (item.eventId != null) {
+        await eventRepo.deleteEventMenu(item.eventId!);
+        developer.log('[EvenementDetailController] ✅ event_menu supprimé (id=${item.eventId})');
       }
 
       // 🧹 Mise à jour locale
@@ -291,48 +291,12 @@ class EvenementDetailController extends ChangeNotifier {
   }
 
   Future<List<IngredientTotal>> computeTotalIngredientsForEvent() async {
-    if (event == null) throw Exception("Aucun événement sélectionné");
-    developer.log('[EvenementDetailController] 🧮 Calcul des ingrédients via getMealPlanUC');
-
-    final aggregated = <String, IngredientTotal>{};
-    final start = event!.date;
-    final end = event!.dateFin;
-    for (DateTime day = start;
-    !day.isAfter(end);
-    day = day.add(const Duration(days: 1))) {
-      for (final meal in MealType.values) {
-        try {
-          final plan = await getMealPlanUC(event!.id.toString(), day, meal);
-          for (final item in plan.items) {
-            for (final ing in item.forPortions(plan.portions)) {
-              final key = '${ing.name}:${ing.unit}';
-              if (!aggregated.containsKey(key)) {
-                aggregated[key] = ing;
-              } else {
-                final cur = aggregated[key]!;
-                aggregated[key] = IngredientTotal(
-                  name: cur.name,
-                  unit: cur.unit,
-                  quantity: cur.quantity + ing.quantity,
-                );
-              }
-            }
-          }
-        } catch (e) {
-          developer.log('⚠️ Aucun repas pour $day - $meal : $e');
-        }
-      }
+      return [];
     }
-
-    developer.log(
-        '[EvenementDetailController] ✅ Ingrédients totaux pour tout le séjour : ${aggregated.length}');
-    return aggregated.values.toList();
-  }
-
 }
 
 final evenementDetailProvider =
-ChangeNotifierProvider.family<EvenementDetailController, String>((ref, eventId) {
+ChangeNotifierProvider.family<EvenementDetailController, int>((ref, eventId) {
   final getEventUC = ref.read(getEventUseCaseProvider);
   final getMealPlanUC = ref.read(getMealPlanUseCaseProvider);
   final saveMealPlanUC = ref.read(saveMealPlanUseCaseProvider);

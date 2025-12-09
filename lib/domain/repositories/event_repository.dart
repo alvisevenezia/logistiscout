@@ -3,13 +3,14 @@ import '../entities/menu.dart';
 
 abstract class EventRepository {
   updateEventTents(String groupId, int eventId, List<int> tentIds, Event event);
-  Future<Event> getEvent(String id);
+  Future<void> createEvent(Event event);
+  Future<Event> getEvent(int id);
   Future<List<Event>> getAllEvents();
-  Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal);
+  Future<MealPlan> getMealPlan(int eventId, int dayNumber, MealType meal);
   Future<void> addEventMenu({
     required int eventId,
     required int menuId,
-    required DateTime date,
+    required int dayNumber,
     required MealType meal,
     required int portions,
   });
@@ -20,7 +21,7 @@ abstract class EventRepository {
     int eventMenuId,
     int eventId,
     int menuId,
-    DateTime date,
+    int dayNumber,
     MealType meal, int quantity
   );
   Future<void> duplicateMealPlans(

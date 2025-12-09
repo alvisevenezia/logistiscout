@@ -4,119 +4,92 @@ import 'ingredient.dart';
 
 enum MealType { petitDej, dejeuner, diner }
 
+/// Represents a menu item associated with an event.
 @immutable
 class MenuItem {
-  final int? eventMenuId;
-  final int? menuId;
-  final Recipe recipe;
-  final List<IngredientTotal> baseIngredients;
+  final int id;
+  final int eventId;
+  final int recipeId;
+  final int dayNumber;
+  final MealType mealType;
+  final int portions;
 
   const MenuItem({
-    this.eventMenuId,
-    this.menuId,
-    required this.recipe,
-    required this.baseIngredients,
+    required this.id,
+    required this.eventId,
+    required this.recipeId,
+    required this.dayNumber,
+    required this.mealType,
+    required this.portions,
   });
 
   MenuItem copyWith({
+    int? id,
     int? eventMenuId,
     int? menuId,
-    Recipe? recipe,
-    List<IngredientTotal>? baseIngredients,
+    int? dayNumber,
+    MealType? mealType,
+    int? portions,
   }) {
     return MenuItem(
-      eventMenuId: eventMenuId ?? this.eventMenuId,
-      menuId: menuId ?? this.menuId,
-      recipe: recipe ?? this.recipe,
-      baseIngredients: baseIngredients ?? this.baseIngredients,
+      id: id ?? this.id,
+      eventId: eventMenuId ?? this.eventId,
+      recipeId: menuId ?? this.recipeId,
+      dayNumber: dayNumber ?? this.dayNumber,
+      mealType: mealType ?? this.mealType,
+      portions: portions ?? this.portions,
     );
-  }
-
-  @override
-  String toString() =>
-      'MenuItem(eventMenuId: $eventMenuId, menuId: $menuId, recipe: ${recipe.title})';
-
-  factory MenuItem.fromJson(Map<String, dynamic> json) {
-    return MenuItem(
-      eventMenuId: json['id'] as int?,
-      recipe: Recipe.fromJson(json['menu'] ?? {}),
-      menuId: json['menu_id'] as int?,
-      baseIngredients: (json['menu']?['ingredients'] as List?)
-          ?.map((i) => IngredientTotal.fromJson(i))
-          .toList() ??
-          [],
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': eventMenuId,
-    'menu_id': menuId,
-    'menu': recipe.toJson(),
-    'ingredients': baseIngredients.map((i) => i.toJson()).toList(),
-  };
-
-  List<IngredientTotal> forPortions(int portions) {
-    return baseIngredients
-        .map((i) => i.copyWith(quantity: i.quantity * portions))
-        .toList();
   }
 }
 
 
 @immutable
+/// Represents a meal plan for a specific date and meal type.
+///
+/// EN db en on stocke les menus dans une table avec la forme menu_item_dto, ici on veut les assembler en un plan de repas constituer des info du repas et des menus associés (un pour entrée, un pour plat, etc)
 class MealPlan {
-  final DateTime date;
-  final MealType meal;
+  /// The ID of the event this meal plan is associated with.
+  final int eventId;
+  /// The day number within the event.
+  final int dayNumber;
+  /// The type of meal (e.g., breakfast, lunch, dinner).
+  final MealType mealType;
+  /// The number of portions for this meal plan.
   final int portions;
+  /// The list of menu items included in this meal plan.
   final List<MenuItem> items;
 
   const MealPlan({
-    required this.date,
-    required this.meal,
+    required this.eventId,
+    required this.dayNumber,
+    required this.mealType,
     required this.portions,
     required this.items,
   });
 
   factory MealPlan.empty() {
     return MealPlan(
-      date: DateTime.now(),
-      meal: MealType.dejeuner,
+      eventId: -1,
+      dayNumber: -1,
+      mealType: MealType.dejeuner,
       portions: 1,
       items: const [],
     );
   }
 
   MealPlan copyWith({
-    DateTime? date,
+    int? eventId,
+    int? dayNumber,
     MealType? meal,
     int? portions,
     List<MenuItem>? items,
   }) {
     return MealPlan(
-      date: date ?? this.date,
-      meal: meal ?? this.meal,
+      eventId: eventId ?? this.eventId,
+      dayNumber: dayNumber ?? this.dayNumber,
+      mealType: meal ?? this.mealType,
       portions: portions ?? this.portions,
       items: items ?? this.items,
     );
   }
-
-    List<IngredientTotal> totals() {
-      final Map<String, IngredientTotal> agg = {};
-      for (final item in items) {
-        for (final ing in item.forPortions(portions)) {
-          final key = '${ing.name}:${ing.unit}';
-          if (!agg.containsKey(key)) {
-            agg[key] = ing;
-          } else {
-            final cur = agg[key]!;
-            agg[key] = IngredientTotal(
-              name: cur.name,
-              unit: cur.unit,
-              quantity: cur.quantity + ing.quantity,
-            );
-          }
-        }
-      }
-      return agg.values.toList();
-    }
 }

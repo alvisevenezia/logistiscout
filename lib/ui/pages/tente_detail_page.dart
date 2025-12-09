@@ -291,7 +291,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => EvenementDetailPage(eventId: evt.id.toString()),
+                                          builder: (_) => EvenementDetailPage(eventId: evt.id),
                                         ),
                                       );
                                     },

@@ -25,6 +25,10 @@ enum Unit {
 
   }
 
+  static int toInt(Unit unit) {
+    return unit.index;
+  }
+
   static Unit fromString(String unitStr) {
     return Unit.values.firstWhere(
       (e) => e.name.toLowerCase() == unitStr.toLowerCase(),

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:logistiscout/data/models/menu_item_dto.dart';
+import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/services/AppException.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 
@@ -41,7 +43,7 @@ class ApiService {
   }
 
 
-  factory ApiService({String baseUrl = 'http://57.128.224.111:8000'}) {
+  factory ApiService({String baseUrl = 'https://api.logistiscout.fr'}) {
     developer.log('ApiService instance requested', name: 'ApiService');
     return _instance ??= ApiService._internal(baseUrl: baseUrl);
   }
@@ -60,11 +62,11 @@ class ApiService {
       }) async {
     
     final headers = await _headers();
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = Uri.parse('$baseUrl/v2$path');
     
     try {
       developer.log(
-        '${method.name} $path body: $body',
+        '${method.name} /v2$path body: $body',
         name: 'ApiService',
       );
 
@@ -98,7 +100,7 @@ class ApiService {
       }
 
       developer.log(
-        'Response $path: ${response.statusCode} - ${response.body}',
+        'Response /v2$path: ${response.statusCode} - ${response.body}',
         name: 'ApiService',
       );
 
@@ -176,7 +178,7 @@ class ApiService {
   Future<List<dynamic>> getTentList(String groupId) async {
     final response = await _safeRequest(
       HttpMethod.get,
-      '/tentes?groupeId=$groupId',
+      '/tentes',
     );
 
     return jsonDecode(response.body);
@@ -205,10 +207,10 @@ class ApiService {
     );
   }
 
-  Future<List<dynamic>> getEventList(String groupId) async {
+  Future<List<dynamic>> getEventList() async {
     final response = await _safeRequest(
         HttpMethod.get,
-        '/evenements?groupeId=$groupId',
+        '/evenements',
     );
     return jsonDecode(response.body);
   }
@@ -224,7 +226,7 @@ class ApiService {
   Future<void> updateEvent(int eventId, Map<String, dynamic> evt) async {
     await _safeRequest(
       HttpMethod.put,
-      '/evenements',
+      '/evenements/$eventId',
       body: jsonEncode(evt),
     );
   }
@@ -239,7 +241,7 @@ class ApiService {
   Future<List<dynamic>> getEventListByPeriod(String groupId, DateTime start, DateTime end) async {
     final response = await _safeRequest(
       HttpMethod.get,
-      '/evenements?groupeId=$groupId&debut=${start.toIso8601String()}&fin=${end.toIso8601String()}',
+      '/evenements&debut=${start.toIso8601String()}&fin=${end.toIso8601String()}',
     );
     return jsonDecode(response.body);
   }
@@ -299,7 +301,7 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  Future<Map<String, dynamic>> getMenu(int menuId) async {
+  Future<Map<String, dynamic>> getReceipe(int menuId) async {
     final response = await _safeRequest(
       HttpMethod.get,
       '/menus/$menuId',
@@ -331,7 +333,7 @@ class ApiService {
     );
   }
 
-  Future<List<dynamic>> getEventMenuList(int eventId) async {
+  Future<List<dynamic>> getEventMealPlanList(int eventId) async {
     final response = await _safeRequest(
       HttpMethod.get,
       '/event_menus?event_id=$eventId',
@@ -350,7 +352,7 @@ class ApiService {
   Future<void> updateEventMenu(int eventMenuId, Map<String, dynamic> menuData) async {
     await _safeRequest(
       HttpMethod.put,
-      '/event_menus',
+      '/event_menus/$eventMenuId',
       body: jsonEncode(menuData),
     );
   }
@@ -364,7 +366,7 @@ class ApiService {
 
   Future<void> createMenu(Map<String, dynamic> menu) async {
     await _safeRequest(
-      HttpMethod.delete,
+      HttpMethod.post,
       '/menus',
       body: jsonEncode(menu),
     );

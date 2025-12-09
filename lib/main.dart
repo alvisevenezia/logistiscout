@@ -13,7 +13,7 @@ void main() async {
   final groupID = await LocalStorageService.instance.getGroupId();
 
   runApp(
-    ProviderScope( // ✅ this is the key fix
+    ProviderScope(
       child: MyApp(isLoggedIn: groupID != null && groupID.isNotEmpty),
     ),
   );

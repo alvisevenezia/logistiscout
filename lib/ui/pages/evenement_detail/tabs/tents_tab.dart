@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
+import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 
 class TentsTab extends ConsumerWidget {
@@ -28,41 +28,46 @@ class TentsTab extends ConsumerWidget {
         .toList()
       ..sort((a, b) => a.nom.compareTo(b.nom));
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Expanded(
-            child: _TenteSection(
-              title: 'Tentes assignées',
-              color: Colors.blue.shade50,
-              tentes: assigned,
-              controller: c,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(evenementDetailProvider(page.eventId).notifier).loadTentes();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Expanded(
+              child: _TenteSection(
+                title: 'Tentes assignées',
+                color: Colors.blue.shade50,
+                tentes: assigned,
+                controller: c,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            icon: const Icon(Icons.swap_horiz),
-            label: const Text('Basculer la sélection'),
-            onPressed: c.selectedTenteIds.isEmpty
-                ? null
-                : () async {
-              await c.applyTenteChanges();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tentes mises à jour ✅')),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _TenteSection(
-              title: 'Tentes disponibles',
-              color: Colors.green.shade50,
-              tentes: available,
-              controller: c,
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              icon: const Icon(Icons.swap_horiz),
+              label: const Text('Basculer la sélection'),
+              onPressed: c.selectedTenteIds.isEmpty
+                  ? null
+                  : () async {
+                await c.applyTenteChanges();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Tentes mises à jour ✅')),
+                );
+              },
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Expanded(
+              child: _TenteSection(
+                title: 'Tentes disponibles',
+                color: Colors.green.shade50,
+                tentes: available,
+                controller: c,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

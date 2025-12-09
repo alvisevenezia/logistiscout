@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:logistiscout/domain/entities/menu_type.dart';
 import 'ingredient.dart';
 
-enum RecipeCategory { entree, plat, dessert, boisson }
 enum Allergen { gluten, lactose, arachide, soja, oeuf, poisson }
 enum Tag {
   vegetarian,
@@ -10,11 +10,11 @@ enum Tag {
 
 @immutable
 class Recipe {
-  final String id;
+  final int id;
   final String title;
   final String description;
   final String instructions;
-  final RecipeCategory category;
+  final MenuType menuType;
   final List<IngredientTotal> ingredients;
   final Set<Allergen> allergens;
   final Set<Tag> tags;
@@ -22,7 +22,7 @@ class Recipe {
   const Recipe({
     required this.id,
     required this.title,
-    required this.category,
+    required this.menuType,
     this.description = '',
     this.instructions = '',
     this.ingredients = const [],
@@ -32,11 +32,10 @@ class Recipe {
 
   // 🧭 Helpers
   Recipe copyWith({
-    String? id,
+    int? id,
     String? title,
     String? description,
     String? instructions,
-    RecipeCategory? category,
     List<IngredientTotal>? ingredients,
     Set<Allergen>? allergens,
     Set<Tag>? tags,
@@ -45,54 +44,11 @@ class Recipe {
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
+      menuType: menuType ?? this.menuType,
       instructions: instructions ?? this.instructions,
-      category: category ?? this.category,
       ingredients: ingredients ?? this.ingredients,
       allergens: allergens ?? this.allergens,
       tags: tags ?? this.tags,
     );
   }
-
-
-  factory Recipe.fromJson(Map<String, dynamic> json) {
-    return Recipe(
-      id: json['id'].toString(),
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      instructions: json['instructions'] ?? '',
-      category: RecipeCategory.values.firstWhere(
-            (e) => e.name == (json['category'] ?? 'plat'),
-        orElse: () => RecipeCategory.plat,
-      ),
-      ingredients: (json['ingredients'] as List<dynamic>?)
-          ?.map((i) => IngredientTotal.fromJson(i))
-          .toList() ??
-          const [],
-      allergens: (json['allergens'] as List<dynamic>?)
-          ?.map((a) => Allergen.values.firstWhere(
-            (e) => e.name == a,
-        orElse: () => Allergen.gluten,
-      ))
-          .toSet() ??
-          const {},
-      tags: (json['tags'] as List<dynamic>?)
-          ?.map((t) => Tag.values.firstWhere(
-            (e) => e.name == t,
-        orElse: () => Tag.vegetarian,
-      ))
-          .toSet() ??
-          const {},
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'description': description,
-    'instructions': instructions,
-    'category': category.name,
-    'ingredients': ingredients.map((i) => i.toJson()).toList(),
-    'allergens': allergens.map((a) => a.name).toList(),
-    'tags': tags.map((t) => t.name).toList(),
-  };
 }

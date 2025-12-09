@@ -43,7 +43,7 @@ class EventDto {
     'dateFin': dateFin,
     'type': type,
     'tentesAssociees': associatedTents,
-    'unites': unites,
-    'groupId': groupId,
+    'unites': unites.map((u) => Unit.toInt(u)).toList(),
+    'groupeId': groupId,
   };
 }

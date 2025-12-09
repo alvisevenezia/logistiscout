@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
+import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/add_recipe_button.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/recipe_list.dart';
@@ -22,11 +22,13 @@ class MenusTab extends ConsumerWidget {
     }
 
     final plan = controller.currentPlan!;
-    final selectedDate = controller.selectedDate!;
+    final selectedDate = controller.dayOffset!;
     final selectedMeal = controller.selectedMeal;
 
     return RefreshIndicator(
-      onRefresh: () async => controller.changeDate(selectedDate),
+      onRefresh: () async { 
+          await controller.changeOffset(selectedDate);
+        },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
@@ -37,7 +39,7 @@ class MenusTab extends ConsumerWidget {
               DateChips(
                 days: eventDays,
                 selected: selectedDate,
-                onSelected: controller.changeDate,
+                onSelected: controller.changeOffset,
               ),
               const SizedBox(height: 8),
               SegmentedMeal(value: selectedMeal, onChanged: controller.changeMeal),
@@ -49,9 +51,9 @@ class MenusTab extends ConsumerWidget {
               const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 12),
-              RecipeList(eventId: page.eventId), // 🍽️ la liste des recettes du repas
+              RecipeList(eventId: page.eventId),
               const SizedBox(height: 24),
-              AddRecipeButton(eventId: page.eventId), // ➕ bouton d’ajout
+              AddRecipeButton(eventId: page.eventId),
               const SizedBox(height: 80),
             ],
           ),

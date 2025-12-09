@@ -5,5 +5,5 @@ class GetEvent {
   final EventRepository repo;
   GetEvent(this.repo);
 
-  Future<Event> call(String id) => repo.getEvent(id);
+  Future<Event> call(int id) => repo.getEvent(id);
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
+import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'recette_card.dart';
 
 class RecipeList extends ConsumerWidget {
-  final String eventId;
+  final int eventId;
   const RecipeList({super.key, required this.eventId});
 
   @override

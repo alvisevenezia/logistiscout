@@ -3,7 +3,7 @@ import 'package:logistiscout/domain/entities/recipe.dart';
 
 class RecipeSelectorSheet extends StatefulWidget {
   final List<Recipe> recipes;
-  final Set<String> existingIds;
+  final Set<int> existingIds;
 
   const RecipeSelectorSheet({super.key,
     required this.recipes,
@@ -15,7 +15,7 @@ class RecipeSelectorSheet extends StatefulWidget {
 }
 
 class RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
-  final Set<String> _selectedIds = {};
+  final Set<int> _selectedIds = {};
   String _search = '';
 
   @override
@@ -98,7 +98,7 @@ class RecipeSelectorSheetState extends State<RecipeSelectorSheet> {
                       subtitle: Text(
                         isExisting
                             ? 'Déjà ajouté à ce repas'
-                            : recipe.category.name,
+                            : recipe.menuType.name,
                         style: TextStyle(
                           fontSize: 12,
                           color: isExisting

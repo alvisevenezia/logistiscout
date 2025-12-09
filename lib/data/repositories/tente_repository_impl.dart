@@ -56,7 +56,7 @@ class TenteRepositoryImpl implements TentRepository {
     final allJson = await api.getTentList(groupId);
     final allTentes = allJson.map((j) => mapTentDtoToDomain(TentDto.fromJson(j))).toList();
 
-    final eventsJson = await api.getEventList(groupId);
+    final eventsJson = await api.getEventList();
 
     final events = eventsJson
         .map((e) => EventMapper.fromJsonToDomain(e as Map<String, dynamic>))

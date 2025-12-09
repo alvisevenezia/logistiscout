@@ -22,10 +22,10 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
 
       await _localStorage.saveUsername(userLogin);
       await _localStorage.saveGroupId(response['id'].toString());
-      await _localStorage.saveToken(response['token']);
+      await _localStorage.saveToken(response['access_token']);
 
       developer.log('[LoginController] ✅ Login successful');
-      developer.log('[LoginController] userlogin=$userLogin, groupId=${response['id']}, token=${response['token']}');
+      developer.log('[LoginController] userlogin=$userLogin, groupId=${response['id']}, token=${response['access_token']}');
 
       state = const AsyncData(null);
       return true;

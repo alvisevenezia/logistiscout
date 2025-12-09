@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/infos_tab.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/menus_tab.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/tabs/tents_tab.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
+import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/shopping_list_sheet.dart';
 
 class EvenementDetailPage extends ConsumerWidget {
-  final String eventId;
+  final int eventId;
   final bool openMenusDirectly;
 
   const EvenementDetailPage({

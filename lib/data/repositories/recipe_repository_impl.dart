@@ -1,4 +1,5 @@
 import 'package:logistiscout/domain/entities/ingredient.dart';
+import 'package:logistiscout/domain/entities/menu_type.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
@@ -11,7 +12,6 @@ class RecipeRepositoryImpl implements RecipeRepository {
   @override
   Future<List<Recipe>> search({
     String query = '',
-    Set<RecipeCategory>? categories,
     Set<Allergen>? allergens,
     Set<Tag>? tags,
   }) async {
@@ -24,9 +24,9 @@ class RecipeRepositoryImpl implements RecipeRepository {
 
     return filtered.map((menu) {
       return Recipe(
-        id: menu['id'].toString(),
-        title: menu['nom'],
-        category: _parseCategory(menu['type_repas']),
+        id: menu['id'],
+        title: menu['title'],
+        menuType: MenuType.plat,
       );
     }).toList();
   }
@@ -34,10 +34,9 @@ class RecipeRepositoryImpl implements RecipeRepository {
   @override
   Future<void> createRecipe(Recipe recipe) async {
     final payload = {
-      'nom': recipe.title,
+      'title': recipe.title,
       'description': recipe.description,
       'instructions': recipe.instructions ,
-      'type_repas': recipe.category.name,
       'ingredients': recipe.ingredients
           .map((i) => {
         'nom': i.name,
@@ -55,8 +54,8 @@ class RecipeRepositoryImpl implements RecipeRepository {
 
 
   @override
-  Future<List<IngredientTotal>> getIngredientsForRecipe(String recipeId) async {
-    final data = await api.getMenu(int.parse(recipeId));
+  Future<List<IngredientTotal>> getIngredientsForRecipe(int recipeId) async {
+    final data = await api.getReceipe(recipeId);
     final ingredients = (data['ingredients'] as List)
         .map((i) => IngredientTotal(
       name: i['nom'],
@@ -67,20 +66,4 @@ class RecipeRepositoryImpl implements RecipeRepository {
     return ingredients;
   }
 
-  RecipeCategory _parseCategory(String? raw) {
-    switch (raw?.toLowerCase()) {
-      case 'petitdej':
-      case 'petit-déj':
-      case 'petit_dej':
-        return RecipeCategory.entree;
-      case 'déjeuner':
-      case 'dejeuner':
-        return RecipeCategory.plat;
-      case 'dîner':
-      case 'diner':
-        return RecipeCategory.dessert;
-      default:
-        return RecipeCategory.plat;
-    }
-  }
 }

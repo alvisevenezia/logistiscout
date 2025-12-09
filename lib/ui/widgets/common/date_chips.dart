@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class DateChips extends StatelessWidget {
   final List<DateTime> days;
-  final DateTime selected;
-  final ValueChanged<DateTime> onSelected;
+  final int selected;
+  final ValueChanged<int> onSelected;
 
   const DateChips({
     super.key,
@@ -28,11 +28,11 @@ class DateChips extends StatelessWidget {
         itemCount: days.length,
         itemBuilder: (_, i) {
           final d = days[i];
-          final isSelected = d == selected;
+          final isSelected = days.indexOf(d) == selected;
           return ChoiceChip(
             label: Text(_format(d)),
             selected: isSelected,
-            onSelected: (_) => onSelected(d),
+            onSelected: (_) => onSelected(days.indexOf(d)),
             selectedColor: Theme.of(context).colorScheme.primaryContainer,
             labelStyle: TextStyle(
               color: isSelected

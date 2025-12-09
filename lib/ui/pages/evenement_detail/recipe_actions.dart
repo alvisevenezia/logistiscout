@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/ingredient.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
+import 'package:logistiscout/domain/entities/menu_type.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
-import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart.dart';
+import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/widgets/recipe_selector_sheet.dart';
 
 Future<void> openRecipeSelector(
     BuildContext context,
     WidgetRef ref,
-    String eventId,
+    int eventId,
     ) async {
   final recipeRepo = ref.read(recipeRepositoryProvider);
   final controller = ref.read(evenementDetailProvider(eventId));
@@ -26,12 +27,12 @@ Future<void> openRecipeSelector(
 
   // 🔹 Identifiants des recettes déjà présentes dans le plan courant
   final existingIds = controller.currentPlan?.items
-      .map((i) => i.recipe.id)
+      .map((i) => i.recipeId)
       .toSet() ??
       {};
 
   // 🔹 Affiche la bottom sheet
-  final selected = await showModalBottomSheet<List<Recipe>>(
+  final selectedRecipe = await showModalBottomSheet<List<Recipe>>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -41,26 +42,30 @@ Future<void> openRecipeSelector(
     ),
   );
 
-  if (selected == null || selected.isEmpty) return;
+  if (selectedRecipe == null || selectedRecipe.isEmpty) return;
 
-  // 🔹 Ajoute seulement les nouvelles recettes
-  for (final r in selected) {
-    if (existingIds.contains(r.id)) continue; // sécurité
-    final ingredients = await recipeRepo.getIngredientsForRecipe(r.id);
-    final item = MenuItem(recipe: r, baseIngredients: ingredients);
-    await controller.addRecipeToMealPlan(item);
+  for (final recipe in selectedRecipe) {
+    if (existingIds.contains(recipe.id)) continue; // sécurité
+    final item = MenuItem(
+        id: -1,
+        eventId: eventId,
+        recipeId: recipe.id,
+        dayNumber: controller.dayOffset,
+        mealType: MealType.dejeuner,
+        portions: controller.currentPlan?.portions ?? 1,
+    );
+    await controller.addMenuItemToMealPlan(item);
   }
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('${selected.length} recette(s) ajoutée(s) ✅')),
+    SnackBar(content: Text('${selectedRecipe.length} recette(s) ajoutée(s) ✅')),
   );
 }
 
-/// Ouvrir l’UI de création et ENREGISTRER une nouvelle recette côté backend
 Future<void> openRecipeCreator(
     BuildContext context,
     WidgetRef ref,
-    String eventId,
+    int eventId,
     ) async {
   final title = TextEditingController();
   final description = TextEditingController();
@@ -68,6 +73,7 @@ Future<void> openRecipeCreator(
   final qty = TextEditingController();
   final unit = TextEditingController();
   final ingredients = <IngredientTotal>[];
+  var type = MenuType.plat;
 
   final recipe = await showModalBottomSheet<Recipe>(
     context: context,
@@ -100,6 +106,19 @@ Future<void> openRecipeCreator(
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<MenuType>(
+                  initialValue: type,
+                  items: MenuType.values
+                      .map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name),
+                  ))
+                      .toList(),
+                  onChanged: (v) => type = v ?? MenuType.plat,
+                  decoration: const InputDecoration(labelText: 'Unité'),
+                ),
+
                 const SizedBox(height: 12),
                 TextField(
                   controller: instructions,
@@ -138,7 +157,7 @@ Future<void> openRecipeCreator(
                       child: TextField(
                         controller: unit,
                         decoration: const InputDecoration(
-                          hintText: 'Unité', border: OutlineInputBorder(),
+                          hintText: 'Type', border: OutlineInputBorder(),
                         ),
                       ),
                     ),
@@ -168,11 +187,11 @@ Future<void> openRecipeCreator(
                     label: const Text('Enregistrer'),
                     onPressed: () {
                       final r = Recipe(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        id: -1,
                         title: title.text,
+                        menuType: type,
                         description: description.text,
                         instructions: instructions.text,
-                        category: RecipeCategory.plat,
                         ingredients: ingredients,
                       );
                       Navigator.pop(context, r);
@@ -191,9 +210,7 @@ Future<void> openRecipeCreator(
 
   // Enregistrer la recette dans la base (sans forcément l’ajouter au repas)
   final controller = ref.read(evenementDetailProvider(eventId));
-  await controller.addRecipes([
-    MenuItem(recipe: recipe, baseIngredients: recipe.ingredients),
-  ]);
+  await controller.createRecipes([recipe]);
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text('Recette "${recipe.title}" créée ✅')),

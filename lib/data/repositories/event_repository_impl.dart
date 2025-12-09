@@ -1,7 +1,12 @@
 import 'package:logistiscout/data/mappers/event_mapper.dart';
+import 'package:logistiscout/data/mappers/menu_item_mapper.dart';
+import 'package:logistiscout/data/mappers/receipe_mapper.dart';
 import 'package:logistiscout/data/models/event_dto.dart';
+import 'package:logistiscout/data/models/menu_item_dto.dart';
+import 'package:logistiscout/data/models/receipe_dto.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
+import 'package:logistiscout/domain/entities/menu_type.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
@@ -16,7 +21,7 @@ class EventRepositoryImpl implements EventRepository {
 
   EventRepositoryImpl(this.api);
 
-  Future<void> addEvent(Event event) async {
+  Future<void> createEvent(Event event) async {
     final dto = EventMapper.toDto(event);
     await api.addEvent(dto.toJson());
   }
@@ -43,7 +48,7 @@ class EventRepositoryImpl implements EventRepository {
       'type': event.type,
       'date': event.date.toIso8601String(),
       'dateFin': event.dateFin.toIso8601String(),
-      'unites': event.unites,
+      'unites': event.unites.map((u) => Unit.toInt(u)).toList(),
       'tentesAssociees': tentIds,
     };
 
@@ -60,7 +65,7 @@ class EventRepositoryImpl implements EventRepository {
     developer.log(
         '[EventRepositoryImpl] 🔍 Fetching all events for groupId=$groupId');
 
-    final data = await api.getEventList(groupId);
+    final data = await api.getEventList();
 
     if (data.isEmpty) {
       developer.log(
@@ -84,14 +89,10 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
-  Future<Event> getEvent(String id) async {
-    final groupId = await LocalStorageService.instance.getGroupId();
-    if (groupId == null) {
-      throw Exception('GroupId is null');
-    }
-    final all = await api.getEventList(groupId);
+  Future<Event> getEvent(int id) async {
+    final all = await api.getEventList();
     final data = all.firstWhere(
-          (e) => e['id'].toString() == id,
+          (e) => e['id'] == id,
       orElse: () => throw Exception('Événement $id introuvable'),
     );
     return Event(
@@ -104,68 +105,32 @@ class EventRepositoryImpl implements EventRepository {
       unites: (data['unites'] as List<dynamic>? ?? [])
           .map((u) => Unit.fromInt(u))
           .toList(),
-      groupId: data['groupeId'],
+      groupId: data['groupeId'].toString(),
     );
   }
 
   @override
-  Future<MealPlan> getMealPlan(String eventId, DateTime date, MealType meal) async {
+  Future<MealPlan> getMealPlan(int eventId, int dayNumber, MealType meal) async {
 
-    final all = await api.getEventMenuList(int.parse(eventId));
-    final dateStr = date.toIso8601String().split('T').first;
-    final matching = all.where((m) =>
-    m['date'] == dateStr &&
-        m['type_repas'] == meal.name).toList();
+    final all = await api.getEventMealPlanList(eventId).then(
+          (data) => data
+          .map<MenuItem>((json) => menuItemDtoToDomain(MenuItemDto.fromJson(json)))
+          .toList(),
+    );
 
-    final items = <MenuItem>[];
+    final matching = all.where((currentMenuItemDto) =>
+    currentMenuItemDto.dayNumber == dayNumber &&
+        currentMenuItemDto.mealType == meal).toList();
 
-    for (final m in matching) {
-      try {
-        final eventMenuId = m['id'];
-        final menuId = m['menu_id'];
-        if (menuId == null) continue;
-
-        final menuData = await api.getMenu(menuId);
-
-        final ingredientsData = (menuData['ingredients'] as List?) ?? [];
-        final ingredients = ingredientsData.map((i) {
-          return IngredientTotal(
-            name: i['nom'] ?? 'Ingrédient inconnu',
-            quantity: (i['quantite'] as num?)?.toDouble() ?? 0,
-            unit: i['unite'] ?? '',
-          );
-        }).toList();
-
-        final recipe = Recipe(
-          id: menuData['id'].toString(),
-          title: menuData['nom'] ?? 'Recette inconnue',
-          description: menuData['description'] ?? '',
-          instructions: menuData['instructions'] ?? '',
-          category: RecipeCategory.plat,
-          ingredients: ingredients,
-        );
-
-        items.add(MenuItem(
-          eventMenuId: eventMenuId,
-          menuId: menuId,
-          recipe: recipe,
-          baseIngredients: ingredients,
-        ));
-      } catch (e, st) {
-        developer.log(
-          '[EventRepositoryImpl] ⚠️ Failed to load menu ${m['menu_id']}: $e',
-          stackTrace: st,
-        );
-      }
-    }
 
     return MealPlan(
-      date: date,
-      meal: meal,
+      dayNumber: dayNumber,
+      mealType: meal,
       portions: matching.isNotEmpty
-          ? (matching.first['quantite_personnes'] ?? 1)
+          ? (matching.first.portions)
           : 1,
-      items: items,
+      items: matching,
+      eventId: eventId,
     );
   }
 
@@ -176,12 +141,9 @@ class EventRepositoryImpl implements EventRepository {
     for (final item in plan.items) {
       final body = {
         'event_id': int.parse(eventId),
-        'menu_id': int.parse(item.recipe.id),
-        'date': plan.date
-            .toIso8601String()
-            .split('T')
-            .first,
-        'type_repas': plan.meal.name,
+        'menu_id': item.recipeId,
+        'day_number': plan.portions,
+        'type_repas': plan.mealType.name,
         'quantite_personnes': plan.portions,
       };
       await api.addEventMenu(body);
@@ -196,7 +158,7 @@ class EventRepositoryImpl implements EventRepository {
       for (final item in source.items) {
         final body = {
           'event_id': int.parse(eventId),
-          'menu_id': int.parse(item.recipe.id),
+          'menu_id': item.recipeId,
           'date': target.key
               .toIso8601String()
               .split('T')
@@ -211,11 +173,11 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> updateEventMenu(
-      int eventMenuId, int eventId, int menuId, DateTime date, MealType meal, int quantity) async {
+      int eventMenuId, int eventId, int menuId, int day_number, MealType meal, int quantity) async {
     final payload = {
       'event_id': eventId,
       'menu_id': menuId,
-      'date': date.toIso8601String().split('T').first,
+      'day_number': day_number,
       'type_repas': meal.name,
       'quantite_personnes': quantity,
     };
@@ -227,14 +189,14 @@ class EventRepositoryImpl implements EventRepository {
   Future<void> addEventMenu({
     required int eventId,
     required int menuId,
-    required DateTime date,
+    required int dayNumber,
     required MealType meal,
     required int portions,
   }) async {
     await api.addEventMenu({
       'event_id': eventId,
       'menu_id': menuId,
-      'date': date.toIso8601String().split('T').first,
+      'day_number': dayNumber,
       'type_repas': meal.name,
       'quantite_personnes': portions,
     });

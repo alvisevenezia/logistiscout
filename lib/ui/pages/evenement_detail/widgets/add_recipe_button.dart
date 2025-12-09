@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/pages/evenement_detail/recipe_actions.dart';
 
 class AddRecipeButton extends ConsumerWidget {
-  final String eventId;
+  final int eventId;
   const AddRecipeButton({super.key, required this.eventId});
 
   @override
@@ -41,7 +41,7 @@ class AddRecipeButton extends ConsumerWidget {
                   title: const Text('Choisir parmi les recettes existantes'),
                   onTap: () {
                     Navigator.pop(context);
-                    openRecipeSelector(context, ref, eventId); // ⬅️
+                    openRecipeSelector(context, ref, eventId);
                   },
                 ),
                 ListTile(
@@ -49,7 +49,7 @@ class AddRecipeButton extends ConsumerWidget {
                   title: const Text('Créer une nouvelle recette'),
                   onTap: () {
                     Navigator.pop(context);
-                    openRecipeCreator(context, ref, eventId); // ⬅️
+                    openRecipeCreator(context, ref, eventId);
                   },
                 ),
                 const Divider(),
