@@ -25,9 +25,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
     final tentesAsync = ref.watch(tentesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tentes'),
-      ),
+      appBar: AppBar(title: const Text('Tentes')),
       body: SafeArea(
         child: tentesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -41,12 +39,23 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                   : t.nom.toLowerCase().contains(q) ||
                   t.tentType.toLowerCase().contains(q) ||
                   t.assignedUnit.toLowerCase().contains(q);
-              final matchType =
-              _typeFilter == 'Tous' ? true : t.tentType == _typeFilter;
-              final matchEtat = _etatFilter == null ? true : t.state == _etatFilter;
-              final matchSize = _sizeFilter == 'Tous' ? true : t.nbPlaces.toString() == _sizeFilter;
-              final matchUnit = _unitFilter == 'Tous' ? true : t.assignedUnit == _unitFilter;
-              return matchQuery && matchType && matchEtat && matchSize && matchUnit;
+              final matchType = _typeFilter == 'Tous'
+                  ? true
+                  : t.tentType == _typeFilter;
+              final matchEtat = _etatFilter == null
+                  ? true
+                  : t.state == _etatFilter;
+              final matchSize = _sizeFilter == 'Tous'
+                  ? true
+                  : t.nbPlaces.toString() == _sizeFilter;
+              final matchUnit = _unitFilter == 'Tous'
+                  ? true
+                  : t.assignedUnit == _unitFilter;
+              return matchQuery &&
+                  matchType &&
+                  matchEtat &&
+                  matchSize &&
+                  matchUnit;
             }).toList();
 
             return Column(
@@ -72,7 +81,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                       ExpandablePanel(
                         header: Center(child: Text("Affiner la recherche")),
                         collapsed: const SizedBox.shrink(),
-                        expanded:Column(
+                        expanded: Column(
                           spacing: 10,
                           children: [
                             Row(
@@ -81,13 +90,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                                 Expanded(
                                   child: _TypeFilter(
                                     value: _typeFilter,
-                                    onChanged: (v) => setState(() => _typeFilter = v),
+                                    onChanged: (v) =>
+                                        setState(() => _typeFilter = v),
                                   ),
                                 ),
                                 Expanded(
                                   child: _EtatFilter(
                                     value: _etatFilter,
-                                    onChanged: (v) => setState(() => _etatFilter = v),
+                                    onChanged: (v) =>
+                                        setState(() => _etatFilter = v),
                                   ),
                                 ),
                               ],
@@ -98,13 +109,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                                 Expanded(
                                   child: _SizeFilter(
                                     value: _sizeFilter,
-                                    onChanged: (v) => setState(() => _sizeFilter = v),
+                                    onChanged: (v) =>
+                                        setState(() => _sizeFilter = v),
                                   ),
                                 ),
                                 Expanded(
                                   child: _UnitFilter(
                                     value: _unitFilter,
-                                    onChanged: (v) => setState(() => _unitFilter = v),
+                                    onChanged: (v) =>
+                                        setState(() => _unitFilter = v),
                                   ),
                                 ),
                               ],
@@ -112,7 +125,6 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                           ],
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -136,7 +148,8 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => TenteDetailPage(tenteId: t.id),
+                                  builder: (_) =>
+                                      TenteDetailPage(tenteId: t.id),
                                 ),
                               );
                               ref.read(tentesProvider.notifier).reload();
@@ -155,127 +168,181 @@ class _TentesPageState extends ConsumerState<TentesPage> {
 
       floatingActionButton: FloatingActionButton(
         tooltip: 'Ajouter une tente',
-        onPressed: () => _showAddTenteDialog(context, ref),
+        onPressed: () => _showAddTenteDialog(context),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  // ---------- Dialog d’ajout ----------
-  void _showAddTenteDialog(BuildContext context, WidgetRef ref) {
-    final nomCtl = TextEditingController();
-    final nbCtl = TextEditingController(text: '6');
-    final couleursCtl = TextEditingController();
-    String type = 'Canadienne';
-    var etat = TentState.broken; // défaut demandé
-    var integree = false;
-    Unit unitePreferee = Unit.tous;
-
+  void _showAddTenteDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Nouvelle tente'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nomCtl,
-                decoration: const InputDecoration(labelText: 'Nom'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: type,
-                items: const [
-                  DropdownMenuItem(value: 'Canadienne', child: Text('Canadienne')),
-                  DropdownMenuItem(value: 'Tipi', child: Text('Tipi')),
-                  DropdownMenuItem(value: 'Marabout', child: Text('Marabout')),
-                  DropdownMenuItem(value: 'Autre', child: Text('Autre')),
-                ],
-                onChanged: (v) => type = v ?? 'Canadienne',
-                decoration: const InputDecoration(labelText: 'Type'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: nbCtl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Nombre de places'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<TentState>(
-                initialValue: etat,
-                items: TentState.values
-                    .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(tentStateToString(e)),
-                ))
-                    .toList(),
-                onChanged: (v) => etat = v ?? TentState.broken,
-                decoration: const InputDecoration(labelText: 'État'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<Unit>(
-                initialValue: unitePreferee,
-                items: Unit.values
-                    .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e.name, style: TextStyle(color: Color(e.color)),),
-                ))
-                    .toList(),
-                onChanged: (v) => unitePreferee = v ?? Unit.tous,
-                decoration: const InputDecoration(labelText: 'Unité'),
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                value: integree,
-                onChanged: (v) => setState(() => integree = v),
-                title: const Text('Tapis de sol intégré'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ],
-          ),
+      builder: (_) => const AddTenteDialog(),
+    );
+  }
+
+}
+
+// ---------- Dialog d’ajout ----------
+class AddTenteDialog extends ConsumerStatefulWidget {
+  const AddTenteDialog({super.key});
+
+  @override
+  ConsumerState<AddTenteDialog> createState() => _AddTenteDialogState();
+}
+
+class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
+  late final TextEditingController nomCtl;
+  late final TextEditingController nbCtl;
+  late final TextEditingController couleursCtl;
+
+  String type = 'Canadienne';
+  TentState etat = TentState.broken;
+  bool integree = false;
+  Unit unitePreferee = Unit.tous;
+
+  bool isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    nomCtl = TextEditingController();
+    nbCtl = TextEditingController(text: '6');
+    couleursCtl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    nomCtl.dispose();
+    nbCtl.dispose();
+    couleursCtl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nouvelle tente'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nomCtl,
+              decoration: const InputDecoration(labelText: 'Nom'),
+            ),
+            const SizedBox(height: 8),
+
+            DropdownButtonFormField<String>(
+              initialValue: type,
+              items: const [
+                DropdownMenuItem(
+                  value: 'Canadienne',
+                  child: Text('Canadienne'),
+                ),
+                DropdownMenuItem(value: 'Tipi', child: Text('Tipi')),
+                DropdownMenuItem(value: 'Marabout', child: Text('Marabout')),
+                DropdownMenuItem(value: 'Autre', child: Text('Autre')),
+              ],
+              onChanged: (v) => setState(() => type = v ?? 'Canadienne'),
+              decoration: const InputDecoration(labelText: 'Type'),
+            ),
+            const SizedBox(height: 8),
+
+            TextField(
+              controller: nbCtl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Nombre de places'),
+            ),
+            const SizedBox(height: 8),
+
+            DropdownButtonFormField<TentState>(
+              initialValue: etat,
+              items: TentState.values
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(tentStateToString(e)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(() => etat = v ?? TentState.broken),
+              decoration: const InputDecoration(labelText: 'État'),
+            ),
+            const SizedBox(height: 8),
+
+            DropdownButtonFormField<Unit>(
+              initialValue: unitePreferee,
+              items: Unit.values
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(
+                        e.name,
+                        style: TextStyle(color: Color(e.color)),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(() => unitePreferee = v ?? Unit.tous),
+              decoration: const InputDecoration(labelText: 'Unité'),
+            ),
+            const SizedBox(height: 8),
+
+            SwitchListTile(
+              value: integree,
+              onChanged: (v) => setState(() => integree = v),
+              title: const Text('Tapis de sol intégré'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            child: const Text('Annuler'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          ElevatedButton(
-            child: const Text('Ajouter'),
-            onPressed: () async {
-              if (nomCtl.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Nom obligatoire')),
-                );
-                return;
-              }
-
-              final newTente = Tent(
-                id: -1,
-                nom: nomCtl.text.trim(),
-                uniteId: null,
-                state: etat,
-                comment: '',
-                isFloorEmbedded: integree,
-                nbPlaces: int.tryParse(nbCtl.text) ?? 0,
-                tentType: type,
-                assignedUnit: unitePreferee.name,
-                agenda: const [],
-                controlHistory: const [],
-                colors: couleursCtl.text
-                    .split(',')
-                    .map((e) => e.trim())
-                    .where((e) => e.isNotEmpty)
-                    .toList(),
-                groupId: '',
-              );
-
-              await ref.read(tentesProvider.notifier).createTente(newTente);
-              if (context.mounted) Navigator.pop(context);
-            },
-          ),
-        ],
       ),
+      actions: [
+        TextButton(
+          onPressed: isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
+        ElevatedButton(
+          onPressed: isSaving
+              ? null
+              : () async {
+                  if (nomCtl.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Nom obligatoire')),
+                    );
+                    return;
+                  }
+
+                  setState(() => isSaving = true);
+
+                  final newTente = Tent(
+                    id: -1,
+                    nom: nomCtl.text.trim(),
+                    uniteId: null,
+                    state: etat,
+                    comment: '',
+                    isFloorEmbedded: integree,
+                    nbPlaces: int.tryParse(nbCtl.text) ?? 0,
+                    tentType: type,
+                    assignedUnit: unitePreferee.name,
+                    agenda: const [],
+                    controlHistory: const [],
+                    colors: couleursCtl.text
+                        .split(',')
+                        .map((e) => e.trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList(),
+                    groupId: '',
+                  );
+
+                  await ref.read(tentesProvider.notifier).createTente(newTente);
+
+                  if (mounted) Navigator.pop(context);
+                },
+          child: Text(isSaving ? 'Ajout...' : 'Ajouter'),
+        ),
+      ],
     );
   }
 }
@@ -285,6 +352,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
 class _TenteCard extends StatelessWidget {
   final Tent tente;
   final VoidCallback onOpen;
+
   const _TenteCard({required this.tente, required this.onOpen});
 
   @override
@@ -305,7 +373,9 @@ class _TenteCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: Color(Unit.fromString(tente.assignedUnit).color),
+                backgroundColor: Color(
+                  Unit.fromString(tente.assignedUnit).color,
+                ),
                 child: const Icon(Icons.cabin, color: Colors.white),
               ),
               const SizedBox(width: 12),
@@ -331,7 +401,9 @@ class _TenteCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: chipColor.withAlpha(30),
                             borderRadius: BorderRadius.circular(999),
@@ -351,7 +423,7 @@ class _TenteCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${tente.tentType} • ${tente.nbPlaces} places'
-                          '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
+                      '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
@@ -386,16 +458,21 @@ class _TenteCard extends StatelessWidget {
 class _UnitFilter extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
+
   const _UnitFilter({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-
     return DropdownButtonFormField<Unit>(
       isExpanded: true,
       initialValue: Unit.tous,
       items: Unit.values
-          .map((t) => DropdownMenuItem(value: t, child: Text(t.name, style: TextStyle(color: Color(t.color)))))
+          .map(
+            (t) => DropdownMenuItem(
+              value: t,
+              child: Text(t.name, style: TextStyle(color: Color(t.color))),
+            ),
+          )
           .toList(),
       onChanged: (v) => onChanged(v?.name ?? 'Non affectée'),
       decoration: const InputDecoration(
@@ -410,11 +487,29 @@ class _UnitFilter extends StatelessWidget {
 class _SizeFilter extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
+
   const _SizeFilter({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    const sizes = ["Tous","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"];
+    const sizes = [
+      "Tous",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+    ];
     return DropdownButtonFormField<String>(
       isExpanded: true,
       initialValue: sizes.contains(value) ? value : 'Tous',
@@ -434,6 +529,7 @@ class _SizeFilter extends StatelessWidget {
 class _TypeFilter extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
+
   const _TypeFilter({required this.value, required this.onChanged});
 
   @override
@@ -458,11 +554,11 @@ class _TypeFilter extends StatelessWidget {
 class _EtatFilter extends StatelessWidget {
   final TentState? value;
   final ValueChanged<TentState?> onChanged;
+
   const _EtatFilter({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-
     return DropdownButtonFormField<TentState?>(
       isExpanded: true,
       initialValue: value,
@@ -472,7 +568,7 @@ class _EtatFilter extends StatelessWidget {
           child: Text('Tous les états'),
         ),
         ...TentState.values.map(
-              (e) => DropdownMenuItem<TentState?>(
+          (e) => DropdownMenuItem<TentState?>(
             value: e,
             child: Text(tentStateToString(e)),
           ),
