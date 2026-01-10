@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:logistiscout/data/models/menu_item_dto.dart';
-import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/services/AppException.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/services/token_store.dart';
 
 enum HttpMethod {
   get("GET"),
@@ -29,7 +27,7 @@ class ApiService {
   static ApiService? _instance;
 
   Future<Map<String, String>> _headers() async {
-    final token = await LocalStorageService.instance.getToken();
+    final token = await TokenStore.instance.readAccessToken();
 
     final headers = {
       'Content-Type': 'application/json',
@@ -59,42 +57,31 @@ class ApiService {
       HttpMethod method,
       String path, {
         Object? body,
+        bool retrying = false,
       }) async {
-    
     final headers = await _headers();
     final uri = Uri.parse('$baseUrl/v2$path');
-    
+
     try {
-      developer.log(
-        '${method.name} /v2$path body: $body',
-        name: 'ApiService',
-      );
+      developer.log('${method.name} /v2$path body: $body', name: 'ApiService');
 
       late final http.Response response;
 
-      // --- Sélection de la méthode HTTP ---
       switch (method) {
         case HttpMethod.get:
-          response = await http
-              .get(uri, headers: headers)
+          response = await http.get(uri, headers: headers)
               .timeout(const Duration(seconds: 10));
           break;
-
         case HttpMethod.post:
-          response = await http
-              .post(uri, headers: headers, body: body)
+          response = await http.post(uri, headers: headers, body: body)
               .timeout(const Duration(seconds: 10));
           break;
-
         case HttpMethod.put:
-          response = await http
-              .put(uri, headers: headers, body: body)
+          response = await http.put(uri, headers: headers, body: body)
               .timeout(const Duration(seconds: 10));
           break;
-
         case HttpMethod.delete:
-          response = await http
-              .delete(uri, headers: headers, body: body)
+          response = await http.delete(uri, headers: headers, body: body)
               .timeout(const Duration(seconds: 10));
           break;
       }
@@ -104,12 +91,28 @@ class ApiService {
         name: 'ApiService',
       );
 
-      // --- Vérification success (2xx) ---
+      // ✅ Success
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response;
       }
 
-      // --- Mapping des erreurs ---
+      // 🔁 If unauthorized, try refresh once then retry original request
+      final isAuthError = response.statusCode == 401 || response.statusCode == 403;
+      final isRefreshCall = path == '/auth/refresh';
+
+      if (isAuthError && !retrying && !isRefreshCall) {
+        final refreshed = await refreshToken();
+        if (refreshed) {
+          // retry once with the new access token
+          return _safeRequest(method, path, body: body, retrying: true);
+        } else {
+          await TokenStore.instance.clear();
+          throw AppException("Session expirée. Veuillez vous reconnecter.",
+              statusCode: response.statusCode);
+        }
+      }
+
+      // --- Your existing error mapping ---
       switch (response.statusCode) {
         case 400:
           throw AppException("Requête invalide (400).", statusCode: 400);
@@ -136,9 +139,47 @@ class ApiService {
       throw AppException('La réponse du serveur est invalide.');
     } catch (e) {
       developer.log('Erreur inconnue: $e', name: 'ApiService');
+      if (e is AppException) rethrow;
       throw AppException('Une erreur inconnue est survenue.');
     }
   }
+
+
+  Future<bool> refreshToken() async {
+    final refreshToken = await TokenStore.instance.readRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+
+    final uri = Uri.parse('$baseUrl/v2/auth/refresh');
+
+    try {
+      final res = await http
+          .post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      )
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        return false;
+      }
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final newAccess = data['access_token'] as String?;
+      final newRefresh = data['refresh_token'] as String?;
+
+      if (newAccess == null || newAccess.isEmpty) return false;
+
+      await TokenStore.instance.saveAccessToken(newAccess);
+      if (newRefresh != null && newRefresh.isNotEmpty) {
+        await TokenStore.instance.saveRefreshToken(newRefresh);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
 
   Future<Map<String, dynamic>> loginGroup(String userLogin, String mdp) async {
     final response = await _safeRequest(
@@ -147,8 +188,21 @@ class ApiService {
       body: jsonEncode({'userlogin': userLogin, 'mdp': mdp}),
     );
 
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    final access = data['access_token'] as String?;
+    final refresh = data['refresh_token'] as String?;
+
+    if (access != null) {
+      await TokenStore.instance.saveAccessToken(access);
+    }
+    if (refresh != null) {
+      await TokenStore.instance.saveRefreshToken(refresh);
+    }
+
+    return data;
   }
+
 
   Future<void> registerGroup(Map<String, dynamic> groupData) async {
     await _safeRequest(

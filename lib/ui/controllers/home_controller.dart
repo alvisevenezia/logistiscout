@@ -4,6 +4,7 @@ import 'package:logistiscout/data/repositories/event_repository_impl.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
+import 'package:logistiscout/services/AppException.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
@@ -14,12 +15,14 @@ class HomeState {
   final List<Tent> tentes;
   final bool isLoading;
   final String? error;
+  final bool isOffline;
 
   const HomeState({
     this.evenements = const [],
     this.tentes = const [],
     this.isLoading = false,
     this.error,
+    this.isOffline = false,
   });
 
   HomeState copyWith({
@@ -27,15 +30,18 @@ class HomeState {
     List<Tent>? tentes,
     bool? isLoading,
     String? error,
+    bool? isOffline,
   }) {
     return HomeState(
       evenements: evenements ?? this.evenements,
       tentes: tentes ?? this.tentes,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: error,
+      isOffline: isOffline ?? this.isOffline,
     );
   }
 }
+
 
 class HomeController extends StateNotifier<HomeState> {
   final EventRepositoryImpl evenementRepo;
@@ -46,15 +52,18 @@ class HomeController extends StateNotifier<HomeState> {
       : super(const HomeState());
 
   Future<void> loadData() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, isOffline: false);
+
     try {
       final evts = await evenementRepo.getAllEvents();
       final tts = await tenteRepo.getTentList();
       state = state.copyWith(evenements: evts, tentes: tts, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      final offline = (e is AppException) && e.message.contains('connexion');
+      state = state.copyWith(isLoading: false, error: e.toString(), isOffline: offline);
     }
   }
+
 
   Future<void> logout(WidgetRef ref) async {
     await LocalStorageService.instance.clearAll();
@@ -67,6 +76,12 @@ class HomeController extends StateNotifier<HomeState> {
     ref.invalidate(tentesProvider);
 
   }
+
+  Future<void> refresh(WidgetRef ref) async {
+    // re-run the same fetch logic you do on init
+    await loadData();
+  }
+
 }
 
 

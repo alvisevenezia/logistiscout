@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
 import 'package:logistiscout/ui/pages/contact_page.dart';
 import 'package:logistiscout/ui/pages/evenement_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
@@ -27,8 +28,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Logistiscout',
-      initialRoute: isLoggedIn ? '/accueil' : '/login',
+      initialRoute: '/bootstrap',
       routes: {
+        '/bootstrap': (context) => const AuthGate(),
         '/login': (context) => LoginPage(onLogin: () {
           Navigator.of(context).pushReplacementNamed('/accueil');
         }),

@@ -3,9 +3,12 @@ import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
+import 'package:logistiscout/services/token_store.dart';
+
 class LoginController extends StateNotifier<AsyncValue<void>> {
   final ApiService _api;
   final LocalStorageService _localStorage = LocalStorageService.instance;
+  final TokenStore _tokenStore = TokenStore.instance;
 
   LoginController(this._api) : super(const AsyncData(null));
 
@@ -22,7 +25,8 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
 
       await _localStorage.saveUsername(userLogin);
       await _localStorage.saveGroupId(response['id'].toString());
-      await _localStorage.saveToken(response['access_token']);
+      await _tokenStore.saveAccessToken(response['access_token']);
+      await _tokenStore.saveRefreshToken(response['refresh_token']);
 
       developer.log('[LoginController] ✅ Login successful');
       developer.log('[LoginController] userlogin=$userLogin, groupId=${response['id']}, token=${response['access_token']}');

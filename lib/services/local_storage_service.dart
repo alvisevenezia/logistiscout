@@ -35,25 +35,6 @@ class LocalStorageService {
     return prefs.getString(_usernameKey);
   }
 
-  Future<void> saveToken(String token) async {
-    final prefs = await _prefs;
-    await prefs.setString(_tokenKey, token);
-    developer.log('[LocalStorageService] 🔐 Saved token (length=${token.length})');
-  }
-
-  Future<String?> getToken() async {
-    final prefs = await _prefs;
-    final token = prefs.getString(_tokenKey);
-    developer.log('[LocalStorageService] 🔍 Loaded token: ${token != null ? "exists" : "null"}');
-    return token;
-  }
-
-  Future<void> clearToken() async {
-    final prefs = await _prefs;
-    await prefs.remove(_tokenKey);
-    developer.log('[LocalStorageService] 🧽 Cleared token');
-  }
-
   Future<void> clearAll() async {
     final prefs = await _prefs;
     await prefs.clear();
