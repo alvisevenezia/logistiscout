@@ -107,27 +107,6 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                         // --- Informations générales ---
                         _SectionCard(
                           title: 'Informations générales',
-                          action: IconButton(
-                            tooltip: 'Enregistrer',
-                            icon: const Icon(Icons.save, color: Colors.blueAccent),
-                            onPressed: () async {
-                              final updated = tente.copyWith(
-                                nom: _nomCtl!.text.trim(),
-                                nbPlaces: int.tryParse(_nbCtl!.text) ?? tente.nbPlaces,
-                                tentType: _typeTente!,
-                                state: _etat!,
-                                isFloorEmbedded: _estIntegree!,
-                                colors: _couleursHex!,
-                                assignedUnit: _unitePreferee!.name,
-                              );
-                              await ref.read(tentesProvider.notifier).updateTente(updated);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Informations générales enregistrées')),
-                                );
-                              }
-                            },
-                          ),
                           child: Column(
                             children: [
                               TextField(
@@ -211,6 +190,31 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 onAdd: (hex) => setState(() => _couleursHex!.add(hex)),
                                 onRemove: (hex) => setState(() => _couleursHex!.remove(hex)),
                               ),
+                              const SizedBox(height: 15),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.save),
+                                  label: const Text('Enregistrer les modifications'),
+                                  onPressed: () async {
+                                    final updated = tente.copyWith(
+                                      nom: _nomCtl!.text.trim(),
+                                      nbPlaces: int.tryParse(_nbCtl!.text.trim()) ?? tente.nbPlaces,
+                                      tentType: _typeTente!,
+                                      state: _etat!,
+                                      isFloorEmbedded: _estIntegree!,
+                                      colors: _couleursHex!,
+                                    );
+                                    await ref.read(tentesProvider.notifier).updateTente(updated);
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Modifications enregistrées')),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+
                             ],
                           ),
                         ),

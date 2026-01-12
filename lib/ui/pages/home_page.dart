@@ -225,7 +225,7 @@ class _HomeBody extends StatelessWidget {
         leading: const Icon(Icons.event),
         title: Text(e.nom),
         subtitle: Text(
-          'Du ${e.date.toLocal()} au ${e.dateFin.toLocal()} - Type : ${e.type}',
+          'Du ${e.date.toLocal().toString().split(' ')} au ${e.dateFin.toLocal().toString().split(' ')} - Type : ${e.type}',
         ),
       ),
     );
