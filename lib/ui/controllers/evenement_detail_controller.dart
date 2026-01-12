@@ -126,10 +126,6 @@ class EvenementDetailController extends ChangeNotifier {
   }
 
   Future<void> _loadPlan(int eventId) async {
-    if (this.dayOffset == null) {
-      developer.log('[EvenementDetailController] ⚠️ _loadPlan() skipped: selectedDate is null');
-      return;
-    }
 
     developer.log('[EvenementDetailController] 🔵 _loadPlan() start (eventId=$eventId, '
         'date=$this.dayOffset, meal=$selectedMeal, offset=$dayOffset), dayOffset=$dayOffset');
@@ -169,11 +165,10 @@ class EvenementDetailController extends ChangeNotifier {
 
     try {
       for (final item in currentPlan!.items) {
-        if (item.eventId == null) continue; // Sécurité
 
         await eventRepo.updateEventMenu(
-          item.eventId!,
-          event!.id!,
+          item.eventId,
+          event!.id,
           item.recipeId,
           currentPlan!.dayNumber,
           currentPlan!.mealType,
@@ -213,9 +208,9 @@ class EvenementDetailController extends ChangeNotifier {
   }
 
   Future<void> addMenuItemToMealPlan(MenuItem item) async {
-    if (event == null || dayOffset == null) return;
+    if (event == null) return;
 
-    developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan(${item})');
+    developer.log('[EvenementDetailController] 🍽️ addRecipeToMealPlan($item)');
 
     try {
 
@@ -242,12 +237,6 @@ class EvenementDetailController extends ChangeNotifier {
     developer.log('[EvenementDetailController] 🗑️ removeRecipeAt(index=$index)');
 
     try {
-      final item = currentPlan!.items[index];
-
-      if (item.eventId != null) {
-        await eventRepo.deleteEventMenu(item.eventId!);
-        developer.log('[EvenementDetailController] ✅ event_menu supprimé (id=${item.eventId})');
-      }
 
       // 🧹 Mise à jour locale
       final updated = List<MenuItem>.of(currentPlan!.items)..removeAt(index);

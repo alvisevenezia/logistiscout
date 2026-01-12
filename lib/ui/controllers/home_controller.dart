@@ -4,7 +4,7 @@ import 'package:logistiscout/data/repositories/event_repository_impl.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
-import 'package:logistiscout/services/AppException.dart';
+import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';

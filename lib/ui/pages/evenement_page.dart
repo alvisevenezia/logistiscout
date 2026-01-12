@@ -163,7 +163,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                               if (value == 'edit') {
                                 await _showEventDialog(context, ctrl, event: evt);
                               } else if (value == 'delete') {
-                                await ctrl.deleteEvenement(evt.id!);
+                                await ctrl.deleteEvenement(evt.id);
                               } else if (value == 'menus') {
                                 _openEventDetail(context, evt, openMenus: true);
                               }
@@ -297,7 +297,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                         // 🧩 Type
                         DropdownButtonFormField<String>(
-                          value: typesEvenement.contains(typeController.text)
+                          initialValue: typesEvenement.contains(typeController.text)
                               ? typeController.text
                               : null,
                           items: typesEvenement
@@ -322,7 +322,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                         // 🏕️ Unité
                         DropdownButtonFormField<Unit>(
-                          value: selectedUnite,
+                          initialValue: selectedUnite,
                           items: Unit.values
                               .map(
                                 (e) => DropdownMenuItem(

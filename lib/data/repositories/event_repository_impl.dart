@@ -1,26 +1,21 @@
 import 'package:logistiscout/data/mappers/event_mapper.dart';
 import 'package:logistiscout/data/mappers/menu_item_mapper.dart';
-import 'package:logistiscout/data/mappers/receipe_mapper.dart';
 import 'package:logistiscout/data/models/event_dto.dart';
 import 'package:logistiscout/data/models/menu_item_dto.dart';
-import 'package:logistiscout/data/models/receipe_dto.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
-import 'package:logistiscout/domain/entities/menu_type.dart';
-import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
-import '../../domain/entities/ingredient.dart';
-
 class EventRepositoryImpl implements EventRepository {
   final ApiService api;
 
   EventRepositoryImpl(this.api);
 
+  @override
   Future<void> createEvent(Event event) async {
     final dto = EventMapper.toDto(event);
     await api.addEvent(dto.toJson());
@@ -173,11 +168,11 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> updateEventMenu(
-      int eventMenuId, int eventId, int menuId, int day_number, MealType meal, int quantity) async {
+      int eventMenuId, int eventId, int menuId, int dayNumber, MealType meal, int quantity) async {
     final payload = {
       'event_id': eventId,
       'menu_id': menuId,
-      'day_number': day_number,
+      'day_number': dayNumber,
       'type_repas': meal.name,
       'quantite_personnes': quantity,
     };

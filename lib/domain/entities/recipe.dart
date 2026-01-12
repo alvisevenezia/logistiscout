@@ -44,7 +44,7 @@ class Recipe {
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
-      menuType: menuType ?? this.menuType,
+      menuType: menuType,
       instructions: instructions ?? this.instructions,
       ingredients: ingredients ?? this.ingredients,
       allergens: allergens ?? this.allergens,

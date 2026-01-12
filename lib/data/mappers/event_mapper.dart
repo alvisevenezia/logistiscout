@@ -26,7 +26,7 @@ class EventMapper {
 
   static EventDto toDto(Event entity) {
     return EventDto(
-      id: entity.id!,
+      id: entity.id,
       nom: entity.nom,
       date: entity.date.toIso8601String(),
       dateFin: entity.dateFin.toIso8601String(),

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/entities/menu_type.dart';
 
 class RecipeDto{

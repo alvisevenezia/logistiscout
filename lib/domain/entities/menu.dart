@@ -1,6 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'recipe.dart';
-import 'ingredient.dart';
 
 enum MealType { petitDej, dejeuner, diner }
 
@@ -33,8 +31,8 @@ class MenuItem {
   }) {
     return MenuItem(
       id: id ?? this.id,
-      eventId: eventMenuId ?? this.eventId,
-      recipeId: menuId ?? this.recipeId,
+      eventId: eventMenuId ?? eventId,
+      recipeId: menuId ?? recipeId,
       dayNumber: dayNumber ?? this.dayNumber,
       mealType: mealType ?? this.mealType,
       portions: portions ?? this.portions,
@@ -87,7 +85,7 @@ class MealPlan {
     return MealPlan(
       eventId: eventId ?? this.eventId,
       dayNumber: dayNumber ?? this.dayNumber,
-      mealType: meal ?? this.mealType,
+      mealType: meal ?? mealType,
       portions: portions ?? this.portions,
       items: items ?? this.items,
     );

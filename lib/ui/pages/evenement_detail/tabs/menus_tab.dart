@@ -22,7 +22,7 @@ class MenusTab extends ConsumerWidget {
     }
 
     final plan = controller.currentPlan!;
-    final selectedDate = controller.dayOffset!;
+    final selectedDate = controller.dayOffset;
     final selectedMeal = controller.selectedMeal;
 
     return RefreshIndicator(

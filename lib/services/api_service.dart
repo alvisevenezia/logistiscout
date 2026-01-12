@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:logistiscout/services/AppException.dart';
+import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/services/token_store.dart';
 
 enum HttpMethod {

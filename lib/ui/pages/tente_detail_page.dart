@@ -687,12 +687,10 @@ class _HeaderCard extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
-  final Widget? action; // 👈 add this
 
   const _SectionCard({
     required this.title,
     required this.child,
-    this.action,
   });
 
   @override
@@ -715,7 +713,6 @@ class _SectionCard extends StatelessWidget {
                       .titleMedium
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                if (action != null) action!,
               ],
             ),
             const SizedBox(height: 10),
