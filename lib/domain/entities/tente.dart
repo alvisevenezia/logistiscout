@@ -65,17 +65,26 @@ class Tent {
   }
 }
 
-enum TentState { good,
-  repair,
-  broken,
-  lost }
+enum TentState {
+  good(name: "Bon", bg_color: 0xFFE8F5E9, chip_color: 0xFF388E3C),
+  repair(name: "À réparer", bg_color: 0xFFFFF8E1, chip_color: 0xFFFFA000),
+  broken(name: "HS", bg_color: 0xFFFFEBEE, chip_color: 0xFFD32F2F),
+  lost(name: "Perdue", bg_color: 0xFFFAFAFA, chip_color: 0xFF616161);
+
+  const TentState({required this.name, required this.bg_color, required this.chip_color});
+
+  final String name;
+  final int bg_color;
+  final int chip_color;
+
+}
 
 TentState tentStateFromString(String state) {
   final normalized = state.trim().toLowerCase();
 
   switch (normalized) {
     case 'bon':
-      return TentState.good;  
+      return TentState.good;
 
     case 'à réparer':
       return TentState.repair;

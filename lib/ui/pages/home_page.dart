@@ -5,6 +5,9 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
+import 'package:logistiscout/ui/pages/tente_detail_page.dart';
+import 'package:logistiscout/ui/widgets/common/event_card.dart';
+import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -16,21 +19,31 @@ class HomePage extends ConsumerWidget {
 
     // Compute lists only when data is present
     final now = DateTime.now();
-    final evtsAVenir = [...state.evenements]..sort((a, b) => a.date.compareTo(b.date));
-    final prochainsEvts = evtsAVenir.where((e) => e.date.isAfter(now)).take(3).toList();
+    final evtsAVenir = [...state.evenements]
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final prochainsEvts = evtsAVenir
+        .where((e) => e.date.isAfter(now))
+        .take(3)
+        .toList();
 
-    final tentesUtiliseesIds = prochainsEvts.expand((e) => e.associatedTents).toSet();
-    final tentesUtilisees = state.tentes.where((t) => tentesUtiliseesIds.contains(t.id)).toList();
-    final tentesToRepair = state.tentes.where((t) => t.state != TentState.good).toList();
+    final tentesUtiliseesIds = prochainsEvts
+        .expand((e) => e.associatedTents)
+        .toSet();
+    final tentesUtilisees = state.tentes
+        .where((t) => tentesUtiliseesIds.contains(t.id))
+        .toList();
+    final tentesToRepair = state.tentes
+        .where((t) => t.state != TentState.good)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accueil'),
         bottom: state.isLoading
             ? const PreferredSize(
-          preferredSize: Size.fromHeight(4),
-          child: LinearProgressIndicator(),
-        )
+                preferredSize: Size.fromHeight(4),
+                child: LinearProgressIndicator(),
+              )
             : null,
         actions: [
           IconButton(
@@ -50,7 +63,9 @@ class HomePage extends ConsumerWidget {
                       child: const Text('Annuler'),
                     ),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
                       onPressed: () => Navigator.pop(context, true),
                       child: const Text('Confirmer'),
                     ),
@@ -64,7 +79,9 @@ class HomePage extends ConsumerWidget {
 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Préférences locales effacées ✅')),
+                    const SnackBar(
+                      content: Text('Préférences locales effacées ✅'),
+                    ),
                   );
                 }
               }
@@ -96,7 +113,8 @@ class HomePage extends ConsumerWidget {
             prochainsEvts: prochainsEvts,
             tentesUtilisees: tentesUtilisees,
             tentesToRepair: tentesToRepair,
-            onRetry: () => controller.refresh(ref), // add this method in controller
+            onRetry: () =>
+                controller.refresh(ref), // add this method in controller
           ),
 
           // Optional: loading overlay (keeps content visible underneath)
@@ -114,7 +132,6 @@ class HomePage extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 class _HomeBody extends StatelessWidget {
@@ -167,7 +184,9 @@ class _HomeBody extends StatelessWidget {
       children: [
         if (isOffline)
           MaterialBanner(
-            content: const Text('Hors connexion — affichage des dernières données'),
+            content: const Text(
+              'Hors connexion — affichage des dernières données',
+            ),
             actions: [
               TextButton(onPressed: onRetry, child: const Text('Réessayer')),
             ],
@@ -181,64 +200,85 @@ class _HomeBody extends StatelessWidget {
           ),
 
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Prochains événements',
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                if (prochainsEvts.isEmpty)
-                  const Text('Aucun événement à venir.')
-                else
-                  ...prochainsEvts.map((e) => _HomeBody.evenementCard(e)),
+          child: RefreshIndicator(
+            onRefresh: () async => onRetry(), // controller.refresh(ref)
+            child: SingleChildScrollView(
+              physics:
+                  const AlwaysScrollableScrollPhysics(), // allows pull even if content is short
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Prochains événements',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (prochainsEvts.isEmpty)
+                    const Text('Aucun événement à venir.')
+                  else
+                    ...prochainsEvts.map(
+                      (event) =>
+                          EventCard(event: event, onOpen: () {}, detail: false),
+                    ),
 
-                const SizedBox(height: 24),
-                Text('Tentes utilisées prochainement',
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                if (tentesUtilisees.isEmpty)
-                  const Text('Aucune tente réservée pour les prochains événements.')
-                else
-                  ...tentesUtilisees.map((t) => _HomeBody.tenteCard(t)),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Tentes à réparer',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (tentesToRepair.isEmpty)
+                    const Text(
+                      'Aucune tente réservée pour les prochains événements.',
+                    )
+                  else
+                    ...tentesToRepair.map(
+                      (t) => TentCard(
+                        tent: t,
+                        onOpen: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TenteDetailPage(tenteId: t.id),
+                            ),
+                          );
+                        },
+                        detail: false,
+                      ),
+                    ),
 
-                const SizedBox(height: 24),
-                Text('Tentes à réparer',
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                if (tentesToRepair.isEmpty)
-                  const Text('Aucune tente réservée pour les prochains événements.')
-                else
-                  ...tentesToRepair.map((t) => _HomeBody.tenteCard(t)),
-              ],
+                  const SizedBox(height: 24),
+                  Text(
+                    'Tentes utilisées prochainement',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (tentesUtilisees.isEmpty)
+                    const Text(
+                      'Aucune tente réservée pour les prochains événements.',
+                    )
+                  else
+                    ...tentesUtilisees.map(
+                      (t) => TentCard(
+                        tent: t,
+                        onOpen: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TenteDetailPage(tenteId: t.id),
+                            ),
+                          );
+                        },
+                        detail: false,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ],
     );
   }
-
-  static Widget evenementCard(Event e) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.event),
-        title: Text(e.nom),
-        subtitle: Text(
-          'Du ${e.date.toLocal().toString().split(' ')[0]} au ${e.dateFin.toLocal().toString().split(' ')[0]} - Type : ${e.type}',
-        ),
-      ),
-    );
-  }
-
-  static Widget tenteCard(Tent tente) {
-    return Card(
-      child: ListTile(
-        title: Text(tente.nom),
-        subtitle: Text('Unité : ${tente.assignedUnit}'),
-      ),
-    );
-  }
 }
-
-

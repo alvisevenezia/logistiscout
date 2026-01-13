@@ -63,7 +63,7 @@ class ContactPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 "En cas de problème, de suggestion ou de retour à faire sur cette application, "
-                    "merci de me contacter par l’un des moyens suivants :",
+                    "merci de me contacter par l’un des moyens ci dessous.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -74,6 +74,48 @@ class ContactPage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
+            Card(
+              color: theme.colorScheme.secondaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.science,
+                      color: theme.colorScheme.onSecondaryContainer,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rejoindre la version test',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Tu souhaites tester les prochaines fonctionnalités de LogistiScout "
+                                "en avant-première ? N’hésite pas à me contacter pour rejoindre "
+                                "la version de test de l’application.",
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSecondaryContainer,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             // Email
             Card(
               child: ListTile(
