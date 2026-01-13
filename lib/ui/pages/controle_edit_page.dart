@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
+import 'package:logistiscout/domain/entities/status_element_control.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 
@@ -22,6 +23,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
   final TextEditingController remarquesController = TextEditingController();
   final TextEditingController sardinesController = TextEditingController();
   final Map<String, bool> checklist = {};
+  final Map<String, StatusElementControl?> statusByItem = {};
 
   @override
   void dispose() {
@@ -34,6 +36,8 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
   Widget build(BuildContext context) {
     final sections = _sections();
     final explications = _explications();
+
+
 
     return Scaffold(
       appBar: AppBar(
@@ -60,15 +64,55 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                   ),
                 ),
               const SizedBox(height: 4),
-              for (final item in section.value)
-                CheckboxListTile(
-                  title: Text(item),
-                  value: checklist[item] ?? false,
-                  onChanged: (v) => setState(() => checklist[item] = v ?? false),
-                  dense: true,
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-              const Divider(height: 20),
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: const [
+                    SizedBox(width: 48, child: Center(child: Text("OK", style: TextStyle(color: Colors.green,fontWeight: FontWeight.bold)))),
+                    SizedBox(width: 48, child: Center(child: Text("KO", style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold)))),
+                    ],
+                  ),
+                  ...section.value.map((e) {
+                    final status = statusByItem[e];
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(e),
+
+                        Row(
+                          children: [
+                            // OK checkbox
+                            Checkbox(
+                              activeColor: Colors.green,
+                              value: status == StatusElementControl.ok,
+                              onChanged: (checked) {
+                                setState(() {
+                                  statusByItem[e] =
+                                  checked == true ? StatusElementControl.ok : null;
+                                });
+                              },
+                            ),
+                            // KO checkbox
+                            Checkbox(
+                              activeColor: Colors.red,
+                              value: status == StatusElementControl.ko,
+                              onChanged: (checked) {
+                                setState(() {
+                                  statusByItem[e] =
+                                  checked == true ? StatusElementControl.ko : null;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
+                ]
+              ),
+              const SizedBox(height: 20),
             ],
             const SizedBox(height: 10),
             Row(
@@ -111,7 +155,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 }
 
                 final payload = {
-                  for (final e in checklist.entries) e.key: e.value,
+                  for (final e in statusByItem.entries) e.key: e.value,
                   'Nombre de sardines/piquets': sardinesController.text,
                   'nom_controleur': widget.nomControleur.trim(),
                 };
@@ -144,25 +188,24 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
 
   Map<String, List<String>> _sections() => {
     'Structure et éléments principaux': [
-      'Toile extérieure',
+      'Double-toit',
       'Toile intérieure',
-      'Sol de tente',
-      'Mâts / arceaux',
-      'Haubans',
-      'Cordes supplémentaires',
-      'Sardines / Piquets en nombre conforme',
-      'Sardines / Piquets en bon état',
-      'Sardines / Piquets propres',
+      'Tapis de sol',
+      'Faitières',
+      'Piquets',
     ],
     'Fixations et fermetures': [
       'Fermetures éclair',
-      'Œillets / Systèmes de serrage',
-      'Crochets / attaches de haubanage',
+      'Œillets',
+      'Tendeurs double-toit',
+      'Tendeurs toile intérieure',
     ],
     'Accessoires et rangement': [
-      'Housse de rangement',
-      'Système de pliage / ficelles d’attache',
-      'Fiche d’identification',
+      'Sac de tente',
+      'Sac de piquets',
+      'Sac de sardines',
+      'Maillet',
+      'Ballayette',
     ],
     'État général': [
       'Propreté extérieure et intérieure',

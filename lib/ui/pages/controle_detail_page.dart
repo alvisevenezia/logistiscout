@@ -59,10 +59,24 @@ class ControleDetailPage extends StatelessWidget {
                     ),
                     const Divider(height: 20),
                     _InfoRow(label: 'Date', value: _formatDate(controle.date)),
-                    _InfoRow(label: 'Utilisateur (ID)', value: controle.userId.toString()),
-                    const SizedBox(height: 10),
+                    if (controle.checklist.containsKey("nom_controleur")) ...[
+                    _InfoRow(
+                      label: 'Contrôleur',
+                      value: controle.checklist['nom_controleur'],
+                    ),
+                    ],
+                    if (controle.checklist.containsKey("Nombre de sardines/piquets")) ...[
+                      _InfoRow(
+                        label: 'Nombre de sardines',
+                        value: ((controle.checklist["Nombre de sardines/piquets"] == null ||
+                            controle.checklist["Nombre de sardines/piquets"].toString().isEmpty)
+                            ? 0
+                            : controle.checklist["Nombre de sardines/piquets"]).toString(),
+                      ),
+                    ],
+
                     if (controle.comment.isNotEmpty) ...[
-                      Text('Remarques :',
+                      Text('Remarques ',
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
                       Text(controle.comment),
@@ -92,21 +106,12 @@ class ControleDetailPage extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const Divider(height: 20),
-                      ...controle.checklist.entries.map((entry) {
+                      ...controle.checklist.entries.where((entry) => entry.value is bool).map((entry) {
                         final value = entry.value;
-                        Widget icon;
-
-                        // Support booleans, strings, or numbers
-                        if (value is bool) {
-                          icon = Icon(
-                            value ? Icons.check_circle : Icons.cancel,
-                            color: value ? Colors.green : Colors.redAccent,
-                          );
-                        } else if (value is String && value.isNotEmpty) {
-                          icon = const Icon(Icons.text_snippet, color: Colors.blueGrey);
-                        } else {
-                          icon = const Icon(Icons.help_outline, color: Colors.grey);
-                        }
+                        Widget icon = Icon(
+                          value ? Icons.check_circle : Icons.cancel,
+                          color: value ? Colors.green : Colors.redAccent,
+                        );
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6.0),
