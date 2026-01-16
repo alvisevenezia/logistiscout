@@ -4,9 +4,9 @@ import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
-import '../controllers/tentes_controller.dart';
+import '../../controllers/tentes_controller.dart';
 
 class EvenementsPage extends ConsumerStatefulWidget {
   const EvenementsPage({super.key});

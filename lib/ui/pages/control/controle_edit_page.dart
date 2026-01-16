@@ -4,26 +4,28 @@ import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/status_element_control.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
+import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 
-class ControleEditPage extends ConsumerStatefulWidget {
-  final Tent tente;
-  final String nomControleur;
+class ControlEditPage extends ConsumerStatefulWidget {
+  final Tent tent;
+  final String controllerName;
 
-  const ControleEditPage({
+  const ControlEditPage({
     super.key,
-    required this.tente,
-    required this.nomControleur,
+    required this.tent,
+    required this.controllerName,
   });
 
   @override
-  ConsumerState<ControleEditPage> createState() => _ControleEditPageState();
+  ConsumerState<ControlEditPage> createState() => _ControlEditPageState();
 }
 
-class _ControleEditPageState extends ConsumerState<ControleEditPage> {
+class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   final TextEditingController remarquesController = TextEditingController();
   final TextEditingController sardinesController = TextEditingController();
   final Map<String, bool> checklist = {};
   final Map<String, StatusElementControl?> statusByItem = {};
+  TentState? _state;
 
   @override
   void dispose() {
@@ -38,10 +40,9 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
     final explications = _explications();
 
 
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Contrôle - ${widget.tente.nom}'),
+        title: Text('Contrôle - ${widget.tent.nom}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -118,19 +119,33 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
             Row(
               children: [
                 Expanded(
+                  flex: 3,
                   child: TextField(
                     controller: sardinesController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre de sardines/piquets',
+                    decoration: InputDecoration(
+                      labelText: 'Nbr de sardines (attendu : ${_expectedSardines(widget.tent.tentType)}) ',
                       border: OutlineInputBorder(),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Attendu : ${_expectedSardines(widget.tente.tentType)}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<TentState>(
+                    initialValue: widget.tent.state,
+                    items: TentState.values
+                        .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(tentStateToString(e)),
+                    ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _state = v ?? TentState.broken),
+                    decoration: const InputDecoration(
+                      labelText: 'État',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -148,7 +163,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
               icon: const Icon(Icons.save),
               label: const Text('Valider le contrôle'),
               onPressed: () async {
-                if (widget.nomControleur.trim().isEmpty) {
+                if (widget.controllerName.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Veuillez saisir le nom du contrôleur.')));
                   return;
@@ -157,12 +172,12 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 final payload = {
                   for (final e in statusByItem.entries) e.key: e.value,
                   'Nombre de sardines/piquets': sardinesController.text,
-                  'nom_controleur': widget.nomControleur.trim(),
+                  'nom_controleur': widget.controllerName.trim(),
                 };
 
                 final controle = Control(
                   id: null,
-                  tentId: widget.tente.id,
+                  tentId: widget.tent.id,
                   date: DateTime.now(),
                   comment: remarquesController.text.trim(),
                   checklist: payload,
@@ -170,8 +185,12 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 );
 
                 await ref
-                    .read(controlProvider(widget.tente.id).notifier)
+                    .read(controlProvider(widget.tent.id).notifier)
                     .addControl(controle);
+
+                if(widget.tent.state != _state){
+                  ref.read(tentesProvider.notifier).updateTente(widget.tent.copyWith(state: _state));
+                }
 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -208,7 +227,7 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
       'Ballayette',
     ],
     'État général': [
-      'Propreté extérieure et intérieure',
+      'Propreté extérieure/intérieure',
       'Tente sèche',
       'Pas d’odeur de moisi',
     ],

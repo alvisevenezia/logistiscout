@@ -5,9 +5,9 @@ import 'package:logistiscout/domain/entities/unit.dart';
 class TentCard extends StatelessWidget {
   final Tent tent;
   final VoidCallback onOpen;
-  final detail;
+  final bool detail;
 
-  const TentCard({
+  const TentCard({super.key,
     required this.tent,
     required this.onOpen,
     this.detail = true,
@@ -15,8 +15,8 @@ class TentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = Color(tent.state.bg_color);
-    final chipColor = Color(tent.state.chip_color);
+    final bg = Color(tent.state.bgColor);
+    final chipColor = Color(tent.state.chipColor);
 
     return Card(
       elevation: 2,

@@ -5,10 +5,10 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
-import 'package:logistiscout/ui/pages/controle_detail_page.dart';
-import 'package:logistiscout/ui/pages/controle_edit_page.dart';
-import 'package:logistiscout/ui/pages/controle_saisie_nom_page.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/control/controle_detail_page.dart';
+import 'package:logistiscout/ui/pages/control/controle_edit_page.dart';
+import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/hearder_card.dart';
 
 class TenteDetailPage extends ConsumerStatefulWidget {
@@ -98,7 +98,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: HeaderCard(tente: tente),
+                    child: HeaderCard(tent: tente),
                   ),
 
                   Expanded(
@@ -375,14 +375,14 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ControleSaisieNomPage(
+                                    builder: (_) => ControllerPageName.controlerNamePage(
                                       onNomValide: (nomControleur) async {
                                         await Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => ControleEditPage(
-                                              tente: tente,
-                                              nomControleur: nomControleur,
+                                            builder: (_) => ControlEditPage(
+                                              tent: tente,
+                                              controllerName: nomControleur,
                                             ),
                                           ),
                                         );

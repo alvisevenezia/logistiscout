@@ -24,7 +24,7 @@ class ControleDetailPage extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: HeaderCard(tente: tente),
+            child: HeaderCard(tent: tente),
           ),
           Expanded(
             child: ListView(

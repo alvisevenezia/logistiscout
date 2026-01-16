@@ -4,9 +4,9 @@ import 'package:logistiscout/domain/entities/event.dart';
 class EventCard extends StatelessWidget {
   final Event event;
   final VoidCallback onOpen;
-  final detail;
+  final bool detail;
 
-  const EventCard({
+  const EventCard({super.key,
     required this.event,
     required this.onOpen,
     this.detail = true,

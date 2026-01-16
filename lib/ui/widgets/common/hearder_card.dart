@@ -3,12 +3,12 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 
 class HeaderCard extends StatelessWidget {
-  final Tent tente;
-  const HeaderCard({required this.tente});
+  final Tent tent;
+  const HeaderCard({super.key, required this.tent});
 
   @override
   Widget build(BuildContext context) {
-    final chipColor = _chipColor(tente.state);
+    final chipColor = _chipColor(tent.state);
 
     return Card(
       elevation: 1.5,
@@ -19,7 +19,7 @@ class HeaderCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: Color(Unit.fromString(tente.assignedUnit).color),
+              backgroundColor: Color(Unit.fromString(tent.assignedUnit).color),
               child: const Icon(Icons.cabin, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 14),
@@ -31,7 +31,7 @@ class HeaderCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          tente.nom,
+                          tent.nom,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 18,
@@ -48,7 +48,7 @@ class HeaderCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          tentStateToString(tente.state),
+                          tentStateToString(tent.state),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -60,15 +60,15 @@ class HeaderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${tente.tentType} • ${tente.nbPlaces} places'
-                        '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
+                    '${tent.tentType} • ${tent.nbPlaces} places'
+                        '${tent.assignedUnit.isNotEmpty ? ' • ${tent.assignedUnit}' : ''}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  if (tente.colors.isNotEmpty) ...[
+                  if (tent.colors.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 4,
-                      children: tente.colors.take(6).map((c) {
+                      children: tent.colors.take(6).map((c) {
                         return Container(
                           width: 16,
                           height: 10,

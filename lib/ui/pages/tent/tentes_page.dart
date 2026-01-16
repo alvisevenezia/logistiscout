@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
-import 'package:logistiscout/ui/pages/tente_detail_page.dart';
+import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
 class TentesPage extends ConsumerStatefulWidget {

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/controllers/login_controller.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
-import 'package:logistiscout/ui/pages/controle_saisie_nom_page.dart';
-import 'package:logistiscout/ui/pages/register_page.dart';
+import 'package:logistiscout/ui/pages/auth/register_page.dart';
+import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
 
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -116,7 +116,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (ctx) => ControleSaisieNomPage(
+                            builder: (ctx) => ControllerPageName.controlerNamePage(
                               onNomValide: (_) async {
                               },
                             ),
