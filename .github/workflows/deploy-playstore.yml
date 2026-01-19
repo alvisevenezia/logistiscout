@@ -1,61 +1,80 @@
-name: Deploy to Google Play
-
+name: CD
 on:
   workflow_dispatch:
+
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
+      - main
 
 jobs:
-  build-and-deploy:
+  # flutter_test:
+  #   name: Run flutter test and analyze
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: setup python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: "3.8"
+  #     - name: create .env file
+  #       env:
+  #         API_URL: ${{ secrets.API_URL }}
+  #         SECRET: ${{ secrets.SECRET }}
+  #       run: python scripts/create_env.py
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: "12.x"
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         channel: "stable"
+  #     - run: flutter pub get
+  #     - run: flutter analyze
+  #     - run: flutter test
+
+  build_appbundle:
+    name: Build Flutter (Android)
+    # needs: [flutter_test]
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+          python-version: "3.8"
+      - name: create .env file
+        env:
+          SECRET: ${{ secrets.SECRET }}
+        run: python scripts/create_env.py
+      - name: change build number
+        env:
+          BUILD_NUM: ${{github.run_number}}
+        run: python scripts/change_build_number.py
+      - uses: actions/setup-java@v1
         with:
-          flutter-version: '3.35.5'
-          channel : 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Restore keystore from base64
-        run: |
-          mkdir -p android/app
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
-          
+          java-version: "12.x"
+      - name: Create Android keystore
+        id: android_keystore
+        uses: timheuer/base64-to-file@v1.0.3
+        with:
+          fileName: key.jks
+          encodedString: ${{ secrets.ANDROID_KEYSTORE_BASE64  }}
       - name: Create key.properties
         run: |
-          cat << EOF > android/key.properties
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=upload-keystore.jks
-          EOF
-          
-      - name: Build appbundle
-        run: flutter build appbundle --release
-        
-      - name: List build outputs (debug)
-        run: |
-          echo "PWD=$(pwd)"
-          ls -R build/app/outputs/bundle || echo "No bundle folder"
-
-      - name: Upload to Google Play (Open testing)
-        uses: r0adkll/upload-google-play@v1
+          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties
+          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+      - run: flutter pub get
+      - run: flutter clean
+      - run: flutter build appbundle --bundle-sksl-path flutter_01.sksl.json
+      - name: Release app to internal track
+        uses: r0adkll/upload-google-play@v1.0.15
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
           packageName: com.wanto.logistiscout
-          releaseFiles: build/app/outputs/bundle/release/*.aab
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: open
-          status: completed
