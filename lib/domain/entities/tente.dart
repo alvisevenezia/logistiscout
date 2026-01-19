@@ -15,6 +15,8 @@ class Tent {
   final List<Control> controlHistory;
   final List<String> colors;
   final String groupId;
+  final String team;
+  final String location;
 
   const Tent({
     required this.id,
@@ -30,6 +32,8 @@ class Tent {
     required this.controlHistory,
     required this.colors,
     required this.groupId,
+    required this.team,
+    required this.location,
   });
 
   Tent copyWith({
@@ -46,6 +50,8 @@ class Tent {
     List<Control>? controlHistory,
     List<String>? colors,
     String? groupId,
+    String? team,
+    String? location,
   }) {
     return Tent(
       id: id ?? this.id,
@@ -61,6 +67,8 @@ class Tent {
       controlHistory: controlHistory ?? this.controlHistory,
       colors: colors ?? this.colors,
       groupId: groupId ?? this.groupId,
+      team: team ?? this.team,
+      location: location ?? this.location,
     );
   }
 }

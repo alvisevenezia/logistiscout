@@ -82,10 +82,10 @@ class TentCard extends StatelessWidget {
                     Text(
                       detail
                           ? '${tent.assignedUnit} • ${tent.tentType} • ${tent.nbPlaces} places'
+                          '${tent.team != '' ? ' • Equipe ${tent.team}' : ''}'
                           : tent.assignedUnit,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-
                     if(detail)...[
                       const SizedBox(height: 6),
                       // Bandeau de petites pastilles couleur scotch

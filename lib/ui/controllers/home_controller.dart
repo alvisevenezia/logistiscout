@@ -45,7 +45,7 @@ class HomeState {
 
 class HomeController extends StateNotifier<HomeState> {
   final EventRepositoryImpl evenementRepo;
-  final TenteRepositoryImpl tenteRepo;
+  final TentRepositoryImpl tenteRepo;
   final LocalStorageService storage;
 
   HomeController(this.evenementRepo, this.tenteRepo, this.storage)
@@ -89,7 +89,7 @@ final accueilControllerProvider =
 StateNotifierProvider<HomeController, HomeState>((ref) {
   final c = HomeController(
     EventRepositoryImpl(ApiService()),
-    TenteRepositoryImpl(ApiService()),
+    TentRepositoryImpl(ApiService()),
     LocalStorageService.instance,
   );
   Future.microtask(c.loadData);

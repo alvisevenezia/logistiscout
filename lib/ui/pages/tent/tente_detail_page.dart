@@ -21,47 +21,53 @@ class TenteDetailPage extends ConsumerStatefulWidget {
 
 class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   // nullable controllers (init lazily when data available)
-  TextEditingController? _nomCtl;
+  TextEditingController? _nameCtl;
   TextEditingController? _nbCtl;
-  TextEditingController? _couleursCtl;
-  TextEditingController? _remarquesCtl;
+  TextEditingController? _colorChipsCtl;
+  TextEditingController? _commentCtl;
+  TextEditingController? _teamCtl;
+  TextEditingController? _locationCtl;
+
 
   // local editable state (nullable until we see data)
-  String? _typeTente;
-  TentState? _etat;
+  String? _tentType;
+  TentState? _tentState;
   bool? _estIntegree;
-  List<String>? _couleursHex;
-  Unit? _unitePreferee;
+  List<String>? _colorHexList;
+  Unit? _favoriteUnit;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
 
   void _ensureControllersAndState(Tent t) {
-    _nomCtl ??= TextEditingController(text: t.nom);
+    _nameCtl ??= TextEditingController(text: t.nom);
     _nbCtl ??= TextEditingController(text: t.nbPlaces.toString());
-    _remarquesCtl ??= TextEditingController(text: t.comment);
+    _commentCtl ??= TextEditingController(text: t.comment);
+    _teamCtl ??= TextEditingController(text: t.team);
+    _locationCtl ??= TextEditingController(text: t.location);
 
-    _typeTente ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
-    _etat ??= t.state;
+    _tentType ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
+    _tentState ??= t.state;
     _estIntegree ??= t.isFloorEmbedded;
-    _unitePreferee ??= Unit.fromString(t.assignedUnit);
+    _favoriteUnit ??= Unit.fromString(t.assignedUnit);
 
-    _couleursHex ??= List<String>.from(t.colors);
+    _colorHexList ??= List<String>.from(t.colors);
   }
 
   @override
   void dispose() {
-    _nomCtl?.dispose();
+    _nameCtl?.dispose();
     _nbCtl?.dispose();
-    _couleursCtl?.dispose();
-    _remarquesCtl?.dispose();
+    _colorChipsCtl?.dispose();
+    _commentCtl?.dispose();
+    _teamCtl?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final tentesAsync = ref.watch(tentesProvider);
-    final controlesAsync = ref.watch(controlProvider(widget.tenteId));
-    final evenementsAsync = ref.watch(evenementsParTenteProvider(widget.tenteId));
+    final tentAsync = ref.watch(tentesProvider);
+    final controlAsync = ref.watch(controlProvider(widget.tenteId));
+    final eventAsync = ref.watch(evenementsParTenteProvider(widget.tenteId));
 
     return Scaffold(
       appBar: AppBar(
@@ -77,10 +83,18 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
           ),
         ],
       ),
-      body: tentesAsync.when(
+      body: tentAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erreur : $e')),
         data: (tentes) {
+
+
+          const InputDecoration inputDecoration = InputDecoration(
+            border: OutlineInputBorder(),
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          );
+
           final tente = tentes.where((t) => t.id == widget.tenteId).cast<Tent?>().firstOrNull;
           if (tente == null) {
             return const Center(child: Text('Tente introuvable.'));
@@ -88,7 +102,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
           _ensureControllersAndState(tente);
 
-          return controlesAsync.when(
+          return controlAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Erreur chargement contrôles : $e')),
             data: (controles) {
@@ -111,11 +125,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                           child: Column(
                             children: [
                               TextField(
-                                controller: _nomCtl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Nom',
-                                  border: OutlineInputBorder(),
-                                ),
+                                controller: _nameCtl,
+                                decoration: inputDecoration.copyWith(labelText: 'Nom'),
                               ),
                               const SizedBox(height: 12),
                               Row(
@@ -124,57 +135,74 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                     child: TextField(
                                       controller: _nbCtl,
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Capacité (nb places)',
-                                        border: OutlineInputBorder(),
-                                      ),
+                                      decoration: inputDecoration.copyWith(labelText: 'Capacité (nb places)'),
                                     ),
                                   ),
                                   const SizedBox(width: 15),
                                   Expanded(
                                     child: DropdownButtonFormField<String>(
-                                      initialValue: _types.contains(_typeTente!) ? _typeTente : 'Autre',
+                                      initialValue: _types.contains(_tentType!) ? _tentType : 'Autre',
                                       items: _types
-                                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                                          .map((t) => DropdownMenuItem(value: t, child: Text(t,overflow: TextOverflow.ellipsis,)))
                                           .toList(),
-                                      onChanged: (v) => setState(() => _typeTente = v ?? 'Autre'),
-                                      decoration: const InputDecoration(
-                                        labelText: 'Type de tente',
-                                        border: OutlineInputBorder(),
-                                      ),
+                                      onChanged: (v) => setState(() => _tentType = v ?? 'Autre'),
+                                      decoration: inputDecoration.copyWith(labelText: 'Type de tente'),
+                                      isExpanded: true,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 15),
-                              DropdownButtonFormField<TentState>(
-                                initialValue: _etat!,
-                                items: TentState.values
-                                    .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(tentStateToString(e)),
-                                ))
-                                    .toList(),
-                                onChanged: (v) => setState(() => _etat = v ?? TentState.broken),
-                                decoration: const InputDecoration(
-                                  labelText: 'État',
-                                  border: OutlineInputBorder(),
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<TentState>(
+                                      initialValue: _tentState!,
+                                      items: TentState.values
+                                          .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(tentStateToString(e),overflow: TextOverflow.ellipsis,),
+                                      ))
+                                          .toList(),
+                                      onChanged: (v) => setState(() => _tentState = v ?? TentState.broken),
+                                      decoration: inputDecoration.copyWith(labelText: 'État'),
+                                      isExpanded: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: DropdownButtonFormField<Unit>(
+                                      initialValue: _favoriteUnit!,
+                                      items: Unit.values
+                                          .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(e.name,overflow: TextOverflow.ellipsis,),
+                                      ))
+                                          .toList(),
+                                      onChanged: (v) => setState(() => _favoriteUnit = v),
+                                      decoration: inputDecoration.copyWith(labelText: 'Unité'),
+                                      isExpanded: true,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 15),
-                              DropdownButtonFormField<Unit>(
-                                initialValue: _unitePreferee!,
-                                items: Unit.values
-                                    .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(e.name),
-                                ))
-                                    .toList(),
-                                onChanged: (v) => setState(() => _unitePreferee = v),
-                                decoration: const InputDecoration(
-                                  labelText: 'Unité',
-                                  border: OutlineInputBorder(),
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _teamCtl,
+                                      decoration: inputDecoration.copyWith(labelText: 'Équipe'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _locationCtl,
+                                      decoration: inputDecoration.copyWith(labelText: 'Localisation'),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 15),
                               SwitchListTile(
@@ -187,9 +215,9 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               _RowLabel('Couleurs'),
                               const SizedBox(height: 6),
                               _ColorChipsEditor(
-                                colorsHex: _couleursHex!,
-                                onAdd: (hex) => setState(() => _couleursHex!.add(hex)),
-                                onRemove: (hex) => setState(() => _couleursHex!.remove(hex)),
+                                colorsHex: _colorHexList!,
+                                onAdd: (hex) => setState(() => _colorHexList!.add(hex)),
+                                onRemove: (hex) => setState(() => _colorHexList!.remove(hex)),
                               ),
                               const SizedBox(height: 15),
                               Align(
@@ -199,12 +227,14 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   label: const Text('Enregistrer les modifications'),
                                   onPressed: () async {
                                     final updated = tente.copyWith(
-                                      nom: _nomCtl!.text.trim(),
+                                      nom: _nameCtl!.text.trim(),
                                       nbPlaces: int.tryParse(_nbCtl!.text.trim()) ?? tente.nbPlaces,
-                                      tentType: _typeTente!,
-                                      state: _etat!,
+                                      tentType: _tentType!,
+                                      state: _tentState!,
                                       isFloorEmbedded: _estIntegree!,
-                                      colors: _couleursHex!,
+                                      colors: _colorHexList!,
+                                      team: _teamCtl!.text.trim(),
+                                      location: _locationCtl!.text.trim()
                                     );
                                     await ref.read(tentesProvider.notifier).updateTente(updated);
                                     if (mounted) {
@@ -261,7 +291,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                         const SizedBox(height: 16),
 
                         // --- Historique des sorties (Événements) ---
-                        evenementsAsync.when(
+                        eventAsync.when(
                           loading: () => const Center(child: CircularProgressIndicator()),
                           error: (e, _) => Text('Erreur chargement événements : $e'),
                           data: (evenements) {
@@ -316,7 +346,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                           child: Column(
                             children: [
                               TextField(
-                                controller: _remarquesCtl,
+                                controller: _commentCtl,
                                 maxLines: 3,
                                 decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
@@ -331,7 +361,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   label: const Text('Enregistrer la remarque'),
                                   onPressed: () async {
                                     final updated = tente.copyWith(
-                                      comment: _remarquesCtl!.text.trim(),
+                                      comment: _commentCtl!.text.trim(),
                                     );
                                     await ref.read(tentesProvider.notifier).updateTente(updated);
                                     if (mounted) {
@@ -464,7 +494,7 @@ class _ColorChipsEditor extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.start,
       children: [
         // existing colors as removable chips
         ...colorsHex.map((hex) {

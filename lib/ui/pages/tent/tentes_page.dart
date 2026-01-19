@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
@@ -334,7 +335,9 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                         .map((e) => e.trim())
                         .where((e) => e.isNotEmpty)
                         .toList(),
-                    groupId: '',
+                    groupId: await LocalStorageService.instance.getGroupId() ?? '',
+                    team: '',
+                    location: '',
                   );
 
                   await ref.read(tentesProvider.notifier).createTente(newTente);

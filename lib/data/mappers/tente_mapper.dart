@@ -19,6 +19,8 @@ Tent mapTentDtoToDomain(TentDto dto) {
     dto.controlHistory.map((c) => Control.fromJson(c)).toList(),
     colors: dto.colors,
     groupId: dto.groupId,
+    team: dto.team,
+    location: dto.location, // Not present in domain entity
   );
 }
 
@@ -38,5 +40,7 @@ TentDto mapTentDomainToDto(Tent entity) {
     entity.controlHistory.map((c) => c.toJson()).toList(),
     colors: entity.colors,
     groupId: entity.groupId,
+    team: entity.team,
+    location: entity.location,
   );
 }

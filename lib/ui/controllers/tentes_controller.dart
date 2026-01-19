@@ -14,7 +14,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
   @override
   Future<List<Tent>> build() async {
-    _repo = TenteRepositoryImpl(ApiService());
+    _repo = TentRepositoryImpl(ApiService());
     return _loadTentes();
   }
 

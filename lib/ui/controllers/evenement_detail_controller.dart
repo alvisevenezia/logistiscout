@@ -8,18 +8,10 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
-import 'package:logistiscout/domain/usecases/duplicate_menu.dart';
-import 'package:logistiscout/domain/usecases/get_event.dart';
-import 'package:logistiscout/domain/usecases/get_meal_plan.dart';
-import 'package:logistiscout/domain/usecases/save_meal_plan.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 class EvenementDetailController extends ChangeNotifier {
-  final GetEvent getEventUC;
-  final GetMealPlan getMealPlanUC;
-  final SaveMealPlan saveMealPlanUC;
-  final DuplicateMenu duplicateMenuUC;
   final RecipeRepository recipeRepo;
   final TentRepository tenteRepo;
   final EventRepository eventRepo;
@@ -35,10 +27,6 @@ class EvenementDetailController extends ChangeNotifier {
   Set<int> selectedTenteIds = {};
 
   EvenementDetailController({
-    required this.getEventUC,
-    required this.getMealPlanUC,
-    required this.saveMealPlanUC,
-    required this.duplicateMenuUC,
     required this.recipeRepo,
     required this.tenteRepo,
     required this.eventRepo,
@@ -51,7 +39,7 @@ class EvenementDetailController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      event = await getEventUC(eventId);
+      event = await eventRepo.getEvent(eventId);
       developer.log('[EvenementDetailController] ✅ Event loaded: ${event?.nom}');
       await loadTentes();
       allTentes = await tenteRepo.getTentList();
@@ -132,7 +120,7 @@ class EvenementDetailController extends ChangeNotifier {
 
     try {
       final start = DateTime.now();
-      currentPlan = await getMealPlanUC(eventId,dayOffset, selectedMeal);
+      currentPlan = await eventRepo.getMealPlan(eventId,dayOffset, selectedMeal);
       final duration = DateTime.now().difference(start).inMilliseconds;
 
       developer.log('[EvenementDetailController] ✅ _loadPlan() success '
@@ -259,7 +247,7 @@ class EvenementDetailController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await saveMealPlanUC(event!.id.toString(), currentPlan!);
+      await eventRepo.saveMealPlan(event!.id.toString(), currentPlan!);
       developer.log('[EvenementDetailController] ✅ moveRecipe saved');
     } catch (e, st) {
       developer.log('[EvenementDetailController] ❌ moveRecipe failed', error: e, stackTrace: st);
@@ -271,7 +259,7 @@ class EvenementDetailController extends ChangeNotifier {
     developer.log('[EvenementDetailController] 📄 duplicateTo() → ${targets.length} targets');
     try {
       final start = DateTime.now();
-      await duplicateMenuUC(event!.id.toString(), currentPlan!, targets);
+      await eventRepo.duplicateMealPlans(event!.id.toString(), currentPlan!, targets);
       final duration = DateTime.now().difference(start).inMilliseconds;
       developer.log('[EvenementDetailController] ✅ duplicateMenuUC done (${duration}ms)');
     } catch (e, st) {
@@ -286,19 +274,11 @@ class EvenementDetailController extends ChangeNotifier {
 
 final evenementDetailProvider =
 ChangeNotifierProvider.family<EvenementDetailController, int>((ref, eventId) {
-  final getEventUC = ref.read(getEventUseCaseProvider);
-  final getMealPlanUC = ref.read(getMealPlanUseCaseProvider);
-  final saveMealPlanUC = ref.read(saveMealPlanUseCaseProvider);
-  final duplicateMenuUC = ref.read(duplicateMenuUseCaseProvider);
   final recipeRepo = ref.read(recipeRepositoryProvider);
-  final tenteRepo = ref.read(tenteRepositoryProvider);
+  final tenteRepo = ref.read(tentRepositoryProvider);
   final eventRepo = ref.read(eventRepositoryProvider);
 
   final ctrl = EvenementDetailController(
-    getEventUC: getEventUC,
-    getMealPlanUC: getMealPlanUC,
-    saveMealPlanUC: saveMealPlanUC,
-    duplicateMenuUC: duplicateMenuUC,
     recipeRepo: recipeRepo,
     tenteRepo: tenteRepo,
     eventRepo: eventRepo,
