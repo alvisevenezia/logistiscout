@@ -68,7 +68,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter clean
-      - run: flutter build appbundle --release
+      - run: flutter build appbundle --release --stacktrace --debug
       - name: Release app to internal track
         uses: r0adkll/upload-google-play@v1.0.15
         with:
