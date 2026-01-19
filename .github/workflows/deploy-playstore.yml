@@ -4,9 +4,7 @@ on:
 
   push:
     branches:
-      - master
-      - main
-
+      - dev
 jobs:
   # flutter_test:
   #   name: Run flutter test and analyze
@@ -70,7 +68,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter clean
-      - run: flutter build appbundle --bundle-sksl-path flutter_01.sksl.json
+      - run: flutter build appbundle --release
       - name: Release app to internal track
         uses: r0adkll/upload-google-play@v1.0.15
         with:
