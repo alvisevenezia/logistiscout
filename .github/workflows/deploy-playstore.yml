@@ -75,4 +75,4 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
           packageName: com.wanto.logistiscout
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: open
+          track: beta
