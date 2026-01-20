@@ -50,7 +50,7 @@ jobs:
         run: python scripts/change_build_number.py
       - uses: actions/setup-java@v1
         with:
-          java-version: "25.x"
+          java-version: "20.x"
       - name: Create Android keystore
         id: android_keystore
         uses: timheuer/base64-to-file@v1.0.3
