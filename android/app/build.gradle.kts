@@ -18,7 +18,6 @@ android {
     namespace = "com.wanto.logistiscout"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
-    compileSdk = 34
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -35,7 +34,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.34
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
