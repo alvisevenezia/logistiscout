@@ -4,7 +4,7 @@ on:
 
   push:
     branches:
-      - dev
+      - main
 jobs:
   # flutter_test:
   #   name: Run flutter test and analyze
@@ -40,10 +40,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.8"
-#      - name: create .env file
-#        env:
-#          SECRET: ${{ secrets.SECRET }}
-#        run: python scripts/create_env.py
+      #      - name: create .env file
+      #        env:
+      #          SECRET: ${{ secrets.SECRET }}
+      #        run: python scripts/create_env.py
       - name: change build number
         env:
           BUILD_NUM: ${{github.run_number}}
@@ -75,4 +75,4 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
           packageName: com.wanto.logistiscout
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: beta
+          track: production
