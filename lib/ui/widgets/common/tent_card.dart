@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 
 class TentCard extends StatelessWidget {
   final Tent tent;
-  final VoidCallback onOpen;
   final bool detail;
 
   const TentCard({super.key,
     required this.tent,
-    required this.onOpen,
     this.detail = true,
   });
 
@@ -24,7 +23,9 @@ class TentCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: onOpen,
+        onTap:  (){
+          context.push('/tents/${tent.id}');
+        },
         child: Padding(
           padding:  detail ? const EdgeInsets.fromLTRB(16, 24, 16, 24) : const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(

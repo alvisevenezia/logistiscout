@@ -108,7 +108,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => EvenementDetailPage(
+                              builder: (_) => EventDetailPage(
                                 eventId: filtered[index].id,
                                 openMenusDirectly: false,
                               ),

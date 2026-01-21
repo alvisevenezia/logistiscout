@@ -12,8 +12,8 @@ import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/hearder_card.dart';
 
 class TenteDetailPage extends ConsumerStatefulWidget {
-  final int tenteId;
-  const TenteDetailPage({super.key, required this.tenteId});
+  final int tentId;
+  const TenteDetailPage({super.key, required this.tentId});
 
   @override
   ConsumerState<TenteDetailPage> createState() => _TenteDetailPageState();
@@ -66,8 +66,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   @override
   Widget build(BuildContext context) {
     final tentAsync = ref.watch(tentesProvider);
-    final controlAsync = ref.watch(controlProvider(widget.tenteId));
-    final eventAsync = ref.watch(evenementsParTenteProvider(widget.tenteId));
+    final controlAsync = ref.watch(controlProvider(widget.tentId));
+    final eventAsync = ref.watch(evenementsParTenteProvider(widget.tentId));
 
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +78,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
             tooltip: 'Rafraîchir',
             onPressed: () async {
               await ref.read(tentesProvider.notifier).reload();
-              await ref.read(controlProvider(widget.tenteId).notifier).reload();
+              await ref.read(controlProvider(widget.tentId).notifier).reload();
             },
           ),
         ],
@@ -95,7 +95,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           );
 
-          final tente = tentes.where((t) => t.id == widget.tenteId).cast<Tent?>().firstOrNull;
+          final tente = tentes.where((t) => t.id == widget.tentId).cast<Tent?>().firstOrNull;
           if (tente == null) {
             return const Center(child: Text('Tente introuvable.'));
           }
@@ -326,7 +326,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => EvenementDetailPage(eventId: evt.id),
+                                          builder: (_) => EventDetailPage(eventId: evt.id),
                                         ),
                                       );
                                     },

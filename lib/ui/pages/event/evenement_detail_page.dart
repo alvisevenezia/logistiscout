@@ -6,11 +6,11 @@ import 'package:logistiscout/ui/pages/event/tabs/menus_tab.dart';
 import 'package:logistiscout/ui/pages/event/tabs/tents_tab.dart';
 import 'package:logistiscout/ui/pages/event/widgets/shopping_list_sheet.dart';
 
-class EvenementDetailPage extends ConsumerWidget {
+class EventDetailPage extends ConsumerWidget {
   final int eventId;
   final bool openMenusDirectly;
 
-  const EvenementDetailPage({
+  const EventDetailPage({
     super.key,
     required this.eventId,
     this.openMenusDirectly = false,
@@ -107,7 +107,7 @@ class _BottomBarButton extends StatelessWidget {
 class _MenusBottomBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = context.findAncestorWidgetOfExactType<EvenementDetailPage>()!;
+    final page = context.findAncestorWidgetOfExactType<EventDetailPage>()!;
     final c = ref.watch(evenementDetailProvider(page.eventId));
 
     if (c.currentPlan == null || c.event == null) {

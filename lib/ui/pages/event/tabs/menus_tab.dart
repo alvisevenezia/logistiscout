@@ -14,7 +14,7 @@ class MenusTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = context.findAncestorWidgetOfExactType<EvenementDetailPage>()!;
+    final page = context.findAncestorWidgetOfExactType<EventDetailPage>()!;
     final controller = ref.watch(evenementDetailProvider(page.eventId));
 
     if (controller.loading || controller.currentPlan == null || controller.event == null) {

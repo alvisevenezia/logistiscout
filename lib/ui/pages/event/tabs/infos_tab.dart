@@ -9,7 +9,7 @@ class InfosTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = context.findAncestorWidgetOfExactType<EvenementDetailPage>()!;
+    final page = context.findAncestorWidgetOfExactType<EventDetailPage>()!;
     final c = ref.watch(evenementDetailProvider(page.eventId));
 
     if (c.loading) {

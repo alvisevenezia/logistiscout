@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/token_store.dart';
@@ -43,9 +44,8 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacementNamed(
-      loggedIn ? '/accueil' : '/login',
-    );
+    context.go(loggedIn ? '/home' : '/login');
+
   }
 
   @override

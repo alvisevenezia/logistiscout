@@ -5,7 +5,6 @@ import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
-import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
@@ -236,14 +235,6 @@ class _HomeBody extends StatelessWidget {
                     ...tentesToRepair.map(
                       (t) => TentCard(
                         tent: t,
-                        onOpen: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TenteDetailPage(tenteId: t.id),
-                            ),
-                          );
-                        },
                         detail: false,
                       ),
                     ),
@@ -262,14 +253,6 @@ class _HomeBody extends StatelessWidget {
                     ...tentesUtilisees.map(
                       (t) => TentCard(
                         tent: t,
-                        onOpen: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TenteDetailPage(tenteId: t.id),
-                            ),
-                          );
-                        },
                         detail: false,
                       ),
                     ),

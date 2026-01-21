@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 
 class EventCard extends StatelessWidget {
@@ -75,7 +76,9 @@ class EventCard extends StatelessWidget {
           ),
         ),
 
-        onTap: onOpen,
+        onTap: (){
+          context.push('/events/${event.id}');
+        },
       ),
 
     );
