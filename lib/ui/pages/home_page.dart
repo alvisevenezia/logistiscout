@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
@@ -93,7 +94,7 @@ class HomePage extends ConsumerWidget {
             onPressed: () async {
               await controller.logout(ref);
               if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
+                context.go('/login');
               }
             },
           ),
