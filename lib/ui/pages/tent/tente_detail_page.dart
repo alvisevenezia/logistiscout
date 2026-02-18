@@ -220,30 +220,52 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 onRemove: (hex) => setState(() => _colorHexList!.remove(hex)),
                               ),
                               const SizedBox(height: 15),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.save),
-                                  label: const Text('Enregistrer les modifications'),
-                                  onPressed: () async {
-                                    final updated = tente.copyWith(
-                                      nom: _nameCtl!.text.trim(),
-                                      nbPlaces: int.tryParse(_nbCtl!.text.trim()) ?? tente.nbPlaces,
-                                      tentType: _tentType!,
-                                      state: _tentState!,
-                                      isFloorEmbedded: _estIntegree!,
-                                      colors: _colorHexList!,
-                                      team: _teamCtl!.text.trim(),
-                                      location: _locationCtl!.text.trim()
-                                    );
-                                    await ref.read(tentesProvider.notifier).updateTente(updated);
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Modifications enregistrées')),
-                                      );
-                                    }
-                                  },
-                                ),
+                              Row(
+                                children: [
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.qr_code),
+                                    label: const Text('Générer qrcode'),
+                                    onPressed: () => showDialog(
+                                        context: context,
+                                        builder:  (BuildContext context) => AlertDialog(
+                                          title: const Text('QR Code'),
+                                          content: Image,
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, 'Cancel'),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, 'OK'),
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        ),
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                      icon: const Icon(Icons.save),
+                                      label: const Text('Enregistrer les modifications'),
+                                      onPressed: () async {
+                                        final updated = tente.copyWith(
+                                          nom: _nameCtl!.text.trim(),
+                                          nbPlaces: int.tryParse(_nbCtl!.text.trim()) ?? tente.nbPlaces,
+                                          tentType: _tentType!,
+                                          state: _tentState!,
+                                          isFloorEmbedded: _estIntegree!,
+                                          colors: _colorHexList!,
+                                          team: _teamCtl!.text.trim(),
+                                          location: _locationCtl!.text.trim()
+                                        );
+                                        await ref.read(tentesProvider.notifier).updateTente(updated);
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Modifications enregistrées')),
+                                          );
+                                        }
+                                      },
+                                  ),
+                                ],
                               ),
 
                             ],

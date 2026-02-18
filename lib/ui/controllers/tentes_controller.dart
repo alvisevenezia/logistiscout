@@ -6,6 +6,7 @@ import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
+import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 
@@ -17,6 +18,8 @@ class TentesController extends AsyncNotifier<List<Tent>> {
     _repo = TentRepositoryImpl(ApiService());
     return _loadTentes();
   }
+
+
 
   Future<List<Tent>> _loadTentes() async {
     try {
@@ -66,6 +69,16 @@ class TentesController extends AsyncNotifier<List<Tent>> {
       developer.log('[TentesController] createTente() failed', error: e, stackTrace: st);
       rethrow;
     }
+  }
+
+  QrImageView createTenteQrCode(Tent tente) {
+    final groupId = LocalStorageService.instance.getGroupId() ?? 'unknown';
+    final qrData = 'tent:$groupId:${tente.id}';
+    return QrImageView(
+      data: qrData,
+      version: QrVersions.auto,
+      size: 200.0,
+    );
   }
 
   Future<void> updateTente(Tent tente) async {
