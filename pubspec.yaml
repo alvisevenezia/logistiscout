@@ -51,7 +51,9 @@ dependencies:
   dio: ^5.4.0
   jwt_decoder: ^2.0.1
   go_router: ^17.0.1
-  qr_flutter: ^4.1.0
+  qr_flutter:
+    git:
+      url: https://github.com/theyakka/qr.flutter.git
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

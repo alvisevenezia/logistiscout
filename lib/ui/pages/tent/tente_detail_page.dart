@@ -223,27 +223,6 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               Row(
                                 children: [
                                   ElevatedButton.icon(
-                                    icon: const Icon(Icons.qr_code),
-                                    label: const Text('Générer qrcode'),
-                                    onPressed: () => showDialog(
-                                        context: context,
-                                        builder:  (BuildContext context) => AlertDialog(
-                                          title: const Text('QR Code'),
-                                          content: Image,
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, 'Cancel'),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, 'OK'),
-                                              child: const Text('OK'),
-                                            ),
-                                          ],
-                                        ),
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
                                       icon: const Icon(Icons.save),
                                       label: const Text('Enregistrer les modifications'),
                                       onPressed: () async {
