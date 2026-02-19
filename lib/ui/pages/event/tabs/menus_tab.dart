@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/widgets/add_recipe_button.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/widgets/recipe_list.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/event/widgets/add_recipe_button.dart';
+import 'package:logistiscout/ui/pages/event/widgets/recipe_list.dart';
 import 'package:logistiscout/ui/widgets/common/date_chips.dart';
 import 'package:logistiscout/ui/widgets/common/segmented_meal.dart';
 import 'package:logistiscout/ui/widgets/menus/portion_stepper.dart';
@@ -14,7 +14,7 @@ class MenusTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = context.findAncestorWidgetOfExactType<EvenementDetailPage>()!;
+    final page = context.findAncestorWidgetOfExactType<EventDetailPage>()!;
     final controller = ref.watch(evenementDetailProvider(page.eventId));
 
     if (controller.loading || controller.currentPlan == null || controller.event == null) {

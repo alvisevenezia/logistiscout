@@ -6,10 +6,6 @@ import 'package:logistiscout/data/repositories/event_repository_impl.dart';
 import 'package:logistiscout/data/repositories/recipe_repository_impl.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
-import 'package:logistiscout/domain/usecases/get_event.dart';
-import 'package:logistiscout/domain/usecases/get_meal_plan.dart';
-import 'package:logistiscout/domain/usecases/save_meal_plan.dart';
-import 'package:logistiscout/domain/usecases/duplicate_menu.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
@@ -25,27 +21,7 @@ final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
   return RecipeRepositoryImpl(api);
 });
 
-final getEventUseCaseProvider = Provider<GetEvent>((ref) {
-  final repo = ref.read(eventRepositoryProvider);
-  return GetEvent(repo);
-});
-
-final getMealPlanUseCaseProvider = Provider<GetMealPlan>((ref) {
-  final repo = ref.read(eventRepositoryProvider);
-  return GetMealPlan(repo);
-});
-
-final saveMealPlanUseCaseProvider = Provider<SaveMealPlan>((ref) {
-  final repo = ref.read(eventRepositoryProvider);
-  return SaveMealPlan(repo);
-});
-
-final duplicateMenuUseCaseProvider = Provider<DuplicateMenu>((ref) {
-  final repo = ref.read(eventRepositoryProvider);
-  return DuplicateMenu(repo);
-});
-
-final tenteRepositoryProvider = Provider<TentRepository>((ref) {
+final tentRepositoryProvider = Provider<TentRepository>((ref) {
   final api = ref.read(apiServiceProvider);
-  return TenteRepositoryImpl(api);
+  return TentRepositoryImpl(api);
 });

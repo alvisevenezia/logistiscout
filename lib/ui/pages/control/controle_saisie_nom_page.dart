@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 
-class ControleSaisieNomPage extends StatefulWidget {
+class ControllerPageName extends StatefulWidget {
   final Future<void> Function(String) onNomValide;
 
-  const ControleSaisieNomPage({super.key, required this.onNomValide});
+  const ControllerPageName.controlerNamePage({super.key, required this.onNomValide});
 
   @override
-  State<ControleSaisieNomPage> createState() => _ControleSaisieNomPageState();
+  State<ControllerPageName> createState() => _ControllerPageNameState();
 }
 
-class _ControleSaisieNomPageState extends State<ControleSaisieNomPage> {
+class _ControllerPageNameState extends State<ControllerPageName> {
   final _controller = TextEditingController();
   bool _loading = true;
 

@@ -7,10 +7,10 @@ import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
-class TenteRepositoryImpl implements TentRepository {
+class TentRepositoryImpl implements TentRepository {
   final ApiService api;
 
-  TenteRepositoryImpl(this.api);
+  TentRepositoryImpl(this.api);
 
   @override
   Future<List<Tent>> getTentList() async {

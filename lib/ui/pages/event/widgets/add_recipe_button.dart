@@ -1,7 +1,7 @@
 // lib/ui/pages/menus/add_recipe_button.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/recipe_actions.dart';
+import 'package:logistiscout/ui/pages/event/recipe_actions.dart';
 
 class AddRecipeButton extends ConsumerWidget {
   final int eventId;

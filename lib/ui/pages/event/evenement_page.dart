@@ -4,8 +4,9 @@ import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
-import '../controllers/tentes_controller.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
+import 'package:logistiscout/ui/widgets/common/event_card.dart';
+import '../../controllers/tentes_controller.dart';
 
 class EvenementsPage extends ConsumerStatefulWidget {
   const EvenementsPage({super.key});
@@ -32,10 +33,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     final asyncEvents = ref.watch(evenementsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Événements'),
-
-      ),
+      appBar: AppBar(title: const Text('Événements')),
       body: Column(
         children: [
           Padding(
@@ -50,9 +48,13 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 12,
+                      ),
                     ),
-                    onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value.toLowerCase()),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -63,7 +65,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Tous')),
                     ..._typesEvenement.map(
-                          (t) => DropdownMenuItem(value: t, child: Text(t)),
+                      (t) => DropdownMenuItem(value: t, child: Text(t)),
                     ),
                   ],
                 ),
@@ -83,101 +85,36 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                 error: (e, _) => Center(child: Text('Erreur : $e')),
                 data: (events) {
                   final filtered = events.where((evt) {
-                    final matchesName = evt.nom.toLowerCase().contains(_searchQuery);
-                    final matchesType = _selectedType == null || evt.type == _selectedType;
+                    final matchesName = evt.nom.toLowerCase().contains(
+                      _searchQuery,
+                    );
+                    final matchesType =
+                        _selectedType == null || evt.type == _selectedType;
                     return matchesName && matchesType;
                   }).toList();
-              
+
                   if (filtered.isEmpty) {
                     return const Center(child: Text('Aucun événement trouvé.'));
                   }
-              
+
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final evt = filtered[index];
-              
-                      final mainUnit = evt.unites.isNotEmpty ? evt.unites.first : null;
-                      final cardColor = mainUnit != null
-                          ? Color(mainUnit.color)
-                          : Colors.grey.shade200;
-              
-                      final unitLabel = mainUnit != null
-                          ? mainUnit.name
-                          : 'Aucune unité';
-
-                      final textColor = ThemeData.estimateBrightnessForColor(cardColor) == Brightness.dark
-                          ? Colors.white
-                          : Colors.black;
-              
-                      return Card(
-                        color: cardColor,
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          leading: CircleAvatar(
-                            backgroundColor: cardColor,
-                            child: const Icon(Icons.event, color: Colors.white),
-                          ),
-                          title: Text(
-                            evt.nom,
-                            style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
+                      return EventCard(
+                        event: filtered[index],
+                        onOpen: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EventDetailPage(
+                                eventId: filtered[index].id,
+                                openMenusDirectly: false,
+                              ),
                             ),
                           ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('📅 Du ${_formatDate(evt.date)} au ${_formatDate(evt.dateFin)}',
-                                    style: TextStyle(
-                                      color: textColor)
-                                ),
-                                Text('🗂️ Type : ${evt.type}',
-                                    style: TextStyle(
-                                        color: textColor)
-                                ),
-                                Text('🏕️ Unité : $unitLabel',
-                                    style: TextStyle(
-                                        color: textColor)
-                                ),
-                                Text(
-                                  '⛺ Tentes : ${evt.associatedTents.isEmpty ? "Aucune" : evt.associatedTents.join(", ")}',
-                                    style: TextStyle(
-                                        color: textColor)
-                                ),
-                              ],
-                            ),
-                          ),
-                          trailing: PopupMenuButton<String>(
-                            onSelected: (value) async {
-                              final ctrl = ref.read(evenementsProvider.notifier);
-                              if (value == 'edit') {
-                                await _showEventDialog(context, ctrl, event: evt);
-                              } else if (value == 'delete') {
-                                await ctrl.deleteEvenement(evt.id);
-                              } else if (value == 'menus') {
-                                _openEventDetail(context, evt, openMenus: true);
-                              }
-                            },
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(value: 'edit', child: Text('Modifier')),
-                              PopupMenuItem(value: 'delete', child: Text('Supprimer')),
-                              PopupMenuDivider(),
-                              PopupMenuItem(value: 'menus', child: Text('Ouvrir Menus')),
-                            ],
-                          ),
-                          onTap: () => _openEventDetail(context, evt),
-                        ),
-              
+                        },
                       );
                     },
                   );
@@ -190,7 +127,10 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
       floatingActionButton: FloatingActionButton(
         tooltip: 'Ajouter un évènement',
         onPressed: () async {
-          await _showEventDialog(context, ref.read(evenementsProvider.notifier));
+          await _showEventDialog(
+            context,
+            ref.read(evenementsProvider.notifier),
+          );
         },
         child: const Icon(Icons.add),
       ),
@@ -200,23 +140,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
-  void _openEventDetail(BuildContext context, Event evt, {bool openMenus = false}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EvenementDetailPage(
-          eventId: evt.id,
-          openMenusDirectly: openMenus,
-        ),
-      ),
-    );
-  }
 
   Future<void> _showEventDialog(
-      BuildContext context,
-      EvenementController ctrl, {
-        Event? event,
-      }) async {
+    BuildContext context,
+    EvenementController ctrl, {
+    Event? event,
+  }) async {
     final isEditing = event != null;
 
     final nomController = TextEditingController(text: event?.nom ?? '');
@@ -224,9 +153,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     final typesEvenement = _typesEvenement;
 
     DateTime debut = event?.date ?? DateTime.now();
-    DateTime fin = event?.dateFin ?? DateTime.now().add(const Duration(days: 1));
+    DateTime fin =
+        event?.dateFin ?? DateTime.now().add(const Duration(days: 1));
 
-    Unit? selectedUnite = event?.unites.isNotEmpty == true ? event!.unites.first : null;
+    Unit? selectedUnite = event?.unites.isNotEmpty == true
+        ? event!.unites.first
+        : null;
 
     List<int> selectedTenteIds = List.from(event?.associatedTents ?? []);
 
@@ -274,7 +206,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                         // titre
                         Text(
-                          isEditing ? 'Modifier l\'événement' : 'Nouvel événement',
+                          isEditing
+                              ? 'Modifier l\'événement'
+                              : 'Nouvel événement',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 16),
@@ -297,16 +231,15 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                         // 🧩 Type
                         DropdownButtonFormField<String>(
-                          initialValue: typesEvenement.contains(typeController.text)
+                          initialValue:
+                              typesEvenement.contains(typeController.text)
                               ? typeController.text
                               : null,
                           items: typesEvenement
                               .map(
-                                (t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(t),
-                            ),
-                          )
+                                (t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)),
+                              )
                               .toList(),
                           onChanged: (value) {
                             setStateDialog(() {
@@ -326,23 +259,23 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                           items: Unit.values
                               .map(
                                 (e) => DropdownMenuItem(
-                              value: e,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 12,
-                                    height: 12,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      color: Color(e.color),
-                                      shape: BoxShape.circle,
-                                    ),
+                                  value: e,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 12,
+                                        height: 12,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: Color(e.color),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      Text(e.name),
+                                    ],
                                   ),
-                                  Text(e.name),
-                                ],
-                              ),
-                            ),
-                          )
+                                ),
+                              )
                               .toList(),
                           onChanged: (value) {
                             setStateDialog(() => selectedUnite = value);
@@ -378,7 +311,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                     setStateDialog(() => debut = picked);
                                     if (fin.isBefore(debut)) {
                                       setStateDialog(
-                                            () => fin = debut.add(const Duration(days: 1)),
+                                        () => fin = debut.add(
+                                          const Duration(days: 1),
+                                        ),
                                       );
                                     }
                                   }
@@ -393,7 +328,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                 onPressed: () async {
                                   final picked = await showDatePicker(
                                     context: context,
-                                    initialDate: fin.isAfter(debut) ? fin : debut,
+                                    initialDate: fin.isAfter(debut)
+                                        ? fin
+                                        : debut,
                                     firstDate: debut,
                                     lastDate: DateTime(2100),
                                   );
@@ -430,16 +367,17 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                             final indispoFuture = ref
                                 .watch(evenementsProvider.future)
                                 .then((events) {
-                              final indispo = <int>{};
-                              for (final evt in events) {
-                                final chevauche = debut.isBefore(evt.dateFin) &&
-                                    fin.isAfter(evt.date);
-                                if (chevauche) {
-                                  indispo.addAll(evt.associatedTents);
-                                }
-                              }
-                              return indispo;
-                            });
+                                  final indispo = <int>{};
+                                  for (final evt in events) {
+                                    final chevauche =
+                                        debut.isBefore(evt.dateFin) &&
+                                        fin.isAfter(evt.date);
+                                    if (chevauche) {
+                                      indispo.addAll(evt.associatedTents);
+                                    }
+                                  }
+                                  return indispo;
+                                });
 
                             return FutureBuilder<Set<int>>(
                               future: indispoFuture,
@@ -448,9 +386,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
 
                                 final sortedTentes = [...tentes]
                                   ..sort(
-                                        (a, b) => a.nom
-                                        .toLowerCase()
-                                        .compareTo(b.nom.toLowerCase()),
+                                    (a, b) => a.nom.toLowerCase().compareTo(
+                                      b.nom.toLowerCase(),
+                                    ),
                                   );
 
                                 return Wrap(
@@ -468,34 +406,38 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                                 : Colors.black,
                                           ),
                                         ),
-                                        backgroundColor: indispoIds.contains(t.id)
+                                        backgroundColor:
+                                            indispoIds.contains(t.id)
                                             ? Colors.grey.shade300
                                             : Colors.grey.shade100,
                                         disabledColor: Colors.grey.shade200,
-                                        selectedColor:
-                                        Theme.of(context).colorScheme.primary
-                                            .withAlpha(45),
+                                        selectedColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primary.withAlpha(45),
                                         side: BorderSide(
                                           color: selectedTenteIds.contains(t.id)
                                               ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              .withAlpha(150)
+                                                    .colorScheme
+                                                    .primary
+                                                    .withAlpha(150)
                                               : Colors.grey.shade400,
                                         ),
-                                        selected:
-                                        selectedTenteIds.contains(t.id),
+                                        selected: selectedTenteIds.contains(
+                                          t.id,
+                                        ),
                                         onSelected: indispoIds.contains(t.id)
                                             ? null
                                             : (selected) {
-                                          setStateDialog(() {
-                                            if (selected) {
-                                              selectedTenteIds.add(t.id);
-                                            } else {
-                                              selectedTenteIds.remove(t.id);
-                                            }
-                                          });
-                                        },
+                                                setStateDialog(() {
+                                                  if (selected) {
+                                                    selectedTenteIds.add(t.id);
+                                                  } else {
+                                                    selectedTenteIds.remove(
+                                                      t.id,
+                                                    );
+                                                  }
+                                                });
+                                              },
                                       ),
                                   ],
                                 );
@@ -522,15 +464,16 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   return;
                                 }
 
-                                final groupId =
-                                await LocalStorageService.instance
+                                final groupId = await LocalStorageService
+                                    .instance
                                     .getGroupId();
 
                                 if (groupId == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                          'Impossible de récupérer le groupe.'),
+                                        'Impossible de récupérer le groupe.',
+                                      ),
                                     ),
                                   );
                                   return;
@@ -569,7 +512,4 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
       },
     );
   }
-
-
-
 }

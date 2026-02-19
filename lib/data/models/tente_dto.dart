@@ -13,6 +13,8 @@ class TentDto {
   final List<Map<String, dynamic>> controlHistory; // raw controles JSON
   final List<String> colors;
   final String groupId;
+  final String team;
+  final String location;
 
   TentDto({
     required this.id,
@@ -28,6 +30,8 @@ class TentDto {
     required this.controlHistory,
     required this.colors,
     required this.groupId,
+    required this.team,
+    required this.location,
   });
 
   factory TentDto.fromJson(Map<String, dynamic> json) => TentDto(
@@ -44,6 +48,8 @@ class TentDto {
     controlHistory: List<Map<String, dynamic>>.from(json['controlHistory'] ?? const []),
     colors: (json['couleurs'] as List<dynamic>? ?? []).map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList(),
     groupId: json['groupeId']?.toString() ?? '',
+    team: json['equipe']?.toString() ?? '',
+    location: json['localisation']?.toString() ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,5 +65,7 @@ class TentDto {
     'agenda': agenda,
     'couleurs': colors,
     'groupeId': groupId,
+    'equipe' : team,
+    'localisation': location,
   };
 }

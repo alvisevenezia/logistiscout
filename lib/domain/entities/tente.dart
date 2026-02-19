@@ -15,6 +15,8 @@ class Tent {
   final List<Control> controlHistory;
   final List<String> colors;
   final String groupId;
+  final String team;
+  final String location;
 
   const Tent({
     required this.id,
@@ -30,6 +32,8 @@ class Tent {
     required this.controlHistory,
     required this.colors,
     required this.groupId,
+    required this.team,
+    required this.location,
   });
 
   Tent copyWith({
@@ -46,6 +50,8 @@ class Tent {
     List<Control>? controlHistory,
     List<String>? colors,
     String? groupId,
+    String? team,
+    String? location,
   }) {
     return Tent(
       id: id ?? this.id,
@@ -61,21 +67,32 @@ class Tent {
       controlHistory: controlHistory ?? this.controlHistory,
       colors: colors ?? this.colors,
       groupId: groupId ?? this.groupId,
+      team: team ?? this.team,
+      location: location ?? this.location,
     );
   }
 }
 
-enum TentState { good,
-  repair,
-  broken,
-  lost }
+enum TentState {
+  good(name: "Bon", bgColor: 0xFFE8F5E9, chipColor: 0xFF388E3C),
+  repair(name: "À réparer", bgColor: 0xFFFFF8E1, chipColor: 0xFFFFA000),
+  broken(name: "HS", bgColor: 0xFFFFEBEE, chipColor: 0xFFD32F2F),
+  lost(name: "Perdue", bgColor: 0xFFFAFAFA, chipColor: 0xFF616161);
+
+  const TentState({required this.name, required this.bgColor, required this.chipColor});
+
+  final String name;
+  final int bgColor;
+  final int chipColor;
+
+}
 
 TentState tentStateFromString(String state) {
   final normalized = state.trim().toLowerCase();
 
   switch (normalized) {
     case 'bon':
-      return TentState.good;  
+      return TentState.good;
 
     case 'à réparer':
       return TentState.repair;

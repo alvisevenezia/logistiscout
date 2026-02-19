@@ -6,7 +6,7 @@ import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/entities/menu_type.dart';
 import 'package:logistiscout/domain/entities/recipe.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/widgets/recipe_selector_sheet.dart';
+import 'package:logistiscout/ui/pages/event/widgets/recipe_selector_sheet.dart';
 
 Future<void> openRecipeSelector(
     BuildContext context,

@@ -1,12 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
-import 'package:logistiscout/ui/pages/contact_page.dart';
-import 'package:logistiscout/ui/pages/evenement_page.dart';
+import 'package:logistiscout/ui/pages/contact/contact_page.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/event/evenement_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
-import 'package:logistiscout/ui/pages/login_page.dart';
-import 'package:logistiscout/ui/pages/tentes_page.dart';
+import 'package:logistiscout/ui/pages/auth/login_page.dart';
+import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
+import 'package:logistiscout/ui/pages/tent/tentes_page.dart';
+
+final _router = GoRouter(
+  initialLocation: '/bootstrap',
+  routes: [
+    GoRoute(
+      path: '/bootstrap',
+      builder: (context, state) => const AuthGate(),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => LoginPage(
+        onLogin: () => context.go('/home'),
+      ),
+    ),
+
+    // Bottom-nav shell
+    ShellRoute(
+      builder: (context, state, child) => _MainNavigation(child: child),
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: '/tents',
+          builder: (context, state) => const TentesPage(),
+          routes: [
+            GoRoute(
+              path: ':tentId',
+              builder: (context, state) {
+                final tentId = int.parse(state.pathParameters['tentId']!);
+                return TenteDetailPage(tentId: tentId);
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/events',
+          builder: (context, state) => const EvenementsPage(),
+          routes: [
+            GoRoute(
+              path: ':eventId',
+              builder: (context, state) {
+                final eventId = int.parse(state.pathParameters['eventId']!);
+                return EventDetailPage(eventId: eventId);
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/contact',
+          builder: (context, state) => const ContactPage(),
+        ),
+      ],
+    ),
+
+    // Optional: redirect root to accueil
+    GoRoute(
+      path: '/',
+      redirect: (_, __) => '/accueil',
+    ),
+  ],
+);
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,16 +93,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Logistiscout',
-      initialRoute: '/bootstrap',
-      routes: {
-        '/bootstrap': (context) => const AuthGate(),
-        '/login': (context) => LoginPage(onLogin: () {
-          Navigator.of(context).pushReplacementNamed('/accueil');
-        }),
-        '/accueil': (context) => const _MainNavigation(),
-      },
+      routerConfig: _router,
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
           primary: Color(0xFF003a5d),
@@ -78,58 +138,49 @@ class MyApp extends StatelessWidget {
 }
 
 
-class _MainNavigation extends StatefulWidget {
-  const _MainNavigation();
-  @override
-  State<_MainNavigation> createState() => _MainNavigationState();
-}
+class _MainNavigation extends StatelessWidget {
+  final Widget child;
+  const _MainNavigation({required this.child});
 
-class _MainNavigationState extends State<_MainNavigation> {
-  int _selectedIndex = 0;
-  static const List<Widget> _pages = <Widget>[
-    HomePage(),
-    TentesPage(),
-    EvenementsPage(),
-    ContactPage()
-  ];
+  int _locationToIndex(String location) {
+    if (location.startsWith('/tents')) return 1;
+    if (location.startsWith('/events')) return 2;
+    if (location.startsWith('/contact')) return 3;
+    return 0; // /accueil (and default)
+  }
 
-  // Ajout d'une méthode pour valider la capacité des canadiennes
-  bool isCapaciteValide(int capacite) {
-    return capacite >= 4 && capacite <= 8;
+  String _indexToLocation(int index) {
+    switch (index) {
+      case 1:
+        return '/tents';
+      case 2:
+        return '/events';
+      case 3:
+        return '/contact';
+      case 0:
+      default:
+        return '/home';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path;
+    final selectedIndex = _locationToIndex(location);
+
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: child,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.cabin),
-            label: 'Tentes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event),
-            label: 'Événements',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.contact_support),
-            label: 'Contact',
-          ),
-        ],
+        currentIndex: selectedIndex,
         type: BottomNavigationBarType.fixed,
+        onTap: (index) => context.go(_indexToLocation(index)),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
+          BottomNavigationBarItem(icon: Icon(Icons.cabin), label: 'Tentes'),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Événements'),
+          BottomNavigationBarItem(icon: Icon(Icons.contact_support), label: 'Contact'),
+        ],
       ),
     );
   }
 }
-

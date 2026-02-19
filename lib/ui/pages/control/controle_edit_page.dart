@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
+import 'package:logistiscout/domain/entities/status_element_control.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
+import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 
-class ControleEditPage extends ConsumerStatefulWidget {
-  final Tent tente;
-  final String nomControleur;
+class ControlEditPage extends ConsumerStatefulWidget {
+  final Tent tent;
+  final String controllerName;
 
-  const ControleEditPage({
+  const ControlEditPage({
     super.key,
-    required this.tente,
-    required this.nomControleur,
+    required this.tent,
+    required this.controllerName,
   });
 
   @override
-  ConsumerState<ControleEditPage> createState() => _ControleEditPageState();
+  ConsumerState<ControlEditPage> createState() => _ControlEditPageState();
 }
 
-class _ControleEditPageState extends ConsumerState<ControleEditPage> {
+class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   final TextEditingController remarquesController = TextEditingController();
   final TextEditingController sardinesController = TextEditingController();
   final Map<String, bool> checklist = {};
+  final Map<String, StatusElementControl?> statusByItem = {};
+  TentState? _state;
 
   @override
   void dispose() {
@@ -35,9 +39,10 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
     final sections = _sections();
     final explications = _explications();
 
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Contrôle - ${widget.tente.nom}'),
+        title: Text('Contrôle - ${widget.tent.nom}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -60,33 +65,87 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                   ),
                 ),
               const SizedBox(height: 4),
-              for (final item in section.value)
-                CheckboxListTile(
-                  title: Text(item),
-                  value: checklist[item] ?? false,
-                  onChanged: (v) => setState(() => checklist[item] = v ?? false),
-                  dense: true,
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-              const Divider(height: 20),
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: const [
+                    SizedBox(width: 48, child: Center(child: Text("OK", style: TextStyle(color: Colors.green,fontWeight: FontWeight.bold)))),
+                    SizedBox(width: 48, child: Center(child: Text("KO", style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold)))),
+                    ],
+                  ),
+                  ...section.value.map((e) {
+                    final status = statusByItem[e];
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(e),
+
+                        Row(
+                          children: [
+                            // OK checkbox
+                            Checkbox(
+                              activeColor: Colors.green,
+                              value: status == StatusElementControl.ok,
+                              onChanged: (checked) {
+                                setState(() {
+                                  statusByItem[e] =
+                                  checked == true ? StatusElementControl.ok : null;
+                                });
+                              },
+                            ),
+                            // KO checkbox
+                            Checkbox(
+                              activeColor: Colors.red,
+                              value: status == StatusElementControl.ko,
+                              onChanged: (checked) {
+                                setState(() {
+                                  statusByItem[e] =
+                                  checked == true ? StatusElementControl.ko : null;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
+                ]
+              ),
+              const SizedBox(height: 20),
             ],
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
+                  flex: 3,
                   child: TextField(
                     controller: sardinesController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre de sardines/piquets',
+                    decoration: InputDecoration(
+                      labelText: 'Nbr de sardines (attendu : ${_expectedSardines(widget.tent.tentType)}) ',
                       border: OutlineInputBorder(),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Attendu : ${_expectedSardines(widget.tente.tentType)}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<TentState>(
+                    initialValue: widget.tent.state,
+                    items: TentState.values
+                        .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(tentStateToString(e)),
+                    ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _state = v ?? TentState.broken),
+                    decoration: const InputDecoration(
+                      labelText: 'État',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -104,21 +163,21 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
               icon: const Icon(Icons.save),
               label: const Text('Valider le contrôle'),
               onPressed: () async {
-                if (widget.nomControleur.trim().isEmpty) {
+                if (widget.controllerName.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Veuillez saisir le nom du contrôleur.')));
                   return;
                 }
 
                 final payload = {
-                  for (final e in checklist.entries) e.key: e.value,
+                  for (final e in statusByItem.entries) e.key: e.value,
                   'Nombre de sardines/piquets': sardinesController.text,
-                  'nom_controleur': widget.nomControleur.trim(),
+                  'nom_controleur': widget.controllerName.trim(),
                 };
 
                 final controle = Control(
                   id: null,
-                  tentId: widget.tente.id,
+                  tentId: widget.tent.id,
                   date: DateTime.now(),
                   comment: remarquesController.text.trim(),
                   checklist: payload,
@@ -126,8 +185,12 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
                 );
 
                 await ref
-                    .read(controlProvider(widget.tente.id).notifier)
+                    .read(controlProvider(widget.tent.id).notifier)
                     .addControl(controle);
+
+                if(widget.tent.state != _state){
+                  ref.read(tentesProvider.notifier).updateTente(widget.tent.copyWith(state: _state));
+                }
 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -144,28 +207,27 @@ class _ControleEditPageState extends ConsumerState<ControleEditPage> {
 
   Map<String, List<String>> _sections() => {
     'Structure et éléments principaux': [
-      'Toile extérieure',
+      'Double-toit',
       'Toile intérieure',
-      'Sol de tente',
-      'Mâts / arceaux',
-      'Haubans',
-      'Cordes supplémentaires',
-      'Sardines / Piquets en nombre conforme',
-      'Sardines / Piquets en bon état',
-      'Sardines / Piquets propres',
+      'Tapis de sol',
+      'Faitières',
+      'Piquets',
     ],
     'Fixations et fermetures': [
       'Fermetures éclair',
-      'Œillets / Systèmes de serrage',
-      'Crochets / attaches de haubanage',
+      'Œillets',
+      'Tendeurs double-toit',
+      'Tendeurs toile intérieure',
     ],
     'Accessoires et rangement': [
-      'Housse de rangement',
-      'Système de pliage / ficelles d’attache',
-      'Fiche d’identification',
+      'Sac de tente',
+      'Sac de piquets',
+      'Sac de sardines',
+      'Maillet',
+      'Ballayette',
     ],
     'État général': [
-      'Propreté extérieure et intérieure',
+      'Propreté extérieure/intérieure',
       'Tente sèche',
       'Pas d’odeur de moisi',
     ],

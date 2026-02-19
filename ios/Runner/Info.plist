@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+    <string>NO</string>
 	<key>CFBundleDisplayName</key>
 	<string>Logistiscout</string>
 	<key>CFBundleExecutable</key>
@@ -47,5 +49,15 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Cette application a besoin d'accéder à la caméra pour scanner des codes QR et des documents.</string>
+	<key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>logistiscout</string>
+        </array>
+      </dict>
+    </array>
+
 </dict>
 </plist>

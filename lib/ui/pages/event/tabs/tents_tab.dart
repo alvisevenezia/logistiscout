@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
-import 'package:logistiscout/ui/pages/evenement_detail/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 
 class TentsTab extends ConsumerWidget {
   const TentsTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = context.findAncestorWidgetOfExactType<EvenementDetailPage>()!;
+    final page = context.findAncestorWidgetOfExactType<EventDetailPage>()!;
     final c = ref.watch(evenementDetailProvider(page.eventId));
 
     if (c.loading) return const Center(child: CircularProgressIndicator());

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
-import 'package:logistiscout/ui/pages/tente_detail_page.dart';
+import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
 class TentesPage extends ConsumerStatefulWidget {
   const TentesPage({super.key});
@@ -142,18 +143,8 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                         final t = filtered[i];
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _TenteCard(
-                            tente: t,
-                            onOpen: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      TenteDetailPage(tenteId: t.id),
-                                ),
-                              );
-                              ref.read(tentesProvider.notifier).reload();
-                            },
+                          child: TentCard(
+                            tent: t,
                           ),
                         );
                       },
@@ -333,7 +324,9 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                         .map((e) => e.trim())
                         .where((e) => e.isNotEmpty)
                         .toList(),
-                    groupId: '',
+                    groupId: await LocalStorageService.instance.getGroupId() ?? '',
+                    team: '',
+                    location: '',
                   );
 
                   await ref.read(tentesProvider.notifier).createTente(newTente);
@@ -349,111 +342,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
 
 // ======= Widgets & helpers UI =======
 
-class _TenteCard extends StatelessWidget {
-  final Tent tente;
-  final VoidCallback onOpen;
 
-  const _TenteCard({required this.tente, required this.onOpen});
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = _etatBgColor(tente.state);
-    final chipColor = _etatChipColor(tente.state);
-
-    return Card(
-      elevation: 2,
-      color: bg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: Color(
-                  Unit.fromString(tente.assignedUnit).color,
-                ),
-                child: const Icon(Icons.cabin, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              // Infos
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Titre + état chip
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            tente.nom,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: chipColor.withAlpha(30),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: chipColor.withAlpha(80)),
-                          ),
-                          child: Text(
-                            tentStateToString(tente.state),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: chipColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${tente.tentType} • ${tente.nbPlaces} places'
-                      '${tente.assignedUnit.isNotEmpty ? ' • ${tente.assignedUnit}' : ''}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    // Bandeau de petites pastilles couleur scotch
-                    if (tente.colors.isNotEmpty)
-                      Wrap(
-                        spacing: 4,
-                        children: tente.colors.take(6).map((c) {
-                          return Container(
-                            width: 16,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: _parseColor(c),
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border.all(color: Colors.white, width: 1),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: Colors.black45),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _UnitFilter extends StatelessWidget {
   final String value;
@@ -581,38 +470,5 @@ class _EtatFilter extends StatelessWidget {
         border: OutlineInputBorder(),
       ),
     );
-  }
-}
-
-Color _etatBgColor(TentState e) {
-  switch (e) {
-    case TentState.good:
-      return Colors.green.shade50;
-    case TentState.broken:
-      return Colors.orange.shade50;
-    default:
-      return Colors.red.shade50;
-  }
-}
-
-Color _etatChipColor(TentState e) {
-  switch (e) {
-    case TentState.good:
-      return Colors.green.shade700;
-    case TentState.broken:
-      return Colors.orange.shade700;
-    default:
-      return Colors.red.shade700;
-  }
-}
-
-Color _parseColor(String s) {
-  try {
-    if (s.startsWith('#')) {
-      return Color(int.parse(s.substring(1), radix: 16) + 0xFF000000);
-    }
-    return Colors.grey.shade400;
-  } catch (_) {
-    return Colors.grey.shade400;
   }
 }
