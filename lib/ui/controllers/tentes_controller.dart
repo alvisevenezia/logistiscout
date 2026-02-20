@@ -72,8 +72,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
   }
 
   QrImageView createTenteQrCode(Tent tente) {
-    final groupId = LocalStorageService.instance.getGroupId() ?? 'unknown';
-    final qrData = 'tent:$groupId:${tente.id}';
+    final qrData = 'logistiscout:///tents/${tente.id}';
     return QrImageView(
       data: qrData,
       version: QrVersions.auto,
@@ -93,6 +92,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
       rethrow;
     }
   }
+
 }
 
 final tentesProvider =

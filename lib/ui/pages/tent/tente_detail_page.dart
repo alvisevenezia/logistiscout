@@ -221,7 +221,38 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               ),
                               const SizedBox(height: 15),
                               Row(
-                                children: [
+                                children: [IconButton(
+                                  icon: const Icon(Icons.qr_code),
+                                  onPressed: () async {
+                                    // Show QR code in a dialog
+                                    await showDialog(
+                                      context: context,
+                                      // dart
+                                      // dart
+                                      builder: (context) => AlertDialog(
+                                        title: Text('QR Code - ${tente.nom}'),
+                                        content: SingleChildScrollView(
+                                          child: Center(
+                                            child: SizedBox(
+                                              width: 280, // correspond à la largeur minimale que Dialog impose
+                                              height: 280,
+                                              child: FittedBox(
+                                                fit: BoxFit.contain,
+                                                child: ref.read(tentesProvider.notifier).createTenteQrCode(tente),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text('Fermer'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                                   ElevatedButton.icon(
                                       icon: const Icon(Icons.save),
                                       label: const Text('Enregistrer les modifications'),
