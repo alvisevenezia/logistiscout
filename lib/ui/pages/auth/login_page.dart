@@ -145,6 +145,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               // Error message
               if (loginState.hasError)
+                if(loginState.error.toString().contains('401')) // 🔹 Check for specific error
+                  const Text(
+                    'Identifiant ou mot de passe incorrect',
+                    style: TextStyle(color: Colors.red),
+                  )
+                else
                 Text(
                   loginState.error
                       ?.toString()

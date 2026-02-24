@@ -13,6 +13,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
+  final _fallbackEmail = TextEditingController();
   final _nomController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -36,6 +37,7 @@ class _RegisterPageState extends State<RegisterPage> {
       "userlogin": _loginController.text.trim(),
       "mdp": _passwordController.text.trim(),
       "nom": _nomController.text.trim(),
+      "mail": _fallbackEmail.text.trim(),
     };
 
     try {
@@ -130,6 +132,16 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 validator: (v) =>
                     v == null || v.isEmpty ? 'Champ obligatoire' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _fallbackEmail,
+                decoration: InputDecoration(
+                  labelText: 'Email de récupération',
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) =>
+                v == null || v.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
