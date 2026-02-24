@@ -9,13 +9,81 @@ import 'package:logistiscout/ui/controllers/home_controller.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+
+  int tapCount = 0;
+  DateTime? firstTapTime;
+
+  void handleTripleTap() {
+    final now = DateTime.now();
+
+    // Si plus d'1 sec → reset
+    if (firstTapTime == null || now.difference(firstTapTime!) > const Duration(seconds: 1)) {
+      tapCount = 0;
+      firstTapTime = now;
+    }
+
+    tapCount++;
+
+    if (tapCount == 1) {
+      firstTapTime = now;
+    }
+
+    if (tapCount == 3 &&
+        now.difference(firstTapTime!) <= const Duration(seconds: 1)) {
+
+        final confirm =  showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Réinitialiser ?'),
+            content: const Text(
+              'Cela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Confirmer'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+           LocalStorageService.instance.clearAll();
+           TokenStore.instance.clear();
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Préférences locales effacées ✅'),
+              ),
+            );
+          }
+        }
+
+      tapCount = 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(accueilControllerProvider);
     final controller = ref.read(accueilControllerProvider.notifier);
+
 
     // Compute lists only when data is present
     final now = DateTime.now();
@@ -38,7 +106,17 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Accueil'),
+        title: TextButton(
+          onPressed: () => handleTripleTap(),
+          child: const Text(
+            'Accueil',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         bottom: state.isLoading
             ? const PreferredSize(
                 preferredSize: Size.fromHeight(4),
@@ -46,48 +124,6 @@ class HomePage extends ConsumerWidget {
               )
             : null,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.cleaning_services_outlined),
-            tooltip: 'Vider les préférences locales',
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Réinitialiser ?'),
-                  content: const Text(
-                    'Cela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Annuler'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                      ),
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Confirmer'),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirm == true) {
-                await LocalStorageService.instance.clearAll();
-                await TokenStore.instance.clear();
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Préférences locales effacées ✅'),
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Déconnexion',
