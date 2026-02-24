@@ -12,7 +12,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordConfirmController = TextEditingController();
   final _nomController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
@@ -45,9 +48,9 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur : $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur : $e")));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -72,18 +75,51 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Champ obligatoire' : null,
+                    v == null || v.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Mot de passe',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscurePassword,
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Champ obligatoire' : null,
+                    v == null || v.isEmpty ? 'Champ obligatoire' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordConfirmController,
+                decoration: InputDecoration(
+                  labelText: 'Confirmation mot de passe',
+                  border: OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                    },
+                  ),
+                ),
+
+                obscureText: _obscureConfirmPassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Champ obligatoire';
+                  }
+                  if (v != _passwordController.text) {
+                    return 'Les mots de passe ne correspondent pas';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -93,16 +129,16 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Champ obligatoire' : null,
+                    v == null || v.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 icon: _isLoading
                     ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.group_add),
                 label: Text(_isLoading ? "Création..." : "Créer le groupe"),
                 onPressed: _isLoading ? null : _register,
