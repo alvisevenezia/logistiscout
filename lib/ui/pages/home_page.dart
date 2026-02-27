@@ -44,7 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           builder: (context) => AlertDialog(
             title: const Text('Réinitialiser ?'),
             content: const Text(
-              'Cela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
+              'UNIQUEMENT POUR DU DEBUG \n\nCela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
             ),
             actions: [
               TextButton(
@@ -124,6 +124,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               )
             : null,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Configuration',
+            onPressed: () async {
+              await controller.logout(ref);
+              if (context.mounted) {
+                context.go('/account');
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Déconnexion',

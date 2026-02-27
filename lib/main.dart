@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/pages/account/account_page.dart';
 import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
 import 'package:logistiscout/ui/pages/contact/contact_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
@@ -24,7 +25,10 @@ final _router = GoRouter(
         onLogin: () => context.go('/home'),
       ),
     ),
-
+    GoRoute(
+      path: '/account',
+      builder: (context, state) => const AccountPage(),
+    ),
     // Bottom-nav shell
     ShellRoute(
       builder: (context, state, child) => _MainNavigation(child: child),
@@ -69,7 +73,7 @@ final _router = GoRouter(
     // Optional: redirect root to accueil
     GoRoute(
       path: '/',
-      redirect: (_, __) => '/accueil',
+      redirect: (_, __) => '/home',
     ),
   ],
 );

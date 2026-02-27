@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/services/token_store.dart';
 
@@ -10,7 +11,8 @@ enum HttpMethod {
   get("GET"),
   post("POST"),
   put("PUT"),
-  delete("DELETE");
+  delete("DELETE"),
+  patch("PATCH");
 
   final String name;
   const HttpMethod(this.name);
@@ -82,6 +84,10 @@ class ApiService {
           break;
         case HttpMethod.delete:
           response = await http.delete(uri, headers: headers, body: body)
+              .timeout(const Duration(seconds: 10));
+          break;
+        case HttpMethod.patch:
+          response = await http.patch(uri, headers: headers, body: body)
               .timeout(const Duration(seconds: 10));
           break;
       }
@@ -178,6 +184,12 @@ class ApiService {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<dynamic> getGroupInfo(){
+    return _safeRequest(
+        HttpMethod.get,'/me',
+      ).then((response) => jsonDecode(response.body));
   }
 
 

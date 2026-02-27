@@ -37,16 +37,16 @@ class _RegisterPageState extends State<RegisterPage> {
       "userlogin": _loginController.text.trim(),
       "mdp": _passwordController.text.trim(),
       "nom": _nomController.text.trim(),
-      "mail": _fallbackEmail.text.trim(),
+      "email": _fallbackEmail.text.trim(),
     };
 
     try {
-      await api.registerGroup(body); // 👈 méthode à ajouter dans ApiService
+      await api.registerGroup(body);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Groupe créé avec succès 🎉")),
         );
-        Navigator.pop(context); // Retour vers la page de login
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
