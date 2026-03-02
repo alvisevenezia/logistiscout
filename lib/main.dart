@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/pages/account/group_settings_page.dart';
 import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
 import 'package:logistiscout/ui/pages/contact/contact_page.dart';
@@ -79,21 +81,18 @@ final _router = GoRouter(
 );
 
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final groupID = await LocalStorageService.instance.getGroupId();
 
   runApp(
     ProviderScope(
-      child: MyApp(isLoggedIn: groupID != null && groupID.isNotEmpty),
+      child: MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

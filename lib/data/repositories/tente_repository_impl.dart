@@ -14,46 +14,40 @@ class TentRepositoryImpl implements TentRepository {
 
   @override
   Future<List<Tent>> getTentList() async {
-    final groupId = await LocalStorageService.instance.getGroupId();
-    if (groupId == null) throw Exception('GroupId is null');
-
-    developer.log('[TenteRepository] getAllTentes(groupId=$groupId)');
-    final jsonList = await api.getTentList(groupId);
+    developer.log('[TenteRepository] getAllTentes()');
+    final jsonList = await api.getTentList();
     final dtos = jsonList.map((j) => TentDto.fromJson(j)).toList();
     return dtos.map(mapTentDtoToDomain).toList();
   }
 
   @override
-  Future<void> createTent(String groupId, Tent tent) async {
-    developer.log('[TenteRepository] createTente($groupId, ${tent.nom})');
+  Future<void> createTent(Tent tent) async {
+    developer.log('[TenteRepository] createTente( ${tent.nom})');
     final dto = mapTentDomainToDto(tent);
-    final json = dto.toJson()..['groupeId'] = groupId;
+    final json = dto.toJson();
     await api.createTent(json);
   }
 
   @override
-  Future<void> updateTent(String groupId, Tent tent) async {
-    developer.log('[TenteRepository] updateTente($groupId, ${tent.id})');
+  Future<void> updateTent(Tent tent) async {
+    developer.log('[TenteRepository] updateTente(${tent.id})');
     final dto = mapTentDomainToDto(tent);
-    final json = dto.toJson()..['groupeId'] = groupId;
+    final json = dto.toJson();
     await api.updateTent(tent.id, json);
   }
 
   @override
-  Future<void> deleteTent(int id, String groupId) async {
-    developer.log('[TenteRepository] deleteTente($id, groupId=$groupId)');
-    await api.deleteTent(id, groupId: groupId);
+  Future<void> deleteTent(int id) async {
+    developer.log('[TenteRepository] deleteTente($id)');
+    await api.deleteTent(id);
   }
 
   @override
   Future<List<Tent>> getAvailableTent(DateTime debut, DateTime fin) async {
-    final groupId = await LocalStorageService.instance.getGroupId();
-    if (groupId == null) throw Exception('GroupId is null');
-
-    developer.log('[TenteRepository] 🔍 getAvailableTentes(groupId=$groupId, '
+    developer.log('[TenteRepository] 🔍 getAvailableTentes('
         'debut=$debut, fin=$fin)');
 
-    final allJson = await api.getTentList(groupId);
+    final allJson = await api.getTentList();
     final allTentes = allJson.map((j) => mapTentDtoToDomain(TentDto.fromJson(j))).toList();
 
     final eventsJson = await api.getEventList();

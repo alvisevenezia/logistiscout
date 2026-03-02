@@ -2,6 +2,7 @@ import 'package:logistiscout/data/mappers/group_mapper.dart';
 import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/domain/entities/group.dart';
 import 'package:logistiscout/services/api_service.dart';
+import 'package:logistiscout/services/token_store.dart';
 
 class GroupRepository {
   final ApiService api;
@@ -22,4 +23,5 @@ class GroupRepository {
   Future<void> updateGroup(Group newGroup) async {
     api.updateGroupInfo(mapGroupDomainToDto(newGroup).toJson());
   }
+
 }

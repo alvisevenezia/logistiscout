@@ -24,7 +24,6 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
       }
 
       await _localStorage.saveUsername(userLogin);
-      await _localStorage.saveGroupId(response['id'].toString());
       await _tokenStore.saveAccessToken(response['access_token']);
       await _tokenStore.saveRefreshToken(response['refresh_token']);
 

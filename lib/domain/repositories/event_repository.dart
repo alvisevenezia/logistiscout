@@ -2,7 +2,7 @@ import '../entities/event.dart';
 import '../entities/menu.dart';
 
 abstract class EventRepository {
-  updateEventTents(String groupId, int eventId, List<int> tentIds, Event event);
+  updateEventTents(int eventId, List<int> tentIds, Event event);
   Future<void> createEvent(Event event);
   Future<Event> getEvent(int id);
   Future<List<Event>> getAllEvents();

@@ -17,13 +17,8 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
   Future<List<Event>> _loadEvenements() async {
     try {
-      final groupId = await _localStorage.getGroupId();
 
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
-
-      developer.log('[EvenementController] 🚀 Loading events for groupId=$groupId');
+      developer.log('[EvenementController] 🚀 Loading events ');
 
       final events = await _repo.getAllEvents();
 
@@ -46,12 +41,8 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
   Future<void> addEvenement(Event event) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
 
-      developer.log('[EvenementController] ➕ Adding event "${event.nom}" for groupId=$groupId');
+      developer.log('[EvenementController] ➕ Adding event "${event.nom}" ');
 
       await _repo.createEvent(event);
 
@@ -64,12 +55,8 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
   Future<void> updateEvenement(Event event) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
 
-      developer.log('[EvenementController] ✏️ Updating event id=${event.id} ($groupId)');
+      developer.log('[EvenementController] ✏️ Updating event id=${event.id}');
 
      _repo.updateEvent(event);
 
@@ -82,12 +69,8 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
   Future<void> deleteEvenement(int id) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
 
-      developer.log('[EvenementController] 🗑️ Deleting event id=$id for groupId=$groupId');
+      developer.log('[EvenementController] 🗑️ Deleting event id=$id ');
 
       await reload();
     } catch (e, st) {

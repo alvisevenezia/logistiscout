@@ -96,11 +96,7 @@ class EvenementDetailController extends ChangeNotifier {
       selectedTenteIds.clear();
       notifyListeners();
 
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception("group.dart ID not found");
-
       await eventRepo.updateEventTents(
-        groupId,
         updatedEvent.id,
         updatedIds.toList(),
         updatedEvent,

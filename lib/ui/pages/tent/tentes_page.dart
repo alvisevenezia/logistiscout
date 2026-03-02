@@ -324,7 +324,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                         .map((e) => e.trim())
                         .where((e) => e.isNotEmpty)
                         .toList(),
-                    groupId: await LocalStorageService.instance.getGroupId() ?? '',
+                    groupId: '0',
                     team: '',
                     location: '',
                   );

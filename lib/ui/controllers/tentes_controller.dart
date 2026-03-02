@@ -24,10 +24,6 @@ class TentesController extends AsyncNotifier<List<Tent>> {
   Future<List<Tent>> _loadTentes() async {
     try {
       developer.log('[TentesController] Loading tents...');
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) {
-        throw Exception('Aucun groupe sélectionné.');
-      }
 
       final data = await _repo.getTentList();
       developer.log('[TentesController] Loaded ${data.length} tents');
@@ -48,9 +44,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
   Future<void> deleteTente(int id) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
-      await _repo.deleteTent(id, groupId);
+      await _repo.deleteTent(id);
       await reload();
     } catch (e, st) {
       developer.log('[TentesController] deleteTente() failed', error: e, stackTrace: st);
@@ -60,10 +54,8 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
   Future<void> createTente(Tent tente) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
 
-      await _repo.createTent(groupId, tente);
+      await _repo.createTent(tente);
       await reload();
     } catch (e, st) {
       developer.log('[TentesController] createTente() failed', error: e, stackTrace: st);
@@ -82,10 +74,7 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
   Future<void> updateTente(Tent tente) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
-
-      await _repo.updateTent(groupId, tente);
+      await _repo.updateTent(tente);
       await reload();
     } catch (e, st) {
       developer.log('[TentesController] updateTente() failed', error: e, stackTrace: st);

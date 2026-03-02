@@ -464,20 +464,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   return;
                                 }
 
-                                final groupId = await LocalStorageService
-                                    .instance
-                                    .getGroupId();
-
-                                if (groupId == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Impossible de récupérer le groupe.',
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
 
                                 final newEvent = Event(
                                   id: isEditing ? event.id : -1,
@@ -487,7 +473,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   dateFin: fin,
                                   associatedTents: selectedTenteIds,
                                   unites: [selectedUnite!],
-                                  groupId: groupId,
+                                  groupId: "0",
                                 );
 
                                 if (isEditing) {

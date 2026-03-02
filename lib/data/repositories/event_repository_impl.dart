@@ -28,17 +28,16 @@ class EventRepositoryImpl implements EventRepository {
     await api.updateEvent(dto.id, dto.toJson());
   }
 
-  Future<void> deleteEvent(int id, String groupeId) async {
-    await api.deleteEvent(id, groupId: groupeId);
+  Future<void> deleteEvent(int id) async {
+    await api.deleteEvent(id);
   }
 
   @override
-  Future<void> updateEventTents(String groupId, int eventId,
+  Future<void> updateEventTents(int eventId,
       List<int> tentIds, Event event) async {
     developer.log('[EventRepository] 🔄 updateEventTentes(eventId=$eventId)');
 
     final evt = {
-      'groupeId': groupId,
       'nom': event.nom,
       'type': event.type,
       'date': event.date.toIso8601String(),
@@ -52,19 +51,12 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<List<Event>> getAllEvents() async {
-    final groupId = await LocalStorageService.instance.getGroupId();
-    if (groupId == null || groupId.isEmpty) {
-      throw Exception('GroupId is null or empty');
-    }
-
-    developer.log(
-        '[EventRepositoryImpl] 🔍 Fetching all events for groupId=$groupId');
 
     final data = await api.getEventList();
 
     if (data.isEmpty) {
       developer.log(
-          '[EventRepositoryImpl] ⚠️ No events found for groupId=$groupId');
+          '[EventRepositoryImpl] ⚠️ No events found');
       return [];
     }
 
