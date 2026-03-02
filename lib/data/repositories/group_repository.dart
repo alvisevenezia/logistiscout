@@ -12,4 +12,14 @@ class GroupRepository {
     final data = await api.getGroupInfo();
     return mapGroupDtoToDomain(GroupDto.fromJson(data));
   }
+
+  Future<void> changePassword(String password) async {
+
+
+
+  }
+
+  Future<void> updateGroup(Group newGroup) async {
+    api.updateGroupInfo(mapGroupDomainToDto(newGroup).toJson());
+  }
 }

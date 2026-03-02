@@ -9,6 +9,9 @@ Group mapGroupDtoToDomain(GroupDto dto) {
     name: dto.name,
     members: dto.members,
     email: dto.email,
+    login: dto.login,
+    type: dto.type,
+    units: dto.units,
   );
 }
 
@@ -18,5 +21,8 @@ GroupDto mapGroupDomainToDto(Group control) {
     name: control.name,
     members: control.members,
     email: control.email,
+    login: control.login,
+    type: control.type,
+    units: control.units,
   );
 }

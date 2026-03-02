@@ -8,7 +8,7 @@ import 'package:logistiscout/data/repositories/event_repository_impl.dart';
 import 'package:logistiscout/data/repositories/recipe_repository_impl.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/domain/repositories/recipe_repository.dart';
-import 'package:logistiscout/ui/controllers/account_controller.dart';
+import 'package:logistiscout/ui/controllers/group_settings_controller.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
@@ -34,6 +34,6 @@ final groupRepositoryProvider = Provider<GroupRepository>((ref) {
   return GroupRepository(api: api);
 });
 
-final accountControllerProvider = AsyncNotifierProvider<AccountController, Group>(
-  () => AccountController(),
+final accountControllerProvider = AsyncNotifierProvider<GroupSettingsController, Group>(
+  () => GroupSettingsController(),
 );

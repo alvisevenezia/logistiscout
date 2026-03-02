@@ -38,6 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
       "mdp": _passwordController.text.trim(),
       "nom": _nomController.text.trim(),
       "email": _fallbackEmail.text.trim(),
+      "membres": "{}",
     };
 
     try {

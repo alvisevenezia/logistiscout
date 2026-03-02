@@ -437,4 +437,14 @@ class ApiService {
       body: jsonEncode(menu),
     );
   }
+
+  Future<void> updateGroupInfo(Map<String, dynamic> json) async {
+    await _safeRequest(
+      HttpMethod.put,
+      '/groupes',
+      body: jsonEncode(json),
+    );
+
+
+  }
 }
