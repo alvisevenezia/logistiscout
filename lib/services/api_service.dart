@@ -151,6 +151,11 @@ class ApiService {
   }
 
 
+  Future<dynamic> checkToken() async {
+    final response = await _safeRequest(HttpMethod.get, '/auth/check');
+    return jsonDecode(response.body);
+  }
+
   Future<bool> refreshToken() async {
     final refreshToken = await TokenStore.instance.readRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) return false;
@@ -241,7 +246,7 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  Future<List<dynamic>> getTentList(String groupId) async {
+  Future<List<dynamic>> getTentList() async {
     final response = await _safeRequest(
       HttpMethod.get,
       '/tentes',
@@ -266,7 +271,7 @@ class ApiService {
     );
   }
 
-  Future<void> deleteTent(int tentId, {required String groupId}) async {
+  Future<void> deleteTent(int tentId) async {
     await _safeRequest(
         HttpMethod.delete,
         '/tentes/$tentId',
@@ -297,7 +302,7 @@ class ApiService {
     );
   }
 
-  Future<void> deleteEvent(int eventId, {required String groupId}) async {
+  Future<void> deleteEvent(int eventId) async {
     await _safeRequest(
       HttpMethod.delete,
       '/evenements/$eventId',
