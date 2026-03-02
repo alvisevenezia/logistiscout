@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/event/tabs/infos_tab.dart';
 import 'package:logistiscout/ui/pages/event/tabs/menus_tab.dart';
@@ -147,6 +148,35 @@ class _MenusBottomBar extends ConsumerWidget {
                     content: Text('Partager / Imprimer (PDF) à implémenter')),
               ),
             ),
+            _BottomBarButton(
+              icon: Icons.remove_circle,
+              label: "Supprimer",
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Supprimer l'évènement ?"),
+                    content: Text("Supprimer l'évènement ? Cette action est irréversible."),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Annuler'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Supprimer'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(eventRepositoryProvider).deleteEvent(page.eventId);
+                   Navigator.pop(context);
+                }
+
+              },
+            )
           ],
         ),
         ),

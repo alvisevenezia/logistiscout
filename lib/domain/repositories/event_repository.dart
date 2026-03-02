@@ -29,4 +29,5 @@ abstract class EventRepository {
       MealPlan source,
       List<MapEntry<DateTime, MealType>> targets,
       );
+  Future<void> deleteEvent(int id);
 }
