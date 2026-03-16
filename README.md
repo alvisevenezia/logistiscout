@@ -32,7 +32,7 @@ Applciation poru la gestion du matériel scout, des groupes et de la logistique 
 
 ## Structure du projet
 - `lib/` : code source principal (pages, modèles, helpers)
-- `openapi.yaml` : documentation OpenAPI pour l'API serveur (à adapter selon vos besoins)
+- `openapi.yaml` : documentation OpenAPI pour l'API serveur
 - `android/`, `ios/`, `web/`, `linux/`, `macos/`, `windows/` : plateformes supportées
 
 ## API serveur
@@ -40,6 +40,14 @@ Voir le fichier [`openapi.yaml`](openapi.yaml) pour la documentation des endpoin
 
 ## Contribution
 Les PR et suggestions sont les bienvenues !
+
+## Licence
+Ce projet "logistiscout" est publié sous licence GNU GPL-3.
+
+✔ Vous pouvez utiliser, modifier et redistribuer ce logiciel.  
+✔ Toute redistribution ou modification doit inclure le code source complet et rester sous GPL-3.
+
+⚠️ Usage commercial : Toute entreprise souhaitant utiliser ce logiciel pour des activités commerciales doit **contacter l’auteur** pour obtenir une licence commerciale.
 
 ---
 © 2024 LogistiScout
