@@ -6,38 +6,27 @@ import 'package:logistiscout/data/repositories/group_repository.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import '../../core/di.dart';
 
-
-/// PROVIDER
-final groupSettingsControllerProvider =
-AsyncNotifierProvider<GroupSettingsController, Group>(
-  GroupSettingsController.new,
-);
-
-
-
-/// CONTROLLER
 class GroupSettingsController extends AsyncNotifier<Group> {
-  late final GroupRepository groupRepository;
+  GroupRepository get _groupRepository => ref.read(groupRepositoryProvider);
 
   @override
   FutureOr<Group> build() async {
-    groupRepository = ref.read(groupRepositoryProvider);
-    return groupRepository.getGroupInfo();
+    return _groupRepository.getGroupInfo();
   }
 
-  // =====================================================================
-  //                         UPDATE HELPER
-  // =====================================================================
-
-  /// Set state & persist
-  Future<void> _updateGroup(Group newGroup) async {
-    state = AsyncData(newGroup);
-    await groupRepository.updateGroup(newGroup);
+  Future<void> _updateGroup(Group updatedGroup) async {
+    final previous = state.valueOrNull;
+    state = AsyncData(updatedGroup);
+    try {
+      await _groupRepository.updateGroup(updatedGroup);
+    } catch (e, st) {
+      if (previous != null) {
+        state = AsyncData(previous);
+      } else {
+        state = AsyncError(e, st);
+      }
+    }
   }
-
-  // =====================================================================
-  //                         BASIC FIELDS
-  // =====================================================================
 
   void setName(String name) {
     final group = state.valueOrNull;
@@ -61,7 +50,7 @@ class GroupSettingsController extends AsyncNotifier<Group> {
   }
 
   void setPassword(String password) async {
-    await groupRepository.changePassword(password);
+    await _groupRepository.changePassword(password);
   }
 
   void setType(String type) {
@@ -71,9 +60,40 @@ class GroupSettingsController extends AsyncNotifier<Group> {
     _updateGroup(group.copyWith(type: type));
   }
 
-  // =====================================================================
-  //                         UNITS MANAGEMENT
-  // =====================================================================
+  Future<void> createDefaultUnitsIfEmpty() async {
+    final current = state.value;
+
+    if (current == null) return;
+
+    if (current.units.isNotEmpty) return;
+
+    final isMarin = current.type.trim().toLowerCase().contains('marin');
+    final defaultUnits = isMarin
+        ? [
+            {'name': 'Farfadets', 'color': 0xFF65bc99},
+            {'name': 'Moussaillons', 'color': 0xFF65bc99},
+            {'name': 'Mousses', 'color': 0xFF0077b3},
+            {'name': 'Marins', 'color': 0xFFd03f15},
+            {'name': 'Compagnons', 'color': 0xFF007254},
+            {'name': 'Groupe', 'color': 0xFF420068},
+          ]
+        : [
+            {'name': 'Farfadets', 'color': 0xFF65bc99},
+            {'name': 'Louveteaux-Jeanettes', 'color': 0xFFFF8300},
+            {'name': 'Scouts-Guides', 'color': 0xFF0077b3},
+            {'name': 'Pionniers-Caravelles', 'color': 0xFFd03f15},
+            {'name': 'Compagnons', 'color': 0xFF007254},
+            {'name': 'Groupe', 'color': 0xFF420068},
+          ];
+
+    for (final unit in defaultUnits) {
+      await _groupRepository.createUnit(
+        name: unit['name']! as String,
+        color: unit['color']! as int,
+      );
+    }
+    await reload();
+  }
 
   /// Add a unit
   Future<void> addUnit({
@@ -81,63 +101,38 @@ class GroupSettingsController extends AsyncNotifier<Group> {
     required int color,
     required Unit type,
   }) async {
-    final group = state.valueOrNull;
-    if (group == null) return;
-
-    // Create a new unique ID (timestamp)
-    final newUnit = GroupUnit(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      color: color,
-      type: type,
-    );
-
-    final updatedUnits = [...group.units, newUnit];
-
-    _updateGroup(group.copyWith(units: updatedUnits));
+    await _groupRepository.createUnit(name: name, color: color);
+    await reload();
   }
 
   /// Update a unit
   Future<void> updateUnit(
-      String unitId, {
-        String? name,
-        int? color,
-        Unit? type,
-      }) async {
-    final group = state.valueOrNull;
-    if (group == null) return;
-
-    final updated = group.units.map((u) {
-      if (u.id == unitId) {
-        return u.copyWith(
-          name: name,
-          color: color,
-          type: type,
-        );
-      }
-      return u;
-    }).toList();
-
-    _updateGroup(group.copyWith(units: updated));
+    String unitId, {
+    String? name,
+    int? color,
+    Unit? type,
+  }) async {
+    final parsedId = int.tryParse(unitId);
+    if (parsedId == null) return;
+    await _groupRepository.updateUnit(
+      unitId: parsedId,
+      name: name,
+      color: color,
+    );
+    await reload();
   }
 
   /// Remove a unit
   Future<void> removeUnit(String unitId) async {
-    final group = state.valueOrNull;
-    if (group == null) return;
-
-    final updated = group.units.where((u) => u.id != unitId).toList();
-
-    _updateGroup(group.copyWith(units: updated));
+    final parsedId = int.tryParse(unitId);
+    if (parsedId == null) return;
+    await _groupRepository.deleteUnit(parsedId);
+    await reload();
   }
-
-  // =====================================================================
-  //                         FORCE REFRESH
-  // =====================================================================
 
   /// Reload from repository
   Future<void> reload() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => groupRepository.getGroupInfo());
+    state = await AsyncValue.guard(() => _groupRepository.getGroupInfo());
   }
 }

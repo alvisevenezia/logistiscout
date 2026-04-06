@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/domain/entities/unit.dart';
 
-class TentCard extends StatelessWidget {
+class TentCard extends ConsumerWidget {
   final Tent tent;
   final bool detail;
 
-  const TentCard({super.key,
-    required this.tent,
-    this.detail = true,
-  });
+  const TentCard({super.key, required this.tent, this.detail = true});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final group = ref.watch(accountControllerProvider).valueOrNull;
+    int? matchedColor;
+    for (final u in (group?.units ?? const [])) {
+      if (int.tryParse(u.id) == tent.uniteId) {
+        matchedColor = u.color;
+        break;
+      }
+    }
+
+    final avatarColor = matchedColor != null
+        ? Color(matchedColor)
+        : Colors.grey.shade500;
+
     final bg = Color(tent.state.bgColor);
     final chipColor = Color(tent.state.chipColor);
 
@@ -23,18 +34,18 @@ class TentCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap:  (){
+        onTap: () {
           context.push('/tents/${tent.id}');
         },
         child: Padding(
-          padding:  detail ? const EdgeInsets.fromLTRB(16, 24, 16, 24) : const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: detail
+              ? const EdgeInsets.fromLTRB(16, 24, 16, 24)
+              : const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: Color(
-                  Unit.fromString(tent.assignedUnit).color,
-                ),
+                backgroundColor: avatarColor,
                 child: const Icon(Icons.cabin, color: Colors.white),
               ),
               const SizedBox(width: 12),
@@ -83,11 +94,11 @@ class TentCard extends StatelessWidget {
                     Text(
                       detail
                           ? '${tent.assignedUnit} • ${tent.tentType} • ${tent.nbPlaces} places'
-                          '${tent.team != '' ? ' • Equipe ${tent.team}' : ''}'
+                                '${tent.team != '' ? ' • Equipe ${tent.team}' : ''}'
                           : tent.assignedUnit,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    if(detail)...[
+                    if (detail) ...[
                       const SizedBox(height: 6),
                       // Bandeau de petites pastilles couleur scotch
                       if (tent.colors.isNotEmpty)
@@ -100,14 +111,15 @@ class TentCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: _parseColor(c),
                                 borderRadius: BorderRadius.circular(3),
-                                border: Border.all(color: Colors.white, width: 1),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1,
+                                ),
                               ),
                             );
                           }).toList(),
                         ),
-                    ]
-
-
+                    ],
                   ],
                 ),
               ),

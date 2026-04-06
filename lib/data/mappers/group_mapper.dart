@@ -15,14 +15,14 @@ Group mapGroupDtoToDomain(GroupDto dto) {
   );
 }
 
-GroupDto mapGroupDomainToDto(Group control) {
+GroupDto mapGroupDomainToDto(Group group) {
   return GroupDto(
-    id: control.id,
-    name: control.name,
-    members: control.members,
-    email: control.email,
-    login: control.login,
-    type: control.type,
-    units: control.units,
+    id: group.id,
+    name: group.name,
+    members: group.members,
+    email: group.email,
+    login: group.login,
+    type: group.type,
+    units: group.units,
   );
 }

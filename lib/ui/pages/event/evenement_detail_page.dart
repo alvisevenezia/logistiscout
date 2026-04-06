@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
+import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/event/tabs/infos_tab.dart';
 import 'package:logistiscout/ui/pages/event/tabs/menus_tab.dart';
@@ -22,9 +23,7 @@ class EventDetailPage extends ConsumerWidget {
     final c = ref.watch(evenementDetailProvider(eventId));
 
     if (c.loading || c.event == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final event = c.event!;
@@ -54,7 +53,10 @@ class EventDetailPage extends ConsumerWidget {
                 }
               },
               itemBuilder: (_) => const [
-                PopupMenuItem(value: 'export', child: Text('Exporter / Partager')),
+                PopupMenuItem(
+                  value: 'export',
+                  child: Text('Exporter / Partager'),
+                ),
               ],
             ),
           ],
@@ -70,10 +72,7 @@ class EventDetailPage extends ConsumerWidget {
       ),
     );
   }
-
 }
-
-
 
 class _BottomBarButton extends StatelessWidget {
   final IconData icon;
@@ -92,8 +91,9 @@ class _BottomBarButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6.0),
       child: TextButton.icon(
         style: TextButton.styleFrom(
-          foregroundColor:
-          onPressed == null ? Colors.grey : Theme.of(context).colorScheme.primary,
+          foregroundColor: onPressed == null
+              ? Colors.grey
+              : Theme.of(context).colorScheme.primary,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         ),
         onPressed: onPressed,
@@ -103,7 +103,6 @@ class _BottomBarButton extends StatelessWidget {
     );
   }
 }
-
 
 class _MenusBottomBar extends ConsumerWidget {
   @override
@@ -120,14 +119,18 @@ class _MenusBottomBar extends ConsumerWidget {
     return BottomAppBar(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Center(child: Row(
+      child: Center(
+        child: Row(
           children: [
             _BottomBarButton(
               icon: Icons.list_alt,
               label: 'Courses',
               onPressed: () async {
-                final controller = ref.read(evenementDetailProvider(page.eventId));
-                final ingredients = await controller.computeTotalIngredientsForEvent();
+                final controller = ref.read(
+                  evenementDetailProvider(page.eventId),
+                );
+                final ingredients = await controller
+                    .computeTotalIngredientsForEvent();
                 if (context.mounted) {
                   showModalBottomSheet(
                     context: context,
@@ -144,9 +147,12 @@ class _MenusBottomBar extends ConsumerWidget {
               onPressed: plan.items.isEmpty
                   ? null
                   : () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Partager / Imprimer (PDF) à implémenter')),
-              ),
+                      const SnackBar(
+                        content: Text(
+                          'Partager / Imprimer (PDF) à implémenter',
+                        ),
+                      ),
+                    ),
             ),
             _BottomBarButton(
               icon: Icons.remove_circle,
@@ -156,14 +162,18 @@ class _MenusBottomBar extends ConsumerWidget {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text("Supprimer l'évènement ?"),
-                    content: Text("Supprimer l'évènement ? Cette action est irréversible."),
+                    content: Text(
+                      "Supprimer l'évènement ? Cette action est irréversible.",
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
                         child: const Text('Annuler'),
                       ),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
                         onPressed: () => Navigator.pop(context, true),
                         child: const Text('Supprimer'),
                       ),
@@ -171,20 +181,18 @@ class _MenusBottomBar extends ConsumerWidget {
                   ),
                 );
                 if (confirm == true) {
-                  await ref.read(eventRepositoryProvider).deleteEvent(page.eventId);
-                   Navigator.pop(context);
+                  await ref
+                      .read(evenementsProvider.notifier)
+                      .deleteEvenement(page.eventId);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
                 }
-
               },
-            )
+            ),
           ],
         ),
-        ),
-
+      ),
     );
-
-
   }
-
 }
-

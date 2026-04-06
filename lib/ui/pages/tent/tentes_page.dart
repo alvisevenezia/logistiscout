@@ -1,8 +1,9 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
+import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
@@ -24,6 +25,9 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   @override
   Widget build(BuildContext context) {
     final tentesAsync = ref.watch(tentesProvider);
+    final groupUnits =
+        ref.watch(accountControllerProvider).valueOrNull?.units ??
+        const <GroupUnit>[];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tentes')),
@@ -38,8 +42,8 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               final matchQuery = q.isEmpty
                   ? true
                   : t.nom.toLowerCase().contains(q) ||
-                  t.tentType.toLowerCase().contains(q) ||
-                  t.assignedUnit.toLowerCase().contains(q);
+                        t.tentType.toLowerCase().contains(q) ||
+                        t.assignedUnit.toLowerCase().contains(q);
               final matchType = _typeFilter == 'Tous'
                   ? true
                   : t.tentType == _typeFilter;
@@ -117,6 +121,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                                 Expanded(
                                   child: _UnitFilter(
                                     value: _unitFilter,
+                                    units: groupUnits,
                                     onChanged: (v) =>
                                         setState(() => _unitFilter = v),
                                   ),
@@ -143,9 +148,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                         final t = filtered[i];
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: TentCard(
-                            tent: t,
-                          ),
+                          child: TentCard(tent: t),
                         );
                       },
                     ),
@@ -168,15 +171,20 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   void _showAddTenteDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => const AddTenteDialog(),
+      builder: (_) => AddTenteDialog(
+        units:
+            ref.watch(accountControllerProvider).valueOrNull?.units ??
+            const <GroupUnit>[],
+      ),
     );
   }
-
 }
 
 // ---------- Dialog d’ajout ----------
 class AddTenteDialog extends ConsumerStatefulWidget {
-  const AddTenteDialog({super.key});
+  final List<GroupUnit> units;
+
+  const AddTenteDialog({super.key, required this.units});
 
   @override
   ConsumerState<AddTenteDialog> createState() => _AddTenteDialogState();
@@ -190,7 +198,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
   String type = 'Canadienne';
   TentState etat = TentState.broken;
   bool integree = false;
-  Unit unitePreferee = Unit.tous;
+  GroupUnit? selectedUnit;
 
   bool isSaving = false;
 
@@ -200,6 +208,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
     nomCtl = TextEditingController();
     nbCtl = TextEditingController(text: '6');
     couleursCtl = TextEditingController();
+    selectedUnit = widget.units.isNotEmpty ? widget.units.first : null;
   }
 
   @override
@@ -262,9 +271,9 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
             ),
             const SizedBox(height: 8),
 
-            DropdownButtonFormField<Unit>(
-              initialValue: unitePreferee,
-              items: Unit.values
+            DropdownButtonFormField<GroupUnit>(
+              initialValue: selectedUnit,
+              items: widget.units
                   .map(
                     (e) => DropdownMenuItem(
                       value: e,
@@ -275,7 +284,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                     ),
                   )
                   .toList(),
-              onChanged: (v) => setState(() => unitePreferee = v ?? Unit.tous),
+              onChanged: (v) => setState(() => selectedUnit = v),
               decoration: const InputDecoration(labelText: 'Unité'),
             ),
             const SizedBox(height: 8),
@@ -310,13 +319,13 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                   final newTente = Tent(
                     id: -1,
                     nom: nomCtl.text.trim(),
-                    uniteId: null,
+                    uniteId: int.tryParse(selectedUnit?.id ?? ''),
                     state: etat,
                     comment: '',
                     isFloorEmbedded: integree,
                     nbPlaces: int.tryParse(nbCtl.text) ?? 0,
                     tentType: type,
-                    assignedUnit: unitePreferee.name,
+                    assignedUnit: selectedUnit?.name ?? 'Groupe',
                     agenda: const [],
                     controlHistory: const [],
                     colors: couleursCtl.text
@@ -342,28 +351,28 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
 
 // ======= Widgets & helpers UI =======
 
-
-
 class _UnitFilter extends StatelessWidget {
   final String value;
+  final List<GroupUnit> units;
   final ValueChanged<String> onChanged;
 
-  const _UnitFilter({required this.value, required this.onChanged});
+  const _UnitFilter({
+    required this.value,
+    required this.units,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<Unit>(
+    final unitNames = <String>{'Tous', ...units.map((u) => u.name)}.toList();
+
+    return DropdownButtonFormField<String>(
       isExpanded: true,
-      initialValue: Unit.tous,
-      items: Unit.values
-          .map(
-            (t) => DropdownMenuItem(
-              value: t,
-              child: Text(t.name, style: TextStyle(color: Color(t.color))),
-            ),
-          )
+      initialValue: unitNames.contains(value) ? value : 'Tous',
+      items: unitNames
+          .map((name) => DropdownMenuItem(value: name, child: Text(name)))
           .toList(),
-      onChanged: (v) => onChanged(v?.name ?? 'Non affectée'),
+      onChanged: (v) => onChanged(v ?? 'Tous'),
       decoration: const InputDecoration(
         labelText: 'Unité',
         isDense: true,

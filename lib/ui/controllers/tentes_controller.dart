@@ -11,15 +11,12 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 
 class TentesController extends AsyncNotifier<List<Tent>> {
-  late final TentRepository _repo;
+  final TentRepository _repo = TentRepositoryImpl(ApiService());
 
   @override
   Future<List<Tent>> build() async {
-    _repo = TentRepositoryImpl(ApiService());
     return _loadTentes();
   }
-
-
 
   Future<List<Tent>> _loadTentes() async {
     try {
@@ -32,7 +29,11 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
       return data;
     } catch (e, st) {
-      developer.log('[TentesController] _loadTentes() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] _loadTentes() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -47,29 +48,32 @@ class TentesController extends AsyncNotifier<List<Tent>> {
       await _repo.deleteTent(id);
       await reload();
     } catch (e, st) {
-      developer.log('[TentesController] deleteTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] deleteTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   Future<void> createTente(Tent tente) async {
     try {
-
       await _repo.createTent(tente);
       await reload();
     } catch (e, st) {
-      developer.log('[TentesController] createTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] createTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   QrImageView createTenteQrCode(Tent tente) {
     final qrData = 'logistiscout:///tents/${tente.id}';
-    return QrImageView(
-      data: qrData,
-      version: QrVersions.auto,
-      size: 200.0,
-    );
+    return QrImageView(data: qrData, version: QrVersions.auto, size: 200.0);
   }
 
   Future<void> updateTente(Tent tente) async {
@@ -77,17 +81,24 @@ class TentesController extends AsyncNotifier<List<Tent>> {
       await _repo.updateTent(tente);
       await reload();
     } catch (e, st) {
-      developer.log('[TentesController] updateTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] updateTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
-
 }
 
-final tentesProvider =
-AsyncNotifierProvider<TentesController, List<Tent>>(TentesController.new);
+final tentesProvider = AsyncNotifierProvider<TentesController, List<Tent>>(
+  TentesController.new,
+);
 
-final evenementsParTenteProvider = FutureProvider.family<List<Event>, int>((ref, tenteId) async {
+final evenementsParTenteProvider = FutureProvider.family<List<Event>, int>((
+  ref,
+  tenteId,
+) async {
   final evenementsAsync = await ref.watch(evenementsProvider.future);
 
   final evenements = evenementsAsync.where((evt) {

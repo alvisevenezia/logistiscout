@@ -35,22 +35,7 @@ class Group {
       members: members ?? this.members,
       login: login ?? this.login,
       type: type ?? this.type,
-      units: units ?? this.units,
-    );
-  }
-
-  // JSON si tu utilises une API
-  factory Group.fromJson(Map<String, dynamic> json) {
-    return Group(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      members: json['members'],
-      login: json['login'],
-      type: json['type'],
-      units: (json['units'] as List<dynamic>)
-          .map((e) => GroupUnit.fromJson(e))
-          .toList(),
+      units: units != null ? List<GroupUnit>.from(units) : List<GroupUnit>.from(this.units),
     );
   }
 
@@ -64,5 +49,19 @@ class Group {
       'type': type,
       'units': units.map((u) => u.toJson()).toList(),
     };
+  }
+
+  factory Group.fromJson(Map<String, dynamic> json) {
+    return Group(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      members: json['members'],
+      login: json['login'],
+      type: json['type'],
+      units: (json['units'] as List<dynamic>)
+          .map((e) => GroupUnit.fromJson(e))
+          .toList(),
+    );
   }
 }

@@ -13,12 +13,7 @@ class GroupUnit {
     required this.type,
   });
 
-  GroupUnit copyWith({
-    String? id,
-    String? name,
-    int? color,
-    Unit? type,
-  }) {
+  GroupUnit copyWith({String? id, String? name, int? color, Unit? type}) {
     return GroupUnit(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -27,22 +22,23 @@ class GroupUnit {
     );
   }
 
-  // Si tu stockes en JSON :
-  factory GroupUnit.fromJson(Map<String, dynamic> json) {
-    return GroupUnit(
-      id: json['id'],
-      name: json['name'],
-      color: json['color'],
-      type: Unit.fromInt(json['type']),
-    );
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'color': color, 'type': type.name};
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'color': color,
-      'type': Unit.toInt(type),
-    };
+  factory GroupUnit.fromJson(Map<String, dynamic> json) {
+    final rawType = json['type']?.toString() ?? '';
+    final rawName = json['name']?.toString() ?? '';
+    final semanticType = Unit.fromString(rawName);
+    final parsedType = Unit.fromString(rawType);
+
+    return GroupUnit(
+      id: json['id'].toString(),
+      name: rawName,
+      color: (json['color'] as num?)?.toInt() ?? Unit.fromString(rawName).color,
+      type: (rawType == 'base' || rawType == 'custom')
+          ? semanticType
+          : parsedType,
+    );
   }
 }

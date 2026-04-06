@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 
@@ -14,23 +14,26 @@ class TentsTab extends ConsumerWidget {
     final c = ref.watch(evenementDetailProvider(page.eventId));
 
     if (c.loading) return const Center(child: CircularProgressIndicator());
-    if (c.event == null) return const Center(child: Text('Aucun événement trouvé'));
+    if (c.event == null)
+      return const Center(child: Text('Aucun événement trouvé'));
     if (c.error != null) return Center(child: Text('Erreur : ${c.error}'));
 
     final event = c.event!;
-    final assigned = c.allTentes
-        .where((t) => event.associatedTents.contains(t.id))
-        .toList()
-      ..sort((a, b) => a.nom.compareTo(b.nom));
+    final assigned =
+        c.allTentes.where((t) => event.associatedTents.contains(t.id)).toList()
+          ..sort((a, b) => a.nom.compareTo(b.nom));
 
-    final available = c.availableTentes
-        .where((t) => !event.associatedTents.contains(t.id))
-        .toList()
-      ..sort((a, b) => a.nom.compareTo(b.nom));
+    final available =
+        c.availableTentes
+            .where((t) => !event.associatedTents.contains(t.id))
+            .toList()
+          ..sort((a, b) => a.nom.compareTo(b.nom));
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(evenementDetailProvider(page.eventId).notifier).loadTentes();
+        await ref
+            .read(evenementDetailProvider(page.eventId).notifier)
+            .loadTentes();
       },
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -51,11 +54,11 @@ class TentsTab extends ConsumerWidget {
               onPressed: c.selectedTenteIds.isEmpty
                   ? null
                   : () async {
-                await c.applyTenteChanges();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tentes mises à jour ✅')),
-                );
-              },
+                      await c.applyTenteChanges();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tentes mises à jour ✅')),
+                      );
+                    },
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -91,7 +94,10 @@ class _TenteSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$title (${tentes.length})', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          '$title (${tentes.length})',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Expanded(
           child: ListView(
@@ -113,9 +119,7 @@ class _TenteSection extends StatelessWidget {
   }
 }
 
-
-
-class _TenteCard extends StatelessWidget {
+class _TenteCard extends ConsumerWidget {
   final Tent tente;
   final bool selected;
   final Color? highlightColor;
@@ -127,9 +131,18 @@ class _TenteCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final group = ref.watch(accountControllerProvider).valueOrNull;
+    int? matchedColor;
+    for (final u in (group?.units ?? const [])) {
+      if (int.tryParse(u.id) == tente.uniteId) {
+        matchedColor = u.color;
+        break;
+      }
+    }
+
     return Card(
-     color: Color(Unit.fromString(tente.assignedUnit).color),
+      color: matchedColor != null ? Color(matchedColor) : Colors.grey.shade500,
       //color: selected ? highlightColor ?? Colors.blue.shade50 : Colors.white,
       child: ListTile(
         leading: Icon(

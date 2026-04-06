@@ -1,13 +1,11 @@
-import 'package:logistiscout/domain/entities/unit.dart';
-
 class EventDto {
   final int id;
   final String nom;
-  final String date;    // keep as String because API sends ISO string
+  final String date; // keep as String because API sends ISO string
   final String dateFin; // same
   final String type;
   final List<int> associatedTents;
-  final List<Unit> unites;
+  final List<int> unites;
   final String groupId;
 
   EventDto({
@@ -29,9 +27,7 @@ class EventDto {
       dateFin: json['dateFin'] as String,
       type: json['type'] as String,
       associatedTents: List<int>.from(json['tentesAssociees'] ?? []),
-      unites: (json['unites'] as List<dynamic>? ?? [])
-          .map((u) => Unit.fromInt(u))
-          .toList(),
+      unites: List<int>.from(json['unites'] ?? []),
       groupId: json['groupId'].toString(),
     );
   }
@@ -43,7 +39,7 @@ class EventDto {
     'dateFin': dateFin,
     'type': type,
     'tentesAssociees': associatedTents,
-    'unites': unites.map((u) => Unit.toInt(u)).toList(),
+    'unites': unites,
     'groupeId': groupId,
   };
 }

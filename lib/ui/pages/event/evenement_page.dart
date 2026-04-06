@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
-import 'package:logistiscout/domain/entities/unit.dart';
+import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
@@ -140,7 +141,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
-
   Future<void> _showEventDialog(
     BuildContext context,
     EvenementController ctrl, {
@@ -156,7 +156,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
     DateTime fin =
         event?.dateFin ?? DateTime.now().add(const Duration(days: 1));
 
-    Unit? selectedUnite = event?.unites.isNotEmpty == true
+    int? selectedUniteId = event?.unites.isNotEmpty == true
         ? event!.unites.first
         : null;
 
@@ -175,6 +175,16 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
         return Consumer(
           builder: (context, ref, _) {
             final asyncTentList = ref.watch(tentesProvider);
+            final accountAsync = ref.watch(accountControllerProvider);
+            final groupUnits =
+                accountAsync.valueOrNull?.units ?? const <GroupUnit>[];
+
+            if (selectedUniteId != null &&
+                groupUnits.every(
+                  (u) => int.tryParse(u.id) != selectedUniteId,
+                )) {
+              selectedUniteId = null;
+            }
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -254,12 +264,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                         const SizedBox(height: 12),
 
                         // 🏕️ Unité
-                        DropdownButtonFormField<Unit>(
-                          initialValue: selectedUnite,
-                          items: Unit.values
+                        DropdownButtonFormField<int>(
+                          initialValue: selectedUniteId,
+                          items: groupUnits
                               .map(
                                 (e) => DropdownMenuItem(
-                                  value: e,
+                                  value: int.tryParse(e.id),
                                   child: Row(
                                     children: [
                                       Container(
@@ -276,15 +286,20 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   ),
                                 ),
                               )
+                              .where((item) => item.value != null)
+                              .cast<DropdownMenuItem<int>>()
                               .toList(),
                           onChanged: (value) {
-                            setStateDialog(() => selectedUnite = value);
+                            setStateDialog(() => selectedUniteId = value);
                           },
                           decoration: const InputDecoration(
                             labelText: "Unité concernée",
                             border: OutlineInputBorder(),
                           ),
                           validator: (value) {
+                            if (groupUnits.isEmpty) {
+                              return 'Ajoute d\'abord des unités dans les paramètres du groupe';
+                            }
                             if (value == null) {
                               return 'Veuillez choisir une unité';
                             }
@@ -464,7 +479,6 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   return;
                                 }
 
-
                                 final newEvent = Event(
                                   id: isEditing ? event.id : -1,
                                   nom: nomController.text.trim(),
@@ -472,7 +486,7 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                                   date: debut,
                                   dateFin: fin,
                                   associatedTents: selectedTenteIds,
-                                  unites: [selectedUnite!],
+                                  unites: [selectedUniteId!],
                                   groupId: "0",
                                 );
 

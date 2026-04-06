@@ -17,7 +17,6 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-
   int tapCount = 0;
   DateTime? firstTapTime;
 
@@ -25,7 +24,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     final now = DateTime.now();
 
     // Si plus d'1 sec → reset
-    if (firstTapTime == null || now.difference(firstTapTime!) > const Duration(seconds: 1)) {
+    if (firstTapTime == null ||
+        now.difference(firstTapTime!) > const Duration(seconds: 1)) {
       tapCount = 0;
       firstTapTime = now;
     }
@@ -38,42 +38,37 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     if (tapCount == 3 &&
         now.difference(firstTapTime!) <= const Duration(seconds: 1)) {
-
-        final confirm =  showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Réinitialiser ?'),
-            content: const Text(
-              'UNIQUEMENT POUR DU DEBUG \n\nCela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Confirmer'),
-              ),
-            ],
+      final confirm = showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Réinitialiser ?'),
+          content: const Text(
+            'UNIQUEMENT POUR DU DEBUG \n\nCela va effacer vos données locales (nom du contrôleur, groupe, etc.). Continuer ?',
           ),
-        );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirmer'),
+            ),
+          ],
+        ),
+      );
 
-        if (confirm == true) {
-           LocalStorageService.instance.clearAll();
-           TokenStore.instance.clear();
+      if (confirm == true) {
+        LocalStorageService.instance.clearAll();
+        TokenStore.instance.clear();
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Préférences locales effacées ✅'),
-              ),
-            );
-          }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Préférences locales effacées ✅')),
+          );
         }
+      }
 
       tapCount = 0;
     }
@@ -83,7 +78,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(accueilControllerProvider);
     final controller = ref.read(accueilControllerProvider.notifier);
-
 
     // Compute lists only when data is present
     final now = DateTime.now();
@@ -127,12 +121,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           IconButton(
             icon: const Icon(Icons.account_circle),
             tooltip: 'Configuration',
-            onPressed: () async {
-              await controller.logout(ref);
-              if (context.mounted) {
-                context.go('/account');
-              }
-            },
+            onPressed: () => context.push('/account'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -280,10 +269,7 @@ class _HomeBody extends StatelessWidget {
                     )
                   else
                     ...tentesToRepair.map(
-                      (t) => TentCard(
-                        tent: t,
-                        detail: false,
-                      ),
+                      (t) => TentCard(tent: t, detail: false),
                     ),
 
                   const SizedBox(height: 24),
@@ -298,10 +284,7 @@ class _HomeBody extends StatelessWidget {
                     )
                   else
                     ...tentesUtilisees.map(
-                      (t) => TentCard(
-                        tent: t,
-                        detail: false,
-                      ),
+                      (t) => TentCard(tent: t, detail: false),
                     ),
                 ],
               ),
