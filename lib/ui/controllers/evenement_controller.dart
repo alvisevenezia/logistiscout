@@ -64,7 +64,7 @@ class EvenementController extends AsyncNotifier<List<Event>> {
     try {
       developer.log('[EvenementController] ✏️ Updating event id=${event.id}');
 
-      _repo.updateEvent(event);
+      await _repo.updateEvent(event);
 
       await reload();
     } catch (e, st) {

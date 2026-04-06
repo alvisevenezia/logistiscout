@@ -12,6 +12,10 @@ class TentCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final unitLabel = tent.assignedUnit.trim().isEmpty
+        ? 'Aucune unité'
+        : tent.assignedUnit;
+
     final group = ref.watch(accountControllerProvider).valueOrNull;
     int? matchedColor;
     for (final u in (group?.units ?? const [])) {
@@ -93,9 +97,9 @@ class TentCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       detail
-                          ? '${tent.assignedUnit} • ${tent.tentType} • ${tent.nbPlaces} places'
+                          ? '$unitLabel • ${tent.tentType} • ${tent.nbPlaces} places'
                                 '${tent.team != '' ? ' • Equipe ${tent.team}' : ''}'
-                          : tent.assignedUnit,
+                          : unitLabel,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     if (detail) ...[

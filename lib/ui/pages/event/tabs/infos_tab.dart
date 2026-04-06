@@ -6,7 +6,9 @@ import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/event/widgets/info_card.dart';
 
 class InfosTab extends ConsumerWidget {
-  const InfosTab({super.key});
+  final VoidCallback onEdit;
+
+  const InfosTab({super.key, required this.onEdit});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,13 +68,7 @@ class InfosTab extends ConsumerWidget {
             child: FilledButton.icon(
               icon: const Icon(Icons.edit),
               label: const Text("Modifier l'événement"),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Ouverture de l'édition bientôt 💡"),
-                  ),
-                );
-              },
+              onPressed: onEdit,
             ),
           ),
         ],

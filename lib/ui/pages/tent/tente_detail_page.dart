@@ -43,6 +43,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   bool? _estIntegree;
   List<String>? _colorHexList;
   int? _favoriteUnitId;
+  bool _favoriteUnitInitialized = false;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
 
@@ -56,7 +57,10 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     _tentType ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
     _tentState ??= t.state;
     _estIntegree ??= t.isFloorEmbedded;
-    _favoriteUnitId ??= t.uniteId;
+    if (!_favoriteUnitInitialized) {
+      _favoriteUnitId = t.uniteId;
+      _favoriteUnitInitialized = true;
+    }
 
     _colorHexList ??= List<String>.from(t.colors);
   }
@@ -222,21 +226,30 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   ),
                                   const SizedBox(width: 15),
                                   Expanded(
-                                    child: DropdownButtonFormField<int>(
+                                    child: DropdownButtonFormField<int?>(
                                       initialValue: _favoriteUnitId,
-                                      items: groupUnits
-                                          .map(
-                                            (e) => DropdownMenuItem(
-                                              value: int.tryParse(e.id),
-                                              child: Text(
-                                                e.name,
-                                                overflow: TextOverflow.ellipsis,
+                                      items: [
+                                        const DropdownMenuItem<int?>(
+                                          value: null,
+                                          child: Text(
+                                            'Aucune unité préférée',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        ...groupUnits
+                                            .map(
+                                              (e) => DropdownMenuItem<int?>(
+                                                value: int.tryParse(e.id),
+                                                child: Text(
+                                                  e.name,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
-                                            ),
-                                          )
-                                          .where((item) => item.value != null)
-                                          .cast<DropdownMenuItem<int>>()
-                                          .toList(),
+                                            )
+                                            .where((item) => item.value != null)
+                                            .cast<DropdownMenuItem<int?>>(),
+                                      ],
                                       onChanged: (v) =>
                                           setState(() => _favoriteUnitId = v),
                                       decoration: inputDecoration.copyWith(
@@ -361,12 +374,14 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                       'Enregistrer les modifications',
                                     ),
                                     onPressed: () async {
-                                      var selectedUnitName = tente.assignedUnit;
-                                      for (final u in groupUnits) {
-                                        if (int.tryParse(u.id) ==
-                                            _favoriteUnitId) {
-                                          selectedUnitName = u.name;
-                                          break;
+                                      var selectedUnitName = '';
+                                      if (_favoriteUnitId != null) {
+                                        for (final u in groupUnits) {
+                                          if (int.tryParse(u.id) ==
+                                              _favoriteUnitId) {
+                                            selectedUnitName = u.name;
+                                            break;
+                                          }
                                         }
                                       }
 

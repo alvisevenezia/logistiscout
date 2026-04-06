@@ -38,12 +38,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
           data: (tentes) {
             // Filtres
             final filtered = tentes.where((t) {
+              final unitLabel = t.assignedUnit.trim().isEmpty
+                  ? 'Aucune unité'
+                  : t.assignedUnit;
               final q = _query.trim().toLowerCase();
               final matchQuery = q.isEmpty
                   ? true
                   : t.nom.toLowerCase().contains(q) ||
                         t.tentType.toLowerCase().contains(q) ||
-                        t.assignedUnit.toLowerCase().contains(q);
+                        unitLabel.toLowerCase().contains(q);
               final matchType = _typeFilter == 'Tous'
                   ? true
                   : t.tentType == _typeFilter;
@@ -55,7 +58,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                   : t.nbPlaces.toString() == _sizeFilter;
               final matchUnit = _unitFilter == 'Tous'
                   ? true
-                  : t.assignedUnit == _unitFilter;
+                  : unitLabel == _unitFilter;
               return matchQuery &&
                   matchType &&
                   matchEtat &&
@@ -208,7 +211,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
     nomCtl = TextEditingController();
     nbCtl = TextEditingController(text: '6');
     couleursCtl = TextEditingController();
-    selectedUnit = widget.units.isNotEmpty ? widget.units.first : null;
+    selectedUnit = null;
   }
 
   @override
@@ -271,19 +274,23 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
             ),
             const SizedBox(height: 8),
 
-            DropdownButtonFormField<GroupUnit>(
+            DropdownButtonFormField<GroupUnit?>(
               initialValue: selectedUnit,
-              items: widget.units
-                  .map(
-                    (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(
-                        e.name,
-                        style: TextStyle(color: Color(e.color)),
-                      ),
+              items: [
+                const DropdownMenuItem<GroupUnit?>(
+                  value: null,
+                  child: Text('Aucune unité préférée'),
+                ),
+                ...widget.units.map(
+                  (e) => DropdownMenuItem<GroupUnit?>(
+                    value: e,
+                    child: Text(
+                      e.name,
+                      style: TextStyle(color: Color(e.color)),
                     ),
-                  )
-                  .toList(),
+                  ),
+                ),
+              ],
               onChanged: (v) => setState(() => selectedUnit = v),
               decoration: const InputDecoration(labelText: 'Unité'),
             ),
@@ -325,7 +332,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                     isFloorEmbedded: integree,
                     nbPlaces: int.tryParse(nbCtl.text) ?? 0,
                     tentType: type,
-                    assignedUnit: selectedUnit?.name ?? 'Groupe',
+                    assignedUnit: selectedUnit?.name ?? '',
                     agenda: const [],
                     controlHistory: const [],
                     colors: couleursCtl.text
@@ -364,7 +371,11 @@ class _UnitFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unitNames = <String>{'Tous', ...units.map((u) => u.name)}.toList();
+    final unitNames = <String>{
+      'Tous',
+      'Aucune unité',
+      ...units.map((u) => u.name),
+    }.toList();
 
     return DropdownButtonFormField<String>(
       isExpanded: true,

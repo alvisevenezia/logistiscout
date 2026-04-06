@@ -1,6 +1,8 @@
 import 'package:logistiscout/domain/entities/reservation.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 
+const _uniteIdNotProvided = Object();
+
 class Tent {
   final int id;
   final String nom;
@@ -39,7 +41,7 @@ class Tent {
   Tent copyWith({
     int? id,
     String? nom,
-    int? uniteId,
+    Object? uniteId = _uniteIdNotProvided,
     TentState? state,
     String? comment,
     bool? isFloorEmbedded,
@@ -53,10 +55,14 @@ class Tent {
     String? team,
     String? location,
   }) {
+    final nextUniteId = identical(uniteId, _uniteIdNotProvided)
+        ? this.uniteId
+        : uniteId as int?;
+
     return Tent(
       id: id ?? this.id,
       nom: nom ?? this.nom,
-      uniteId: uniteId ?? this.uniteId,
+      uniteId: nextUniteId,
       state: state ?? this.state,
       comment: comment ?? this.comment,
       isFloorEmbedded: isFloorEmbedded ?? this.isFloorEmbedded,
@@ -79,12 +85,15 @@ enum TentState {
   broken(name: "HS", bgColor: 0xFFFFEBEE, chipColor: 0xFFD32F2F),
   lost(name: "Perdue", bgColor: 0xFFFAFAFA, chipColor: 0xFF616161);
 
-  const TentState({required this.name, required this.bgColor, required this.chipColor});
+  const TentState({
+    required this.name,
+    required this.bgColor,
+    required this.chipColor,
+  });
 
   final String name;
   final int bgColor;
   final int chipColor;
-
 }
 
 TentState tentStateFromString(String state) {

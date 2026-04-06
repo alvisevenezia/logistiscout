@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
+import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/event/tabs/infos_tab.dart';
 import 'package:logistiscout/ui/pages/event/tabs/menus_tab.dart';
 import 'package:logistiscout/ui/pages/event/tabs/tents_tab.dart';
 import 'package:logistiscout/ui/pages/event/widgets/shopping_list_sheet.dart';
+import 'package:logistiscout/ui/pages/event/widgets/event_form_sheet.dart';
 
 class EventDetailPage extends ConsumerWidget {
   final int eventId;
@@ -27,6 +29,17 @@ class EventDetailPage extends ConsumerWidget {
     }
 
     final event = c.event!;
+    final onEditEvent = () async {
+      await showEventFormSheet(
+        context: context,
+        ref: ref,
+        controller: ref.read(evenementsProvider.notifier),
+        event: event,
+        onSaved: (_) async {
+          await ref.read(evenementDetailProvider(event.id)).init(event.id);
+        },
+      );
+    };
 
     return DefaultTabController(
       length: 3,
@@ -63,7 +76,7 @@ class EventDetailPage extends ConsumerWidget {
         ),
         body: TabBarView(
           children: [
-            const InfosTab(),
+            InfosTab(onEdit: onEditEvent),
             const TentsTab(),
             MenusTab(eventDays: event.dateRange),
           ],
