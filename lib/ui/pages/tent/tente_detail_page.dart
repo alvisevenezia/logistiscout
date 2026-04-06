@@ -11,7 +11,6 @@ import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
@@ -703,26 +702,12 @@ Future<String> _saveQrCodeImage(GlobalKey qrKey, String name) async {
 
   final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
   final bytes = byteData.buffer.asUint8List();
-  try {
-    final result = await ImageGallerySaver.saveImage(
-      bytes,
-      quality: 100,
-      name: 'qr_tente_$safeName',
-    );
-
-    final filePath = result['filePath']?.toString();
-    if (filePath != null && filePath.isNotEmpty) {
-      return 'QR code enregistré: $filePath';
-    }
-    return 'QR code enregistré dans la galerie';
-  } on MissingPluginException {
-    final directory =
-        await getExternalStorageDirectory() ??
-        await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/qr_tente_$safeName.png');
-    await file.writeAsBytes(bytes, flush: true);
-    return 'QR code enregistré: ${file.path}';
-  }
+  final directory =
+      await getExternalStorageDirectory() ??
+      await getApplicationDocumentsDirectory();
+  final file = File('${directory.path}/qr_tente_$safeName.png');
+  await file.writeAsBytes(bytes, flush: true);
+  return 'QR code enregistré: ${file.path}';
 }
 
 class _ColorChipsEditor extends StatelessWidget {

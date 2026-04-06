@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
@@ -19,6 +20,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   int tapCount = 0;
   DateTime? firstTapTime;
+  bool _migrationPopupShown = false;
 
   void handleTripleTap() {
     final now = DateTime.now();
@@ -76,6 +78,38 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(accountControllerProvider, (previous, next) {
+      final group = next.valueOrNull;
+      if (_migrationPopupShown || group == null) {
+        return;
+      }
+      if (!group.unitsMigrationPerformed) {
+        return;
+      }
+
+      _migrationPopupShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Nouvelles fonctionnalites unites'),
+            content: const Text(
+              'Votre compte utilisait un ancien format. '
+              'Nous avons migre automatiquement vos donnees d\'unite pour '
+              'activer les nouvelles fonctionnalites.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      });
+    });
+
     final state = ref.watch(accueilControllerProvider);
     final controller = ref.read(accueilControllerProvider.notifier);
 

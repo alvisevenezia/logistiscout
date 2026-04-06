@@ -8,6 +8,7 @@ class Group {
   final String login;
   final String type; // 'scout' ou 'marin'
   final List<GroupUnit> units;
+  final bool unitsMigrationPerformed;
 
   Group({
     required this.id,
@@ -17,6 +18,7 @@ class Group {
     required this.login,
     required this.type,
     required this.units,
+    this.unitsMigrationPerformed = false,
   });
 
   Group copyWith({
@@ -27,6 +29,7 @@ class Group {
     String? login,
     String? type,
     List<GroupUnit>? units,
+    bool? unitsMigrationPerformed,
   }) {
     return Group(
       id: id ?? this.id,
@@ -35,7 +38,11 @@ class Group {
       members: members ?? this.members,
       login: login ?? this.login,
       type: type ?? this.type,
-      units: units != null ? List<GroupUnit>.from(units) : List<GroupUnit>.from(this.units),
+      units: units != null
+          ? List<GroupUnit>.from(units)
+          : List<GroupUnit>.from(this.units),
+      unitsMigrationPerformed:
+          unitsMigrationPerformed ?? this.unitsMigrationPerformed,
     );
   }
 
@@ -48,6 +55,7 @@ class Group {
       'login': login,
       'type': type,
       'units': units.map((u) => u.toJson()).toList(),
+      'unitsMigrationPerformed': unitsMigrationPerformed,
     };
   }
 
@@ -59,6 +67,7 @@ class Group {
       members: json['members'],
       login: json['login'],
       type: json['type'],
+      unitsMigrationPerformed: json['unitsMigrationPerformed'] == true,
       units: (json['units'] as List<dynamic>)
           .map((e) => GroupUnit.fromJson(e))
           .toList(),

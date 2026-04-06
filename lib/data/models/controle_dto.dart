@@ -6,6 +6,8 @@ class ControlDto {
   final String date; // stored as ISO 8601 string
   final Map<String, dynamic> checklist;
   final String comments;
+  final String? imageUrl;
+  final List<String> imageUrls;
 
   ControlDto({
     this.id,
@@ -14,6 +16,8 @@ class ControlDto {
     required this.date,
     required this.checklist,
     required this.comments,
+    this.imageUrl,
+    this.imageUrls = const [],
   });
 
   factory ControlDto.fromJson(Map<String, dynamic> json) => ControlDto(
@@ -23,6 +27,16 @@ class ControlDto {
     date: json['date'],
     checklist: Map<String, dynamic>.from(json['checklist'] ?? {}),
     comments: json['remarques'] ?? '',
+    imageUrl: json['image_url'],
+    imageUrls: (json['image_urls'] is List)
+        ? (json['image_urls'] as List).map((e) => e.toString()).toList()
+        : (Map<String, dynamic>.from(json['checklist'] ?? {})['photo_urls']
+              is List)
+        ? (Map<String, dynamic>.from(json['checklist'] ?? {})['photo_urls']
+                  as List)
+              .map((e) => e.toString())
+              .toList()
+        : const [],
   );
 
   Map<String, dynamic> toJson() => {
@@ -32,5 +46,7 @@ class ControlDto {
     'date': date,
     'checklist': checklist,
     'remarques': comments,
+    if (imageUrl != null) 'image_url': imageUrl,
+    if (imageUrls.isNotEmpty) 'image_urls': imageUrls,
   };
 }

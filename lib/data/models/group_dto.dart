@@ -9,6 +9,7 @@ class GroupDto {
   final String login;
   final String type; // 'scout' ou 'marin'
   final List<GroupUnit> units;
+  final bool unitsMigrationPerformed;
 
   GroupDto({
     required this.id,
@@ -18,6 +19,7 @@ class GroupDto {
     required this.login,
     required this.type,
     required this.units,
+    this.unitsMigrationPerformed = false,
   });
 
   factory GroupDto.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class GroupDto {
       email: json['email'],
       login: json['login'] ?? '',
       type: json['type'] ?? 'scout',
+      unitsMigrationPerformed: json['unitsMigrationPerformed'] == true,
       units: (json['units'] as List<dynamic>? ?? [])
           .map(
             (u) => GroupUnit(
@@ -53,6 +56,7 @@ class GroupDto {
     'email': email,
     'login': login,
     'type': type,
+    'unitsMigrationPerformed': unitsMigrationPerformed,
     'units': units
         .map(
           (u) => {

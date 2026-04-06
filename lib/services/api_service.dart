@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
@@ -324,11 +325,47 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  Future<void> addControl(Map<String, dynamic> control) async {
-    await _safeRequest(
+  Future<Map<String, dynamic>> addControl(Map<String, dynamic> control) async {
+    final response = await _safeRequest(
       HttpMethod.post,
       '/controles',
       body: jsonEncode(control),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> uploadControlPicture({
+    required int controlId,
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final uri = Uri.parse('$baseUrl/v2/controles/$controlId/picture');
+    final headers = await _headers();
+    headers.remove('Content-Type');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(headers)
+      ..files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+      );
+
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 20),
+    );
+    final response = await http.Response.fromStream(streamedResponse);
+
+    developer.log(
+      'Response /v2/controles/$controlId/picture: ${response.statusCode} - ${response.body}',
+      name: 'ApiService',
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw AppException(
+      'Upload de photo impossible (${response.statusCode})',
+      statusCode: response.statusCode,
     );
   }
 
