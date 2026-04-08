@@ -12,6 +12,7 @@ Group mapGroupDtoToDomain(GroupDto dto) {
     login: dto.login,
     type: dto.type,
     units: dto.units,
+    tentStatuses: dto.tentStatuses,
     unitsMigrationPerformed: dto.unitsMigrationPerformed,
   );
 }
@@ -25,6 +26,7 @@ GroupDto mapGroupDomainToDto(Group group) {
     login: group.login,
     type: group.type,
     units: group.units,
+    tentStatuses: group.tentStatuses,
     unitsMigrationPerformed: group.unitsMigrationPerformed,
   );
 }

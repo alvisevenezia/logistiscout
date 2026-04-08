@@ -345,10 +345,19 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                   }
                 }
 
-                if (widget.tent.state != _state) {
-                  ref
+                final selectedState = _state ?? widget.tent.state;
+
+                if (widget.tent.state != selectedState) {
+                  await ref
                       .read(tentesProvider.notifier)
-                      .updateTente(widget.tent.copyWith(state: _state));
+                      .updateTente(
+                        widget.tent.copyWith(
+                          state: selectedState,
+                          tentStatusId: null,
+                          tentStatusLabel: tentStateToString(selectedState),
+                          tentStatusColor: selectedState.chipColor,
+                        ),
+                      );
                 }
 
                 if (context.mounted) {

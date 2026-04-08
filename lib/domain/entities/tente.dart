@@ -1,5 +1,6 @@
 import 'package:logistiscout/domain/entities/reservation.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
+import 'package:logistiscout/domain/entities/tent_status.dart';
 
 const _uniteIdNotProvided = Object();
 
@@ -8,6 +9,9 @@ class Tent {
   final String nom;
   final int? uniteId;
   final TentState state;
+  final int? tentStatusId;
+  final String? tentStatusLabel;
+  final int? tentStatusColor;
   final String comment;
   final bool isFloorEmbedded;
   final int nbPlaces;
@@ -25,6 +29,9 @@ class Tent {
     required this.nom,
     required this.uniteId,
     required this.state,
+    required this.tentStatusId,
+    required this.tentStatusLabel,
+    required this.tentStatusColor,
     required this.comment,
     required this.isFloorEmbedded,
     required this.nbPlaces,
@@ -43,6 +50,9 @@ class Tent {
     String? nom,
     Object? uniteId = _uniteIdNotProvided,
     TentState? state,
+    Object? tentStatusId = _uniteIdNotProvided,
+    String? tentStatusLabel,
+    Object? tentStatusColor = _uniteIdNotProvided,
     String? comment,
     bool? isFloorEmbedded,
     int? nbPlaces,
@@ -58,12 +68,21 @@ class Tent {
     final nextUniteId = identical(uniteId, _uniteIdNotProvided)
         ? this.uniteId
         : uniteId as int?;
+    final nextStatusId = identical(tentStatusId, _uniteIdNotProvided)
+        ? this.tentStatusId
+        : tentStatusId as int?;
+    final nextStatusColor = identical(tentStatusColor, _uniteIdNotProvided)
+        ? this.tentStatusColor
+        : tentStatusColor as int?;
 
     return Tent(
       id: id ?? this.id,
       nom: nom ?? this.nom,
       uniteId: nextUniteId,
       state: state ?? this.state,
+      tentStatusId: nextStatusId,
+      tentStatusLabel: tentStatusLabel ?? this.tentStatusLabel,
+      tentStatusColor: nextStatusColor,
       comment: comment ?? this.comment,
       isFloorEmbedded: isFloorEmbedded ?? this.isFloorEmbedded,
       nbPlaces: nbPlaces ?? this.nbPlaces,
@@ -77,6 +96,27 @@ class Tent {
       location: location ?? this.location,
     );
   }
+
+  String get displayStatusLabel => tentStatusLabel ?? tentStateToString(state);
+
+  int get displayStatusColor {
+    if (tentStatusColor != null) {
+      return tentStatusColor!;
+    }
+    return state.chipColor;
+  }
+
+  ColorPair get displayStatusPalette => ColorPair(
+        label: displayStatusLabel,
+        color: displayStatusColor,
+      );
+}
+
+class ColorPair {
+  final String label;
+  final int color;
+
+  const ColorPair({required this.label, required this.color});
 }
 
 enum TentState {
@@ -101,9 +141,13 @@ TentState tentStateFromString(String state) {
 
   switch (normalized) {
     case 'bon':
+    case 'ok':
+    case 'good':
       return TentState.good;
 
     case 'à réparer':
+    case 'a reparer':
+    case 'repair':
       return TentState.repair;
 
     case 'hs':

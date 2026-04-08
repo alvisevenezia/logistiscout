@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/ui/controllers/login_controller.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/pages/auth/forgot_password_page.dart';
 import 'package:logistiscout/ui/pages/auth/register_page.dart';
 import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
-
 
 class LoginPage extends ConsumerStatefulWidget {
   final VoidCallback? onLogin; // ✅ Optional callback for after successful login
@@ -43,10 +43,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 40),
               Text(
                 'Bienvenue 👋',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -62,7 +61,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                value == null || value.isEmpty ? 'Champ obligatoire' : null,
+                    value == null || value.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 16),
 
@@ -75,14 +74,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
                     onPressed: () {
                       setState(() => _obscurePassword = !_obscurePassword);
                     },
                   ),
                 ),
                 validator: (value) =>
-                value == null || value.isEmpty ? 'Champ obligatoire' : null,
+                    value == null || value.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 24),
 
@@ -91,10 +93,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 icon: const Icon(Icons.login),
                 label: loginState.isLoading
                     ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Se connecter'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
@@ -102,35 +104,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 onPressed: loginState.isLoading
                     ? null
                     : () async {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    final success = await ref
-                        .read(loginControllerProvider.notifier)
-                        .login(
-                      _loginController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-                    if (success && mounted) {
-                      final savedName = await LocalStorageService.instance.getControllerName();
+                        if (_formKey.currentState?.validate() ?? false) {
+                          final success = await ref
+                              .read(loginControllerProvider.notifier)
+                              .login(
+                                _loginController.text.trim(),
+                                _passwordController.text.trim(),
+                              );
+                          if (success && mounted) {
+                            final savedName = await LocalStorageService.instance
+                                .getControllerName();
 
-                      if (savedName == null || savedName.isEmpty) {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (ctx) => ControllerPageName.controlerNamePage(
-                              onNomValide: (_) async {
-                              },
-                            ),
-                          ),
-                        );
-                      }
+                            if (savedName == null || savedName.isEmpty) {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (ctx) =>
+                                      ControllerPageName.controlerNamePage(
+                                        onNomValide: (_) async {},
+                                      ),
+                                ),
+                              );
+                            }
 
-                      // 🔹 Continue le flux normal
-                      widget.onLogin?.call();
-                    }
+                            // 🔹 Continue le flux normal
+                            widget.onLogin?.call();
+                          }
+                        }
+                      },
+              ),
 
-
-                  }
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ForgotPasswordPage(),
+                    ),
+                  );
                 },
+                child: const Text('Mot de passe oublié ?'),
               ),
 
               const SizedBox(height: 16),
@@ -145,19 +158,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               // Error message
               if (loginState.hasError)
-                if(loginState.error.toString().contains('401')) // 🔹 Check for specific error
+                if (loginState.error.toString().contains(
+                  '401',
+                )) // 🔹 Check for specific error
                   const Text(
                     'Identifiant ou mot de passe incorrect',
                     style: TextStyle(color: Colors.red),
                   )
                 else
-                Text(
-                  loginState.error
-                      ?.toString()
-                      .replaceFirst('Exception: ', '') ??
-                      'Erreur inconnue',
-                  style: const TextStyle(color: Colors.red),
-                ),
+                  Text(
+                    loginState.error?.toString().replaceFirst(
+                          'Exception: ',
+                          '',
+                        ) ??
+                        'Erreur inconnue',
+                    style: const TextStyle(color: Colors.red),
+                  ),
             ],
           ),
         ),

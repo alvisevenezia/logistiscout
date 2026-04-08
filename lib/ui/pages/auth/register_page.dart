@@ -24,6 +24,8 @@ class _RegisterPageState extends State<RegisterPage> {
     _loginController.dispose();
     _passwordController.dispose();
     _nomController.dispose();
+    _fallbackEmail.dispose();
+    _passwordConfirmController.dispose();
     super.dispose();
   }
 
@@ -38,7 +40,7 @@ class _RegisterPageState extends State<RegisterPage> {
       "mdp": _passwordController.text.trim(),
       "nom": _nomController.text.trim(),
       "email": _fallbackEmail.text.trim(),
-      "membres": "{}",
+      "membres": <String>[],
     };
 
     try {
@@ -88,7 +90,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
                     onPressed: () {
                       setState(() => _obscurePassword = !_obscurePassword);
                     },
@@ -106,9 +111,15 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
                     onPressed: () {
-                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
+                      );
                     },
                   ),
                 ),
@@ -142,7 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Champ obligatoire' : null,
+                    v == null || v.isEmpty ? 'Champ obligatoire' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(

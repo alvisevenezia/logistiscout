@@ -1,4 +1,5 @@
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 
 class GroupDto {
@@ -9,6 +10,7 @@ class GroupDto {
   final String login;
   final String type; // 'scout' ou 'marin'
   final List<GroupUnit> units;
+  final List<TentStatusRef> tentStatuses;
   final bool unitsMigrationPerformed;
 
   GroupDto({
@@ -19,6 +21,7 @@ class GroupDto {
     required this.login,
     required this.type,
     required this.units,
+    required this.tentStatuses,
     this.unitsMigrationPerformed = false,
   });
 
@@ -27,7 +30,7 @@ class GroupDto {
       id: json['id'].toString(),
       name: json['name'],
       members: json['members'].toString(),
-      email: json['email'],
+      email: json['email']?.toString() ?? '',
       login: json['login'] ?? '',
       type: json['type'] ?? 'scout',
       unitsMigrationPerformed: json['unitsMigrationPerformed'] == true,
@@ -46,6 +49,9 @@ class GroupDto {
             ),
           )
           .toList(),
+      tentStatuses: (json['tentStatuses'] as List<dynamic>? ?? [])
+          .map((s) => TentStatusRef.fromJson(s as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -57,6 +63,7 @@ class GroupDto {
     'login': login,
     'type': type,
     'unitsMigrationPerformed': unitsMigrationPerformed,
+    'tentStatuses': tentStatuses.map((s) => s.toJson()).toList(),
     'units': units
         .map(
           (u) => {

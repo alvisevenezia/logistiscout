@@ -129,8 +129,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         .where((t) => tentesUtiliseesIds.contains(t.id))
         .toList();
     final tentesToRepair = state.tentes
-        .where((t) => t.state != TentState.good)
-        .toList();
+      .where((t) => _isNonNominalStatus(t.displayStatusLabel))
+      .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -201,6 +201,11 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
+}
+
+bool _isNonNominalStatus(String label) {
+  final normalized = label.trim().toLowerCase();
+  return normalized.isNotEmpty && normalized != 'bon' && normalized != 'ok';
 }
 
 class _HomeBody extends StatelessWidget {

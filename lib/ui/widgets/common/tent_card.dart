@@ -29,8 +29,8 @@ class TentCard extends ConsumerWidget {
         ? Color(matchedColor)
         : Colors.grey.shade500;
 
-    final bg = Color(tent.state.bgColor);
-    final chipColor = Color(tent.state.chipColor);
+    final bg = Color(tent.displayStatusColor);
+    final chipColor = Color(tent.displayStatusColor);
 
     return Card(
       elevation: 2,
@@ -84,7 +84,7 @@ class TentCard extends ConsumerWidget {
                             border: Border.all(color: chipColor.withAlpha(80)),
                           ),
                           child: Text(
-                            tentStateToString(tent.state),
+                            tent.displayStatusLabel,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

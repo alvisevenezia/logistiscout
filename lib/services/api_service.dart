@@ -234,6 +234,30 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> requestPasswordReset(String identifier) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/auth/password_reset/request',
+      body: jsonEncode({'identifier': identifier}),
+    );
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> confirmPasswordReset({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    await _safeRequest(
+      HttpMethod.post,
+      '/auth/password_reset/confirm',
+      body: jsonEncode({
+        'reset_token': resetToken,
+        'new_password': newPassword,
+      }),
+    );
+  }
+
   Future<List<dynamic>> getGroupList() async {
     final response = await _safeRequest(HttpMethod.get, '/groupes');
 
@@ -475,5 +499,56 @@ class ApiService {
   Future<void> deleteGroupUnit(int unitId, {bool forceReplace = false}) async {
     final suffix = forceReplace ? '?force_replace=true' : '';
     await _safeRequest(HttpMethod.delete, '/me/units/$unitId$suffix');
+  }
+
+  Future<List<dynamic>> getTentStatuses() async {
+    final response = await _safeRequest(HttpMethod.get, '/me/tent-statuses');
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> createTentStatus(
+    Map<String, dynamic> json,
+  ) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/me/tent-statuses',
+      body: jsonEncode(json),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateTentStatus(
+    int statusId,
+    Map<String, dynamic> json,
+  ) async {
+    final response = await _safeRequest(
+      HttpMethod.put,
+      '/me/tent-statuses/$statusId',
+      body: jsonEncode(json),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> deleteTentStatus(
+    int statusId, {
+    int? replacementStatusId,
+    bool archiveOnly = false,
+  }) async {
+    await _safeRequest(
+      HttpMethod.delete,
+      '/me/tent-statuses/$statusId',
+      body: jsonEncode({
+        'replacementStatusId': replacementStatusId,
+        'archiveOnly': archiveOnly,
+      }),
+    );
+  }
+
+  Future<List<dynamic>> resetDefaultTentStatuses() async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/me/tent-statuses/reset-defaults',
+    );
+    return jsonDecode(response.body) as List<dynamic>;
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
@@ -20,14 +21,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   String _typeFilter = 'Tous';
   String _sizeFilter = 'Tous';
   String _unitFilter = 'Tous';
-  TentState? _etatFilter;
+  int? _statusFilterId;
 
   @override
   Widget build(BuildContext context) {
     final tentesAsync = ref.watch(tentesProvider);
+    final group = ref.watch(accountControllerProvider).valueOrNull;
     final groupUnits =
-        ref.watch(accountControllerProvider).valueOrNull?.units ??
-        const <GroupUnit>[];
+      group?.units ?? const <GroupUnit>[];
+    final statuses = _sortedStatuses(group?.tentStatuses ?? const <TentStatusRef>[]);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tentes')),
@@ -50,9 +52,14 @@ class _TentesPageState extends ConsumerState<TentesPage> {
               final matchType = _typeFilter == 'Tous'
                   ? true
                   : t.tentType == _typeFilter;
-              final matchEtat = _etatFilter == null
+              final selectedStatus = _statusFilterId == null
+                  ? null
+                  : _firstStatusById(statuses, _statusFilterId);
+              final matchStatus = selectedStatus == null
                   ? true
-                  : t.state == _etatFilter;
+                  : t.tentStatusId == selectedStatus.id ||
+                        t.displayStatusLabel.trim().toLowerCase() ==
+                            selectedStatus.name.trim().toLowerCase();
               final matchSize = _sizeFilter == 'Tous'
                   ? true
                   : t.nbPlaces.toString() == _sizeFilter;
@@ -61,7 +68,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                   : unitLabel == _unitFilter;
               return matchQuery &&
                   matchType &&
-                  matchEtat &&
+                  matchStatus &&
                   matchSize &&
                   matchUnit;
             }).toList();
@@ -104,9 +111,10 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                                 ),
                                 Expanded(
                                   child: _EtatFilter(
-                                    value: _etatFilter,
+                                    value: _statusFilterId,
+                                    statuses: statuses,
                                     onChanged: (v) =>
-                                        setState(() => _etatFilter = v),
+                                        setState(() => _statusFilterId = v),
                                   ),
                                 ),
                               ],
@@ -165,19 +173,22 @@ class _TentesPageState extends ConsumerState<TentesPage> {
 
       floatingActionButton: FloatingActionButton(
         tooltip: 'Ajouter une tente',
-        onPressed: () => _showAddTenteDialog(context),
+        onPressed: () => _showAddTenteDialog(context, groupUnits, statuses),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _showAddTenteDialog(BuildContext context) {
+  void _showAddTenteDialog(
+    BuildContext context,
+    List<GroupUnit> units,
+    List<TentStatusRef> statuses,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AddTenteDialog(
-        units:
-            ref.watch(accountControllerProvider).valueOrNull?.units ??
-            const <GroupUnit>[],
+        units: units,
+        statuses: statuses,
       ),
     );
   }
@@ -186,8 +197,13 @@ class _TentesPageState extends ConsumerState<TentesPage> {
 // ---------- Dialog d’ajout ----------
 class AddTenteDialog extends ConsumerStatefulWidget {
   final List<GroupUnit> units;
+  final List<TentStatusRef> statuses;
 
-  const AddTenteDialog({super.key, required this.units});
+  const AddTenteDialog({
+    super.key,
+    required this.units,
+    required this.statuses,
+  });
 
   @override
   ConsumerState<AddTenteDialog> createState() => _AddTenteDialogState();
@@ -199,7 +215,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
   late final TextEditingController couleursCtl;
 
   String type = 'Canadienne';
-  TentState etat = TentState.broken;
+  TentStatusRef? status;
   bool integree = false;
   GroupUnit? selectedUnit;
 
@@ -212,6 +228,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
     nbCtl = TextEditingController(text: '6');
     couleursCtl = TextEditingController();
     selectedUnit = null;
+    status = widget.statuses.isNotEmpty ? widget.statuses.first : null;
   }
 
   @override
@@ -259,18 +276,23 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
             ),
             const SizedBox(height: 8),
 
-            DropdownButtonFormField<TentState>(
-              initialValue: etat,
-              items: TentState.values
+            DropdownButtonFormField<int>(
+              initialValue: status?.id,
+              items: widget.statuses
                   .map(
                     (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(tentStateToString(e)),
+                      value: e.id,
+                      child: Text(e.name),
                     ),
                   )
                   .toList(),
-              onChanged: (v) => setState(() => etat = v ?? TentState.broken),
-              decoration: const InputDecoration(labelText: 'État'),
+              onChanged: (v) => setState(() {
+                status = widget.statuses
+                    .where((e) => e.id == v)
+                    .cast<TentStatusRef?>()
+                    .firstOrNull;
+              }),
+              decoration: const InputDecoration(labelText: 'Statut'),
             ),
             const SizedBox(height: 8),
 
@@ -327,7 +349,10 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
                     id: -1,
                     nom: nomCtl.text.trim(),
                     uniteId: int.tryParse(selectedUnit?.id ?? ''),
-                    state: etat,
+                    state: tentStateFromString(status?.name ?? 'Bon'),
+                    tentStatusId: status?.id,
+                    tentStatusLabel: status?.name,
+                    tentStatusColor: status?.color,
                     comment: '',
                     isFloorEmbedded: integree,
                     nbPlaces: int.tryParse(nbCtl.text) ?? 0,
@@ -461,34 +486,64 @@ class _TypeFilter extends StatelessWidget {
 }
 
 class _EtatFilter extends StatelessWidget {
-  final TentState? value;
-  final ValueChanged<TentState?> onChanged;
+  final int? value;
+  final List<TentStatusRef> statuses;
+  final ValueChanged<int?> onChanged;
 
-  const _EtatFilter({required this.value, required this.onChanged});
+  const _EtatFilter({
+    required this.value,
+    required this.statuses,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<TentState?>(
+    return DropdownButtonFormField<int?>(
       isExpanded: true,
       initialValue: value,
       items: [
-        const DropdownMenuItem<TentState?>(
+        const DropdownMenuItem<int?>(
           value: null,
-          child: Text('Tous les états'),
+          child: Text('Tous les statuts'),
         ),
-        ...TentState.values.map(
-          (e) => DropdownMenuItem<TentState?>(
-            value: e,
-            child: Text(tentStateToString(e)),
+        ...statuses.map(
+          (e) => DropdownMenuItem<int?>(
+            value: e.id,
+            child: Text(e.name),
           ),
         ),
       ],
       onChanged: onChanged,
       decoration: const InputDecoration(
-        labelText: 'État',
+        labelText: 'Statut',
         isDense: true,
         border: OutlineInputBorder(),
       ),
     );
   }
+}
+
+TentStatusRef? _firstStatusById(List<TentStatusRef> statuses, int? id) {
+  if (id == null) return null;
+  for (final status in statuses) {
+    if (status.id == id) return status;
+  }
+  return null;
+}
+
+List<TentStatusRef> _sortedStatuses(List<TentStatusRef> statuses) {
+  final seenIds = <int>{};
+  final items = <TentStatusRef>[];
+  for (final status in statuses) {
+    if (status.isArchived) continue;
+    if (seenIds.add(status.id)) {
+      items.add(status);
+    }
+  }
+  items.sort((a, b) {
+    final byOrder = a.order.compareTo(b.order);
+    if (byOrder != 0) return byOrder;
+    return a.id.compareTo(b.id);
+  });
+  return items;
 }

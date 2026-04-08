@@ -4,6 +4,9 @@ class TentDto {
   final String nom;
   final int? uniteId;
   final String state;
+  final int? tentStatusId;
+  final String? tentStatusLabel;
+  final int? tentStatusColor;
   final String comments;
   final bool isFloorEmbedded;
   final int nbPlaces;
@@ -21,6 +24,9 @@ class TentDto {
     required this.nom,
     required this.uniteId,
     required this.state,
+    required this.tentStatusId,
+    required this.tentStatusLabel,
+    required this.tentStatusColor,
     required this.comments,
     required this.isFloorEmbedded,
     required this.nbPlaces,
@@ -39,6 +45,9 @@ class TentDto {
     nom: json['nom'] ?? '',
     uniteId: json['uniteId'] == null ? null : int.tryParse(json['uniteId'].toString()),
     state: json['etat'] ?? '',
+    tentStatusId: json['tentStatusId'] == null ? null : int.tryParse(json['tentStatusId'].toString()),
+    tentStatusLabel: json['tentStatusLabel']?.toString(),
+    tentStatusColor: json['tentStatusColor'] == null ? null : int.tryParse(json['tentStatusColor'].toString()),
     comments: json['remarques'] ?? '',
     isFloorEmbedded: json['estIntegree'] == true,
     nbPlaces: json['nbPlaces'] is int ? json['nbPlaces'] : int.tryParse('${json['nbPlaces']}') ?? 0,
@@ -57,6 +66,9 @@ class TentDto {
     'nom': nom,
     'uniteId': uniteId,
     'etat': state,
+    'tentStatusId': tentStatusId,
+    'tentStatusLabel': tentStatusLabel,
+    'tentStatusColor': tentStatusColor,
     'remarques': comments,
     'estIntegree': isFloorEmbedded,
     'nbPlaces': nbPlaces,

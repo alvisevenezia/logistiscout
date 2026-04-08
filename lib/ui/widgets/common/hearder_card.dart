@@ -18,7 +18,7 @@ class HeaderCard extends ConsumerWidget {
       }
     }
 
-    final chipColor = _chipColor(tent.state);
+    final chipColor = Color(tent.displayStatusColor);
 
     return Card(
       elevation: 1.5,
@@ -63,7 +63,7 @@ class HeaderCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          tentStateToString(tent.state),
+                          tent.displayStatusLabel,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -103,17 +103,6 @@ class HeaderCard extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  static Color _chipColor(TentState e) {
-    switch (e) {
-      case TentState.good:
-        return Colors.green.shade700;
-      case TentState.broken:
-        return Colors.orange.shade700;
-      default:
-        return Colors.red.shade700;
-    }
   }
 
   static Color _parseColor(String s) {

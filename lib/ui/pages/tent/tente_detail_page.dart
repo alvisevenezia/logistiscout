@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
@@ -39,13 +40,52 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
   // local editable state (nullable until we see data)
   String? _tentType;
-  TentState? _tentState;
+  int? _tentStatusId;
+  String? _tentStatusLabel;
+  int? _tentStatusColor;
   bool? _estIntegree;
   List<String>? _colorHexList;
   int? _favoriteUnitId;
   bool _favoriteUnitInitialized = false;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
+
+  TentState get _tentStateFallback {
+    return tentStateFromString(
+      _tentStatusLabel ?? tentStateToString(TentState.broken),
+    );
+  }
+
+  void _applyLegacyState(TentState state) {
+    _tentStatusId = null;
+    _tentStatusLabel = tentStateToString(state);
+    _tentStatusColor = state.chipColor;
+  }
+
+  TentStatusRef? _statusById(List<TentStatusRef> statuses, int? id) {
+    if (id == null) return null;
+    for (final status in statuses) {
+      if (status.id == id) return status;
+    }
+    return null;
+  }
+
+  List<TentStatusRef> _sortedStatuses(List<TentStatusRef> statuses) {
+    final seenIds = <int>{};
+    final out = <TentStatusRef>[];
+    for (final status in statuses) {
+      if (status.isArchived) continue;
+      if (seenIds.add(status.id)) {
+        out.add(status);
+      }
+    }
+    out.sort((a, b) {
+      final byOrder = a.order.compareTo(b.order);
+      if (byOrder != 0) return byOrder;
+      return a.id.compareTo(b.id);
+    });
+    return out;
+  }
 
   void _ensureControllersAndState(Tent t) {
     _nameCtl ??= TextEditingController(text: t.nom);
@@ -55,7 +95,9 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     _locationCtl ??= TextEditingController(text: t.location);
 
     _tentType ??= (_types.contains(t.tentType) ? t.tentType : 'Autre');
-    _tentState ??= t.state;
+    _tentStatusId ??= t.tentStatusId;
+    _tentStatusLabel ??= t.tentStatusLabel ?? tentStateToString(t.state);
+    _tentStatusColor ??= t.tentStatusColor ?? t.state.chipColor;
     _estIntegree ??= t.isFloorEmbedded;
     if (!_favoriteUnitInitialized) {
       _favoriteUnitId = t.uniteId;
@@ -83,6 +125,26 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     final groupUnits =
         ref.watch(accountControllerProvider).valueOrNull?.units ??
         const <GroupUnit>[];
+    final statuses = _sortedStatuses(
+      ref.watch(accountControllerProvider).valueOrNull?.tentStatuses ??
+          const <TentStatusRef>[],
+    );
+
+    if (_tentStatusId != null && _statusById(statuses, _tentStatusId) == null) {
+      _tentStatusId = null;
+    }
+
+    if (_tentStatusId == null && statuses.isNotEmpty) {
+      final label = (_tentStatusLabel ?? '').trim().toLowerCase();
+      for (final status in statuses) {
+        if (status.name.trim().toLowerCase() == label) {
+          _tentStatusId = status.id;
+          _tentStatusLabel = status.name;
+          _tentStatusColor = status.color;
+          break;
+        }
+      }
+    }
 
     if (_favoriteUnitId != null &&
         groupUnits.every((u) => int.tryParse(u.id) != _favoriteUnitId)) {
@@ -113,13 +175,18 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           );
 
-          final tente = tentes
-              .where((t) => t.id == widget.tentId)
-              .cast<Tent?>()
-              .firstOrNull;
-          if (tente == null) {
+          Tent? foundTent;
+          for (final candidate in tentes) {
+            if (candidate.id == widget.tentId) {
+              foundTent = candidate;
+              break;
+            }
+          }
+          if (foundTent == null) {
             return const Center(child: Text('Tente introuvable.'));
           }
+
+          final tente = foundTent;
 
           _ensureControllersAndState(tente);
 
@@ -201,28 +268,65 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: DropdownButtonFormField<TentState>(
-                                      initialValue: _tentState!,
-                                      items: TentState.values
-                                          .map(
-                                            (e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(
-                                                tentStateToString(e),
-                                                overflow: TextOverflow.ellipsis,
+                                    child: statuses.isEmpty
+                                        ? DropdownButtonFormField<TentState>(
+                                            initialValue: _tentStateFallback,
+                                            items: TentState.values
+                                                .map(
+                                                  (e) => DropdownMenuItem(
+                                                    value: e,
+                                                    child: Text(
+                                                      tentStateToString(e),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                            onChanged: (v) => setState(
+                                              () => _applyLegacyState(
+                                                v ?? TentState.broken,
                                               ),
                                             ),
+                                            decoration: inputDecoration
+                                                .copyWith(labelText: 'Statut'),
+                                            isExpanded: true,
                                           )
-                                          .toList(),
-                                      onChanged: (v) => setState(
-                                        () =>
-                                            _tentState = v ?? TentState.broken,
-                                      ),
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'État',
-                                      ),
-                                      isExpanded: true,
-                                    ),
+                                        : DropdownButtonFormField<int?>(
+                                            initialValue:
+                                                _statusById(
+                                                      statuses,
+                                                      _tentStatusId,
+                                                    ) !=
+                                                    null
+                                                ? _tentStatusId
+                                                : null,
+                                            items: statuses
+                                                .map(
+                                                  (e) => DropdownMenuItem<int?>(
+                                                    value: e.id,
+                                                    child: Text(
+                                                      e.name,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                            onChanged: (v) => setState(() {
+                                              final selected = _statusById(
+                                                statuses,
+                                                v,
+                                              );
+                                              _tentStatusId = selected?.id;
+                                              _tentStatusLabel = selected?.name;
+                                              _tentStatusColor =
+                                                  selected?.color;
+                                            }),
+                                            decoration: inputDecoration
+                                                .copyWith(labelText: 'Statut'),
+                                            isExpanded: true,
+                                          ),
                                   ),
                                   const SizedBox(width: 15),
                                   Expanded(
@@ -391,7 +495,10 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                             int.tryParse(_nbCtl!.text.trim()) ??
                                             tente.nbPlaces,
                                         tentType: _tentType!,
-                                        state: _tentState!,
+                                        state: _tentStateFallback,
+                                        tentStatusId: _tentStatusId,
+                                        tentStatusLabel: _tentStatusLabel,
+                                        tentStatusColor: _tentStatusColor,
                                         uniteId: _favoriteUnitId,
                                         assignedUnit: selectedUnitName,
                                         isFloorEmbedded: _estIntegree!,
