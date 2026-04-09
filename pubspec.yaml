@@ -58,6 +58,10 @@ dependencies:
       url: https://github.com/theyakka/qr.flutter.git
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  mocktail: ^1.0.4
   flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
