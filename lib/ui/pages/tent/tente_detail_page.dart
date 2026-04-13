@@ -477,6 +477,15 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                     label: const Text(
                                       'Enregistrer les modifications',
                                     ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green.shade600,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
+                                      elevation: 4,
+                                    ),
                                     onPressed: () async {
                                       var selectedUnitName = '';
                                       if (_favoriteUnitId != null) {
