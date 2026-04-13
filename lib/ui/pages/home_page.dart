@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/data/models/login_notice_dto.dart';
+import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
+import 'dart:developer' as developer;
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -21,6 +24,15 @@ class _HomePageState extends ConsumerState<HomePage> {
   int tapCount = 0;
   DateTime? firstTapTime;
   bool _migrationPopupShown = false;
+  bool _noticesChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showLoginNotices();
+    });
+  }
 
   void handleTripleTap() {
     final now = DateTime.now();
@@ -73,6 +85,71 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
 
       tapCount = 0;
+    }
+  }
+
+  Future<void> _showLoginNotices() async {
+    if (_noticesChecked || !mounted) {
+      return;
+    }
+    _noticesChecked = true;
+
+    try {
+      final notices = await ref.read(apiServiceProvider).getActiveNotices();
+      if (notices.isEmpty || !mounted) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Informations de connexion'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final notice in notices) ...[
+                      _LoginNoticeCard(notice: notice),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+                  try {
+                    await ref
+                        .read(apiServiceProvider)
+                        .acknowledgeNotices(
+                          notices.map((notice) => notice.id).toList(),
+                        );
+                  } catch (e, st) {
+                    developer.log(
+                      '[HomePage] failed to acknowledge login notices',
+                      error: e,
+                      stackTrace: st,
+                    );
+                  }
+                },
+                child: const Text('J\'ai compris'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e, st) {
+      developer.log(
+        '[HomePage] failed to load login notices',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -129,8 +206,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         .where((t) => tentesUtiliseesIds.contains(t.id))
         .toList();
     final tentesToRepair = state.tentes
-      .where((t) => _isNonNominalStatus(t.displayStatusLabel))
-      .toList();
+        .where((t) => _isNonNominalStatus(t.displayStatusLabel))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -197,6 +274,107 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginNoticeCard extends StatelessWidget {
+  final LoginNoticeDto notice;
+
+  const _LoginNoticeCard({required this.notice});
+
+  Color _levelColor() {
+    switch (notice.level.toLowerCase()) {
+      case 'critical':
+        return Colors.red;
+      case 'maintenance':
+        return Colors.orange;
+      case 'warning':
+        return Colors.amber;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  IconData _levelIcon() {
+    switch (notice.level.toLowerCase()) {
+      case 'critical':
+        return Icons.report;
+      case 'maintenance':
+        return Icons.build;
+      case 'warning':
+        return Icons.warning_amber;
+      default:
+        return Icons.info;
+    }
+  }
+
+  String _formatDateTime(DateTime? value) {
+    if (value == null) {
+      return '';
+    }
+    final local = value.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month ${hour}h$minute';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _levelColor();
+    final timeLabel = notice.startAt != null || notice.endAt != null
+        ? [
+            if (notice.startAt != null)
+              'Début: ${_formatDateTime(notice.startAt)}',
+            if (notice.endAt != null) 'Fin: ${_formatDateTime(notice.endAt)}',
+          ].join(' • ')
+        : null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(_levelIcon(), color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  notice.title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(notice.message),
+          if (timeLabel != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              timeLabel,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+            ),
+          ],
+          if (notice.actionLabel != null && notice.actionLabel!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              notice.actionLabel!,
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            ),
+          ],
         ],
       ),
     );

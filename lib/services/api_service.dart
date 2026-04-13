@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:logistiscout/data/models/group_dto.dart';
+import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/services/token_store.dart';
 
@@ -54,9 +55,13 @@ class ApiService {
     HttpMethod method,
     String path, {
     Object? body,
+    Map<String, String>? extraHeaders,
     bool retrying = false,
   }) async {
     final headers = await _headers();
+    if (extraHeaders != null && extraHeaders.isNotEmpty) {
+      headers.addAll(extraHeaders);
+    }
     final uri = Uri.parse('$baseUrl/v2$path');
 
     try {
@@ -255,6 +260,82 @@ class ApiService {
         'reset_token': resetToken,
         'new_password': newPassword,
       }),
+    );
+  }
+
+  Future<List<LoginNoticeDto>> getActiveNotices() async {
+    final response = await _safeRequest(HttpMethod.get, '/notices/active');
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded
+        .map((item) => LoginNoticeDto.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> acknowledgeNotices(List<int> noticeIds) async {
+    if (noticeIds.isEmpty) {
+      return;
+    }
+
+    await _safeRequest(
+      HttpMethod.post,
+      '/notices/ack',
+      body: jsonEncode({'noticeIds': noticeIds}),
+    );
+  }
+
+  Future<List<LoginNoticeDto>> listAdminNotices({
+    required String adminToken,
+  }) async {
+    final response = await _safeRequest(
+      HttpMethod.get,
+      '/admin/notices',
+      extraHeaders: {'X-Admin-Token': adminToken},
+    );
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded
+        .map((item) => LoginNoticeDto.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<LoginNoticeDto> createAdminNotice(
+    Map<String, dynamic> payload, {
+    required String adminToken,
+  }) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/admin/notices',
+      body: jsonEncode(payload),
+      extraHeaders: {'X-Admin-Token': adminToken},
+    );
+    return LoginNoticeDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<LoginNoticeDto> updateAdminNotice(
+    int noticeId,
+    Map<String, dynamic> payload, {
+    required String adminToken,
+  }) async {
+    final response = await _safeRequest(
+      HttpMethod.put,
+      '/admin/notices/$noticeId',
+      body: jsonEncode(payload),
+      extraHeaders: {'X-Admin-Token': adminToken},
+    );
+    return LoginNoticeDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> deleteAdminNotice(
+    int noticeId, {
+    required String adminToken,
+  }) async {
+    await _safeRequest(
+      HttpMethod.delete,
+      '/admin/notices/$noticeId',
+      extraHeaders: {'X-Admin-Token': adminToken},
     );
   }
 
