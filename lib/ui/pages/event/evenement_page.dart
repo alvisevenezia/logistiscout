@@ -21,6 +21,8 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
   String _searchQuery = '';
   String? _selectedType;
 
+  bool _showPastEvents = false;
+
   final List<String> _typesEvenement = const [
     'Camp',
     'Sortie',
@@ -76,6 +78,20 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
           ),
 
           // 📋 Liste des événements
+          // 🔘 Bouton pour afficher/masquer les événements passés
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => setState(() => _showPastEvents = !_showPastEvents),
+                child: Text(
+                  _showPastEvents ? 'Masquer les événements passés' : 'Consulter les événements passés',
+                ),
+              ),
+            ),
+          ),
+
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -92,7 +108,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                     );
                     final matchesType =
                         _selectedType == null || evt.type == _selectedType;
-                    return matchesName && matchesType;
+                      final isUpcoming = evt.isUpcoming(DateTime.now());
+                      final matchesTimeFilter = _showPastEvents || isUpcoming;
+                      return matchesName && matchesType && matchesTimeFilter;
                   }).toList();
 
                   if (filtered.isEmpty) {
