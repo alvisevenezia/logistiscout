@@ -443,10 +443,19 @@ class ApiService {
     required int controlId,
     required Uint8List bytes,
     required String fileName,
+    bool retrying = false,
   }) async {
     final uri = Uri.parse('$baseUrl/v2/controles/$controlId/picture');
     final headers = await _headers();
+    final authHeader = headers['Authorization'];
     headers.remove('Content-Type');
+
+    developer.log(
+      'POST multipart /v2/controles/$controlId/picture '
+      'fileName=$fileName size=${bytes.length}B retrying=$retrying '
+      'authPresent=${authHeader != null && authHeader.isNotEmpty} uri=$uri',
+      name: 'ApiService',
+    );
 
     final request = http.MultipartRequest('POST', uri)
       ..headers.addAll(headers)
@@ -454,10 +463,37 @@ class ApiService {
         http.MultipartFile.fromBytes('file', bytes, filename: fileName),
       );
 
-    final streamedResponse = await request.send().timeout(
-      const Duration(seconds: 20),
-    );
-    final response = await http.Response.fromStream(streamedResponse);
+    late final http.Response response;
+    try {
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
+      response = await http.Response.fromStream(streamedResponse);
+    } on SocketException catch (e, st) {
+      developer.log(
+        'SocketException during uploadControlPicture: $e',
+        name: 'ApiService',
+        error: e,
+        stackTrace: st,
+      );
+      throw AppException('Pas de connexion Internet.');
+    } on TimeoutException catch (e, st) {
+      developer.log(
+        'Timeout during uploadControlPicture: $e',
+        name: 'ApiService',
+        error: e,
+        stackTrace: st,
+      );
+      throw AppException('Upload photo expiré (timeout).');
+    } catch (e, st) {
+      developer.log(
+        'Unexpected error during uploadControlPicture send: $e',
+        name: 'ApiService',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
 
     developer.log(
       'Response /v2/controles/$controlId/picture: ${response.statusCode} - ${response.body}',
@@ -468,8 +504,30 @@ class ApiService {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
 
+    final isAuthError =
+        response.statusCode == 401 || response.statusCode == 403;
+    if (isAuthError && !retrying) {
+      developer.log(
+        'Picture upload got ${response.statusCode}; attempting token refresh and retry',
+        name: 'ApiService',
+      );
+      final refreshed = await refreshToken();
+      developer.log(
+        'Token refresh after picture upload auth error: $refreshed',
+        name: 'ApiService',
+      );
+      if (refreshed) {
+        return uploadControlPicture(
+          controlId: controlId,
+          bytes: bytes,
+          fileName: fileName,
+          retrying: true,
+        );
+      }
+    }
+
     throw AppException(
-      'Upload de photo impossible (${response.statusCode})',
+      'Upload de photo impossible (${response.statusCode}) - ${response.body}',
       statusCode: response.statusCode,
     );
   }

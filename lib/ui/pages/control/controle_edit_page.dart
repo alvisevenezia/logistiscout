@@ -1,8 +1,11 @@
+import 'dart:io';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/status_element_control.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
@@ -26,6 +29,7 @@ class ControlEditPage extends ConsumerStatefulWidget {
 class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   final TextEditingController remarquesController = TextEditingController();
   final TextEditingController sardinesController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
   final Map<String, bool> checklist = {};
   final Map<String, StatusElementControl?> statusByItem = {};
   TentState? _state;
@@ -39,6 +43,7 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   }
 
   Future<void> _pickPhoto() async {
+    developer.log('Opening photo picker', name: 'ControlEditPage');
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
@@ -51,11 +56,37 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
 
     final newPhotos = <_PendingPhoto>[];
     for (final file in result.files) {
-      final bytes = file.bytes;
-      if (bytes == null) {
+      developer.log(
+        'Picked file candidate: name=${file.name}, path=${file.path}, bytesInMemory=${file.bytes?.length ?? 0}',
+        name: 'ControlEditPage',
+      );
+      var bytes = file.bytes;
+      if (bytes == null && file.path != null) {
+        try {
+          bytes = await File(file.path!).readAsBytes();
+          developer.log(
+            'Loaded file bytes from path: ${file.path} (${bytes.length} bytes)',
+            name: 'ControlEditPage',
+          );
+        } catch (_) {
+          // Ignore unreadable files and continue with remaining selections.
+          developer.log(
+            'Failed to read file from path: ${file.path}',
+            name: 'ControlEditPage',
+          );
+        }
+      }
+      if (bytes == null || bytes.isEmpty) {
+        developer.log(
+          'Skipping file because bytes are empty: ${file.name}',
+          name: 'ControlEditPage',
+        );
         continue;
       }
-      newPhotos.add(_PendingPhoto(bytes: bytes, name: file.name));
+      final fileName = file.name.trim().isEmpty
+          ? 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg'
+          : file.name;
+      newPhotos.add(_PendingPhoto(bytes: bytes, name: fileName));
     }
 
     if (newPhotos.isEmpty) {
@@ -70,6 +101,64 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
     setState(() {
       _selectedPhotos.addAll(newPhotos);
     });
+    developer.log(
+      'Selected photos count is now ${_selectedPhotos.length}',
+      name: 'ControlEditPage',
+    );
+  }
+
+  Future<void> _takePhoto() async {
+    developer.log('Opening camera for control photo', name: 'ControlEditPage');
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (picked == null) {
+        developer.log(
+          'Camera capture canceled by user',
+          name: 'ControlEditPage',
+        );
+        return;
+      }
+
+      final bytes = await picked.readAsBytes();
+      if (bytes.isEmpty) {
+        developer.log('Captured photo is empty', name: 'ControlEditPage');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('La photo capturée est vide.')),
+          );
+        }
+        return;
+      }
+
+      final fileName = picked.name.trim().isEmpty
+          ? 'camera_${DateTime.now().millisecondsSinceEpoch}.jpg'
+          : picked.name;
+
+      setState(() {
+        _selectedPhotos.add(_PendingPhoto(bytes: bytes, name: fileName));
+      });
+
+      developer.log(
+        'Captured photo added: $fileName (${bytes.length} bytes). Selected count=${_selectedPhotos.length}',
+        name: 'ControlEditPage',
+      );
+    } catch (e, st) {
+      developer.log(
+        'Camera capture failed: $e',
+        name: 'ControlEditPage',
+        error: e,
+        stackTrace: st,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible d\'ouvrir la caméra: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -233,9 +322,14 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                           ),
                         ),
                         TextButton.icon(
+                          onPressed: _takePhoto,
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: const Text('Prendre une photo'),
+                        ),
+                        TextButton.icon(
                           onPressed: _pickPhoto,
                           icon: const Icon(Icons.photo_library_outlined),
-                          label: const Text('Ajouter une photo'),
+                          label: const Text('Galerie'),
                         ),
                       ],
                     ),
@@ -305,6 +399,10 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
               icon: const Icon(Icons.save),
               label: const Text('Valider le contrôle'),
               onPressed: () async {
+                developer.log(
+                  'Save control tapped for tentId=${widget.tent.id}, selectedPhotos=${_selectedPhotos.length}',
+                  name: 'ControlEditPage',
+                );
                 if (widget.controllerName.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -314,59 +412,123 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                   return;
                 }
 
-                final payload = {
-                  for (final e in statusByItem.entries) e.key: e.value,
-                  'Nombre de sardines/piquets': sardinesController.text,
-                  'nom_controleur': widget.controllerName.trim(),
-                };
+                try {
+                  final payload = {
+                    for (final e in statusByItem.entries) e.key: e.value,
+                    'Nombre de sardines/piquets': sardinesController.text,
+                    'nom_controleur': widget.controllerName.trim(),
+                  };
 
-                final controle = Control(
-                  id: null,
-                  tentId: widget.tent.id,
-                  date: DateTime.now(),
-                  comment: remarquesController.text.trim(),
-                  checklist: payload,
-                  userId: 0,
-                );
+                  developer.log(
+                    'Creating control with ${payload.length} checklist fields',
+                    name: 'ControlEditPage',
+                  );
 
-                final createdControl = await ref
-                    .read(controlProvider(widget.tent.id).notifier)
-                    .addControl(controle);
+                  final controle = Control(
+                    id: null,
+                    tentId: widget.tent.id,
+                    date: DateTime.now(),
+                    comment: remarquesController.text.trim(),
+                    checklist: payload,
+                    userId: 0,
+                  );
 
-                if (_selectedPhotos.isNotEmpty && createdControl.id != null) {
-                  for (final photo in _selectedPhotos) {
+                  final createdControl = await ref
+                      .read(controlProvider(widget.tent.id).notifier)
+                      .addControl(controle);
+
+                  var controlIdForUpload = createdControl.id;
+                  if (controlIdForUpload == null &&
+                      _selectedPhotos.isNotEmpty) {
+                    developer.log(
+                      'Created control returned null id, attempting fallback by reloading latest control list',
+                      name: 'ControlEditPage',
+                    );
+                    final controls = await ref.read(
+                      controlProvider(widget.tent.id).future,
+                    );
+                    if (controls.isNotEmpty) {
+                      controlIdForUpload = controls.last.id;
+                    }
+                    developer.log(
+                      'Fallback resolved control id to $controlIdForUpload',
+                      name: 'ControlEditPage',
+                    );
+                  }
+
+                  developer.log(
+                    'Control created with id=${createdControl.id}, uploadId=$controlIdForUpload',
+                    name: 'ControlEditPage',
+                  );
+
+                  if (_selectedPhotos.isNotEmpty &&
+                      controlIdForUpload != null) {
+                    for (var i = 0; i < _selectedPhotos.length; i++) {
+                      final photo = _selectedPhotos[i];
+                      developer.log(
+                        'Uploading photo ${i + 1}/${_selectedPhotos.length}: name=${photo.name}, size=${photo.bytes.length} bytes, controlId=$controlIdForUpload',
+                        name: 'ControlEditPage',
+                      );
+                      await ref
+                          .read(controlProvider(widget.tent.id).notifier)
+                          .uploadControlPicture(
+                            controlId: controlIdForUpload,
+                            bytes: photo.bytes,
+                            fileName: photo.name,
+                          );
+                      developer.log(
+                        'Photo ${i + 1}/${_selectedPhotos.length} uploaded successfully',
+                        name: 'ControlEditPage',
+                      );
+                    }
+                  } else {
+                    developer.log(
+                      'No photo upload performed (selectedPhotos=${_selectedPhotos.length}, controlId=$controlIdForUpload)',
+                      name: 'ControlEditPage',
+                    );
+                  }
+
+                  final selectedState = _state ?? widget.tent.state;
+
+                  if (widget.tent.state != selectedState) {
+                    developer.log(
+                      'Updating tent state from ${widget.tent.state} to $selectedState',
+                      name: 'ControlEditPage',
+                    );
                     await ref
-                        .read(controlProvider(widget.tent.id).notifier)
-                        .uploadControlPicture(
-                          controlId: createdControl.id!,
-                          bytes: photo.bytes,
-                          fileName: photo.name,
+                        .read(tentesProvider.notifier)
+                        .updateTente(
+                          widget.tent.copyWith(
+                            state: selectedState,
+                            tentStatusId: null,
+                            tentStatusLabel: tentStateToString(selectedState),
+                            tentStatusColor: selectedState.chipColor,
+                          ),
                         );
                   }
-                }
 
-                final selectedState = _state ?? widget.tent.state;
-
-                if (widget.tent.state != selectedState) {
-                  await ref
-                      .read(tentesProvider.notifier)
-                      .updateTente(
-                        widget.tent.copyWith(
-                          state: selectedState,
-                          tentStatusId: null,
-                          tentStatusLabel: tentStateToString(selectedState),
-                          tentStatusColor: selectedState.chipColor,
-                        ),
-                      );
-                }
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Contrôle enregistré avec succès !'),
-                    ),
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Contrôle enregistré avec succès !'),
+                      ),
+                    );
+                    Navigator.pop(context, true);
+                  }
+                } catch (e, st) {
+                  developer.log(
+                    'Save control flow failed: $e',
+                    name: 'ControlEditPage',
+                    error: e,
+                    stackTrace: st,
                   );
-                  Navigator.pop(context, true);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur lors de l\'enregistrement: $e'),
+                      ),
+                    );
+                  }
                 }
               },
             ),

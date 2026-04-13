@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
@@ -480,10 +481,6 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green.shade600,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 12,
-                                      ),
                                       elevation: 4,
                                     ),
                                     onPressed: () async {
@@ -833,12 +830,27 @@ Future<String> _saveQrCodeImage(GlobalKey qrKey, String name) async {
 
   final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
   final bytes = byteData.buffer.asUint8List();
+
+  final saveResult = await ImageGallerySaver.saveImage(
+    bytes,
+    quality: 100,
+    name: 'qr_tente_$safeName',
+    isReturnImagePathOfIOS: true,
+  );
+
+  final isSaved =
+      saveResult['isSuccess'] == true || saveResult['isSuccess'] == 1;
+  if (isSaved) {
+    return 'QR code enregistré dans la galerie';
+  }
+
+  // Fallback local file path if gallery save fails.
   final directory =
       await getExternalStorageDirectory() ??
       await getApplicationDocumentsDirectory();
   final file = File('${directory.path}/qr_tente_$safeName.png');
   await file.writeAsBytes(bytes, flush: true);
-  return 'QR code enregistré: ${file.path}';
+  return 'Échec galerie, QR code enregistré localement: ${file.path}';
 }
 
 class _ColorChipsEditor extends StatelessWidget {

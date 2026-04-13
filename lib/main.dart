@@ -17,15 +17,11 @@ import 'package:logistiscout/ui/pages/tent/tentes_page.dart';
 final _router = GoRouter(
   initialLocation: '/bootstrap',
   routes: [
-    GoRoute(
-      path: '/bootstrap',
-      builder: (context, state) => const AuthGate(),
-    ),
+    GoRoute(path: '/bootstrap', builder: (context, state) => const AuthGate()),
     GoRoute(
       path: '/login',
-      builder: (context, state) => LoginPage(
-        onLogin: () => context.go('/home'),
-      ),
+      builder: (context, state) =>
+          LoginPage(onLogin: () => context.go('/home')),
     ),
     GoRoute(
       path: '/account',
@@ -35,10 +31,7 @@ final _router = GoRouter(
     ShellRoute(
       builder: (context, state, child) => _MainNavigation(child: child),
       routes: [
-        GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomePage(),
-        ),
+        GoRoute(path: '/home', builder: (context, state) => const HomePage()),
         GoRoute(
           path: '/tents',
           builder: (context, state) => const TentesPage(),
@@ -73,22 +66,14 @@ final _router = GoRouter(
     ),
 
     // Optional: redirect root to accueil
-    GoRoute(
-      path: '/',
-      redirect: (_, __) => '/home',
-    ),
+    GoRoute(path: '/', redirect: (_, __) => '/home'),
   ],
 );
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -140,10 +125,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-class _MainNavigation extends StatelessWidget {
+class _MainNavigation extends StatefulWidget {
   final Widget child;
   const _MainNavigation({required this.child});
+
+  @override
+  State<_MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<_MainNavigation> {
+  String? _previousLocation;
+  int _slideDirection = 1;
 
   int _locationToIndex(String location) {
     if (location.startsWith('/tents')) return 1;
@@ -166,13 +158,61 @@ class _MainNavigation extends StatelessWidget {
     }
   }
 
+  int _pathDepth(String location) {
+    return Uri.parse(location).pathSegments.length;
+  }
+
+  int _computeDirection(String previousLocation, String currentLocation) {
+    final previousIndex = _locationToIndex(previousLocation);
+    final currentIndex = _locationToIndex(currentLocation);
+    if (currentIndex != previousIndex) {
+      return currentIndex > previousIndex ? 1 : -1;
+    }
+
+    final previousDepth = _pathDepth(previousLocation);
+    final currentDepth = _pathDepth(currentLocation);
+    if (currentDepth > previousDepth) {
+      return 1;
+    }
+    if (currentDepth < previousDepth) {
+      return -1;
+    }
+    return 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final selectedIndex = _locationToIndex(location);
 
+    if (_previousLocation == null) {
+      _previousLocation = location;
+    } else if (_previousLocation != location) {
+      _slideDirection = _computeDirection(_previousLocation!, location);
+      _previousLocation = location;
+    }
+
     return Scaffold(
-      body: child,
+      body: TweenAnimationBuilder<double>(
+        key: ValueKey(location),
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeInOutCubicEmphasized,
+        tween: Tween<double>(begin: 0, end: 1),
+        child: widget.child,
+        builder: (context, progress, child) {
+          final width = MediaQuery.sizeOf(context).width;
+          final dx = (1 - progress) * 0.03 * _slideDirection;
+          return ClipRect(
+            child: Opacity(
+              opacity: 0.92 + (0.08 * progress),
+              child: Transform.translate(
+                offset: Offset(dx * width, 0),
+                child: child,
+              ),
+            ),
+          );
+        },
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         type: BottomNavigationBarType.fixed,
@@ -181,7 +221,10 @@ class _MainNavigation extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.cabin), label: 'Tentes'),
           BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Événements'),
-          BottomNavigationBarItem(icon: Icon(Icons.contact_support), label: 'Contact'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.contact_support),
+            label: 'Contact',
+          ),
         ],
       ),
     );
