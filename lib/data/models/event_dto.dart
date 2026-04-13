@@ -20,6 +20,7 @@ class EventDto {
   });
 
   factory EventDto.fromJson(Map<String, dynamic> json) {
+    final rawGroupId = json['groupId'] ?? json['groupeId'];
     return EventDto(
       id: json['id'] as int,
       nom: json['nom'] as String,
@@ -28,7 +29,7 @@ class EventDto {
       type: json['type'] as String,
       associatedTents: List<int>.from(json['tentesAssociees'] ?? []),
       unites: List<int>.from(json['unites'] ?? []),
-      groupId: json['groupId'].toString(),
+      groupId: rawGroupId?.toString() ?? '',
     );
   }
 

@@ -89,5 +89,30 @@ void main() {
         'quantite_personnes': 18,
       });
     });
+
+    test('getAllEvents accepte groupeId legacy du backend', () async {
+      final api = MockApiService();
+      final repo = EventRepositoryImpl(api);
+
+      when(
+        () => api.getEventList(),
+      ).thenAnswer((_) async => [
+        {
+          'id': 5,
+          'nom': 'Camp Legacy',
+          'date': '2026-06-01T10:00:00.000',
+          'dateFin': '2026-06-02T16:00:00.000',
+          'type': 'camp',
+          'tentesAssociees': [4],
+          'unites': [2],
+          'groupeId': 99,
+        },
+      ]);
+
+      final events = await repo.getAllEvents();
+
+      expect(events, hasLength(1));
+      expect(events.first.groupId, '99');
+    });
   });
 }
