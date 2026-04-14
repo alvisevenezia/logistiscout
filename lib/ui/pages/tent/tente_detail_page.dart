@@ -458,6 +458,11 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                                       tente.nom,
                                                     );
                                                 if (dialogContext.mounted) {
+                                                  Navigator.of(
+                                                    dialogContext,
+                                                  ).pop();
+                                                }
+                                                if (mounted) {
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).showSnackBar(
