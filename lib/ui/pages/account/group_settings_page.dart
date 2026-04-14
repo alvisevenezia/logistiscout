@@ -119,7 +119,10 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.save),
-                    label: const Text('Enregistrer'),
+                    label: const Text(
+                      'Enregistrer',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     onPressed: () async {
                       final ok = await controller.saveProfileFields(
                         name: _nameCtl.text,
@@ -142,7 +145,10 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.lock_outline),
-                  label: const Text('Mot de passe'),
+                  label: const Text(
+                    'Mot de passe',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   onPressed: () async {
                     final newPwd = await _askPassword(context);
                     if (newPwd == null || newPwd.trim().isEmpty) return;
@@ -463,16 +469,49 @@ class _UnitsTabState extends State<_UnitsTab> {
             final unit = _local[index];
             return Card(
               key: ValueKey('unit-${unit.id}'),
-              child: ListTile(
-                leading: CircleAvatar(backgroundColor: Color(unit.color)),
-                title: Text(unit.name),
-                subtitle: Text('Type: ${unit.type.name}'),
-                onTap: () => widget.onEdit(unit),
-                trailing: Wrap(
-                  spacing: 4,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    CircleAvatar(backgroundColor: Color(unit.color)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => widget.onEdit(unit),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                unit.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Type: ${unit.type.name}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
+                      visualDensity: VisualDensity.compact,
                       onPressed: () => widget.onDelete(unit),
                     ),
                     const Icon(Icons.drag_handle),
@@ -567,28 +606,63 @@ class _TentStatusesTabState extends State<_TentStatusesTab> {
                   final item = _local[index];
                   return Card(
                     key: ValueKey('status-${item.id}'),
-                    child: ListTile(
-                      leading: CircleAvatar(backgroundColor: Color(item.color)),
-                      title: Text(item.name),
-                      subtitle: Text(
-                        '${item.isArchived ? 'Archive' : 'Actif'}${item.isDefault ? ' • Defaut' : ''}',
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
-                      onTap: () => widget.onEdit(item),
-                      trailing: Wrap(
-                        spacing: 4,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          CircleAvatar(backgroundColor: Color(item.color)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => widget.onEdit(item),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${item.isArchived ? 'Archive' : 'Actif'}${item.isDefault ? ' • Defaut' : ''}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
                           IconButton(
                             tooltip: 'Dupliquer',
+                            visualDensity: VisualDensity.compact,
                             onPressed: () => widget.onDuplicate(item),
                             icon: const Icon(Icons.copy_outlined),
                           ),
                           IconButton(
                             tooltip: 'Archiver',
+                            visualDensity: VisualDensity.compact,
                             onPressed: () => widget.onArchive(item),
                             icon: const Icon(Icons.archive_outlined),
                           ),
                           IconButton(
                             tooltip: 'Supprimer',
+                            visualDensity: VisualDensity.compact,
                             onPressed: () => widget.onDelete(item),
                             icon: const Icon(Icons.delete_outline),
                           ),
