@@ -8,12 +8,12 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 import 'package:logistiscout/ui/controllers/controle_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/pages/control/controle_detail_page.dart';
@@ -473,60 +473,75 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                       );
                                     },
                                   ),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.save),
-                                    label: const Text(
-                                      'Enregistrer les modifications',
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green.shade600,
-                                      foregroundColor: Colors.white,
-                                      elevation: 4,
-                                    ),
-                                    onPressed: () async {
-                                      var selectedUnitName = '';
-                                      if (_favoriteUnitId != null) {
-                                        for (final u in groupUnits) {
-                                          if (int.tryParse(u.id) ==
-                                              _favoriteUnitId) {
-                                            selectedUnitName = u.name;
-                                            break;
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green.shade600,
+                                        foregroundColor: Colors.white,
+                                        elevation: 4,
+                                      ),
+                                      onPressed: () async {
+                                        var selectedUnitName = '';
+                                        if (_favoriteUnitId != null) {
+                                          for (final u in groupUnits) {
+                                            if (int.tryParse(u.id) ==
+                                                _favoriteUnitId) {
+                                              selectedUnitName = u.name;
+                                              break;
+                                            }
                                           }
                                         }
-                                      }
 
-                                      final updated = tente.copyWith(
-                                        nom: _nameCtl!.text.trim(),
-                                        nbPlaces:
-                                            int.tryParse(_nbCtl!.text.trim()) ??
-                                            tente.nbPlaces,
-                                        tentType: _tentType!,
-                                        state: _tentStateFallback,
-                                        tentStatusId: _tentStatusId,
-                                        tentStatusLabel: _tentStatusLabel,
-                                        tentStatusColor: _tentStatusColor,
-                                        uniteId: _favoriteUnitId,
-                                        assignedUnit: selectedUnitName,
-                                        isFloorEmbedded: _estIntegree!,
-                                        colors: _colorHexList!,
-                                        team: _teamCtl!.text.trim(),
-                                        location: _locationCtl!.text.trim(),
-                                      );
-                                      await ref
-                                          .read(tentesProvider.notifier)
-                                          .updateTente(updated);
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Modifications enregistrées',
+                                        final updated = tente.copyWith(
+                                          nom: _nameCtl!.text.trim(),
+                                          nbPlaces:
+                                              int.tryParse(
+                                                _nbCtl!.text.trim(),
+                                              ) ??
+                                              tente.nbPlaces,
+                                          tentType: _tentType!,
+                                          state: _tentStateFallback,
+                                          tentStatusId: _tentStatusId,
+                                          tentStatusLabel: _tentStatusLabel,
+                                          tentStatusColor: _tentStatusColor,
+                                          uniteId: _favoriteUnitId,
+                                          assignedUnit: selectedUnitName,
+                                          isFloorEmbedded: _estIntegree!,
+                                          colors: _colorHexList!,
+                                          team: _teamCtl!.text.trim(),
+                                          location: _locationCtl!.text.trim(),
+                                        );
+                                        await ref
+                                            .read(tentesProvider.notifier)
+                                            .updateTente(updated);
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Modifications enregistrées',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(Icons.save),
+                                          SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              'Enregistrer les modifications',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
                                             ),
                                           ),
-                                        );
-                                      }
-                                    },
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -831,16 +846,14 @@ Future<String> _saveQrCodeImage(GlobalKey qrKey, String name) async {
   final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_');
   final bytes = byteData.buffer.asUint8List();
 
-  final saveResult = await ImageGallerySaver.saveImage(
+  final saveResult = await SaverGallery.saveImage(
     bytes,
     quality: 100,
-    name: 'qr_tente_$safeName',
-    isReturnImagePathOfIOS: true,
+    fileName: 'qr_tente_$safeName',
+    skipIfExists: false,
   );
 
-  final isSaved =
-      saveResult['isSuccess'] == true || saveResult['isSuccess'] == 1;
-  if (isSaved) {
+  if (saveResult.isSuccess) {
     return 'QR code enregistré dans la galerie';
   }
 

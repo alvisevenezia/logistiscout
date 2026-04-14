@@ -526,6 +526,13 @@ class ApiService {
       }
     }
 
+    if (response.statusCode == 413) {
+      throw AppException(
+        'Upload de photo impossible (413) : photo trop lourde.',
+        statusCode: response.statusCode,
+      );
+    }
+
     throw AppException(
       'Upload de photo impossible (${response.statusCode}) - ${response.body}',
       statusCode: response.statusCode,

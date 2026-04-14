@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'dart:developer' as developer;
 import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,6 +24,7 @@ class ControlEditPage extends ConsumerStatefulWidget {
 }
 
 class _ControlEditPageState extends ConsumerState<ControlEditPage> {
+  static const int _maxPhotoBytes = 2 * 1024 * 1024;
   final TextEditingController remarquesController = TextEditingController();
   final TextEditingController sardinesController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
@@ -43,46 +41,53 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   }
 
   Future<void> _pickPhoto() async {
-    developer.log('Opening photo picker', name: 'ControlEditPage');
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-      withData: true,
+    developer.log('Opening photo picker (gallery)', name: 'ControlEditPage');
+    final pickedFiles = await _imagePicker.pickMultiImage(
+      imageQuality: 60,
+      maxWidth: 1600,
+      maxHeight: 1600,
     );
 
-    if (result == null || result.files.isEmpty) {
+    if (pickedFiles.isEmpty) {
       return;
     }
 
     final newPhotos = <_PendingPhoto>[];
-    for (final file in result.files) {
+    var skippedTooLarge = 0;
+
+    for (final file in pickedFiles) {
       developer.log(
-        'Picked file candidate: name=${file.name}, path=${file.path}, bytesInMemory=${file.bytes?.length ?? 0}',
+        'Picked gallery file candidate: name=${file.name}, path=${file.path}',
         name: 'ControlEditPage',
       );
-      var bytes = file.bytes;
-      if (bytes == null && file.path != null) {
-        try {
-          bytes = await File(file.path!).readAsBytes();
-          developer.log(
-            'Loaded file bytes from path: ${file.path} (${bytes.length} bytes)',
-            name: 'ControlEditPage',
-          );
-        } catch (_) {
-          // Ignore unreadable files and continue with remaining selections.
-          developer.log(
-            'Failed to read file from path: ${file.path}',
-            name: 'ControlEditPage',
-          );
-        }
+
+      Uint8List? bytes;
+      try {
+        bytes = await file.readAsBytes();
+      } catch (_) {
+        developer.log(
+          'Failed to read picked gallery file: ${file.path}',
+          name: 'ControlEditPage',
+        );
       }
+
       if (bytes == null || bytes.isEmpty) {
         developer.log(
-          'Skipping file because bytes are empty: ${file.name}',
+          'Skipping gallery file because bytes are empty: ${file.name}',
           name: 'ControlEditPage',
         );
         continue;
       }
+
+      if (bytes.length > _maxPhotoBytes) {
+        skippedTooLarge++;
+        developer.log(
+          'Skipping gallery file because it is still too large after resize: ${file.name} (${bytes.length} bytes)',
+          name: 'ControlEditPage',
+        );
+        continue;
+      }
+
       final fileName = file.name.trim().isEmpty
           ? 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg'
           : file.name;
@@ -101,6 +106,17 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
     setState(() {
       _selectedPhotos.addAll(newPhotos);
     });
+
+    if (skippedTooLarge > 0 && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$skippedTooLarge photo(s) ignorée(s): fichier trop lourd après compression.',
+          ),
+        ),
+      );
+    }
+
     developer.log(
       'Selected photos count is now ${_selectedPhotos.length}',
       name: 'ControlEditPage',
@@ -112,7 +128,9 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
     try {
       final picked = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 85,
+        imageQuality: 60,
+        maxWidth: 1600,
+        maxHeight: 1600,
       );
 
       if (picked == null) {
@@ -129,6 +147,23 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('La photo capturée est vide.')),
+          );
+        }
+        return;
+      }
+
+      if (bytes.length > _maxPhotoBytes) {
+        developer.log(
+          'Captured photo still too large after resize/compression: ${bytes.length} bytes',
+          name: 'ControlEditPage',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Photo trop lourde. Réessayez avec un cadrage plus serré.',
+              ),
+            ),
           );
         }
         return;
@@ -312,24 +347,30 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            'Photo du contrôle',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
+                        Text(
+                          'Photo du contrôle',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        TextButton.icon(
-                          onPressed: _takePhoto,
-                          icon: const Icon(Icons.photo_camera_outlined),
-                          label: const Text('Prendre une photo'),
-                        ),
-                        TextButton.icon(
-                          onPressed: _pickPhoto,
-                          icon: const Icon(Icons.photo_library_outlined),
-                          label: const Text('Galerie'),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _takePhoto,
+                              icon: const Icon(Icons.photo_camera_outlined),
+                              label: const Text('Prendre une photo'),
+                            ),
+                            TextButton.icon(
+                              onPressed: _pickPhoto,
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: const Text('Galerie'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
