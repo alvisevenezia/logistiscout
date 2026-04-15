@@ -58,6 +58,10 @@ dependencies:
   qr_flutter:
     git:
       url: https://github.com/theyakka/qr.flutter.git
+  connectivity_plus: ^7.1.1
+  package_info_plus: ^9.0.1
+  device_info_plus: ^12.4.0
+  carrier_info: ^2.0.8
 
 dev_dependencies:
   flutter_test:

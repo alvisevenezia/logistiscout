@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
+import 'package:logistiscout/services/client_context_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 
 enum HttpMethod {
@@ -29,12 +30,16 @@ class ApiService {
 
   Future<Map<String, String>> _headers() async {
     final token = await TokenStore.instance.readAccessToken();
+    final clientContextHeaders = await ClientContextService.instance
+        .buildHeaders();
 
     final headers = {'Content-Type': 'application/json'};
 
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
+
+    headers.addAll(clientContextHeaders);
 
     return headers;
   }
@@ -281,6 +286,15 @@ class ApiService {
       '/notices/ack',
       body: jsonEncode({'noticeIds': noticeIds}),
     );
+  }
+
+  Future<Map<String, dynamic>> acceptTermsOnServer(String termsVersion) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/legal/terms/accept',
+      body: jsonEncode({'termsVersion': termsVersion}),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<List<LoginNoticeDto>> listAdminNotices({

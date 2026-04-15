@@ -1,0 +1,43 @@
+const kLegalLastUpdate = '15/04/2026';
+
+const kTermsDraftText =
+    '1. Objet et champ d\'application\n'
+    'Les presentes Conditions Generales d\'Utilisation (CGU) encadrent l\'acces et l\'usage de l\'application LogistiScout. Elles s\'appliquent a toute personne utilisant l\'application pour la gestion logistique de son groupe.\n\n'
+    '2. Acces au service\n'
+    'L\'acces est reserve aux utilisateurs autorises par leur groupe. L\'utilisateur est responsable de la confidentialite de ses identifiants et de tout usage realise depuis son compte.\n\n'
+    '3. Fonctionnalites\n'
+    'LogistiScout permet notamment la gestion des tentes, des evenements, des controles, des menus et des informations de groupe. Les fonctionnalites peuvent evoluer a tout moment pour des raisons techniques, de securite ou de qualite de service.\n\n'
+    '4. Engagements de l\'utilisateur\n'
+    'L\'utilisateur s\'engage a fournir des informations exactes, a respecter les lois et reglements applicables, a ne pas perturber le service, et a ne pas detourner l\'application de son objet associatif.\n\n'
+    '5. Disponibilite\n'
+    'Le service est fourni "en l\'etat". L\'editeur met en oeuvre des moyens raisonnables pour assurer la disponibilite et la fiabilite, sans garantie d\'absence totale d\'interruption, de latence ou d\'erreur.\n\n'
+    '6. Propriete intellectuelle\n'
+    'Les elements de l\'application (marques, logo, structure, contenus techniques) restent la propriete de leurs titulaires respectifs. Toute reproduction non autorisee est interdite.\n\n'
+    '7. Limitation de responsabilite\n'
+    'L\'editeur ne saurait etre tenu responsable des dommages indirects, pertes de donnees ou consequences liees a un mauvais usage du service, sous reserve des dispositions legales imperatives.\n\n'
+    '8. Evolution des CGU\n'
+    'Les CGU peuvent etre modifiees. En cas de modification substantielle, une nouvelle acceptation pourra etre demandee lors de la connexion.\n\n'
+    '9. Contact\n'
+    'Pour toute question relative au service ou aux presentes CGU, l\'utilisateur peut utiliser les informations de contact disponibles dans l\'application.';
+
+const kPrivacyDraftText =
+    '1. Responsable du traitement\n'
+    'Le responsable du traitement est l\'editeur de l\'application LogistiScout.\n\n'
+    '2. Donnees traitees\n'
+    'Selon l\'usage, les categories de donnees suivantes peuvent etre traitees: identifiant de groupe, donnees de gestion logistique (tentes, evenements, controles), et donnees techniques (plateforme, version OS, modele appareil, version de l\'application, type de reseau, generation mobile 3G/4G/5G lorsque disponible, identifiant d\'installation pseudonyme, journaux techniques).\n\n'
+    '3. Finalites\n'
+    'Les donnees sont traitees pour: permettre l\'authentification, fournir les fonctionnalites metier, securiser l\'acces, diagnostiquer les incidents, analyser l\'usage et prioriser les evolutions produit.\n\n'
+    '4. Base legale\n'
+    'Les traitements reposent principalement sur l\'execution du service demande par l\'utilisateur et l\'interet legitime de l\'editeur a maintenir la securite et la qualite du service.\n\n'
+    '5. Destinataires\n'
+    'Les donnees sont accessibles aux personnes habilitees (administration technique et fonctionnelle) dans la limite de leurs besoins.\n\n'
+    '6. Duree de conservation\n'
+    'Les donnees de compte et de gestion sont conservees pendant la duree d\'utilisation du service. Les journaux techniques et preuves d\'acceptation sont conserves pour une duree proportionnee aux besoins de securite, d\'audit et de conformite interne.\n\n'
+    '7. Securite\n'
+    'Des mesures techniques et organisationnelles raisonnables sont mises en place pour proteger les donnees contre l\'acces non autorise, l\'alteration, la perte ou la divulgation.\n\n'
+    '8. Droits des personnes\n'
+    'Sous reserve du cadre legal applicable, vous pouvez demander l\'acces, la rectification, l\'effacement ou la limitation de certains traitements, ainsi que formuler une opposition lorsqu\'elle est possible.\n\n'
+    '9. Contact vie privee\n'
+    'Pour toute demande relative a la protection des donnees, utilisez le canal de contact indique dans l\'application.\n\n'
+    '10. Version de test\n'
+    'Ce document est un brouillon de test et devra etre valide juridiquement avant mise en production.';

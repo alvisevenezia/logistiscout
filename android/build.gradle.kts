@@ -1,7 +1,25 @@
+import com.android.build.api.dsl.LibraryExtension
+
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+subprojects {
+    afterEvaluate {
+        // check only for "com.android.library" to not modify
+        // your "app" subproject. All plugins will have "com.android.library" plugin, and only your app "com.android.application"
+        // Change your application's namespace in main build.gradle and in main android block.
+
+        if (plugins.hasPlugin("com.android.library")) {
+            project.extensions.configure<LibraryExtension> {
+                if (namespace == null) {
+                    namespace = group.toString()
+                }
+            }
+        }
     }
 }
 

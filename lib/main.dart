@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/di.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
-import 'package:logistiscout/services/token_store.dart';
+import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/ui/pages/account/group_settings_page.dart';
 import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
 import 'package:logistiscout/ui/pages/contact/contact_page.dart';
@@ -11,6 +10,7 @@ import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
 import 'package:logistiscout/ui/pages/auth/login_page.dart';
+import 'package:logistiscout/ui/pages/legal/terms_page.dart';
 import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
 import 'package:logistiscout/ui/pages/tent/tentes_page.dart';
 
@@ -20,8 +20,22 @@ final _router = GoRouter(
     GoRoute(path: '/bootstrap', builder: (context, state) => const AuthGate()),
     GoRoute(
       path: '/login',
-      builder: (context, state) =>
-          LoginPage(onLogin: () => context.go('/home')),
+      builder: (context, state) => LoginPage(
+        termsVersion: kTermsVersion,
+        onLogin: () => context.go('/home'),
+      ),
+    ),
+    GoRoute(
+      path: '/terms',
+      builder: (context, state) {
+        final user = state.uri.queryParameters['user'] ?? '';
+        final next = state.uri.queryParameters['next'] ?? '/home';
+        return TermsPage(
+          termsVersion: kTermsVersion,
+          userIdentity: user,
+          nextRoute: next,
+        );
+      },
     ),
     GoRoute(
       path: '/account',

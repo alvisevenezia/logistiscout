@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/ui/controllers/login_controller.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/pages/auth/forgot_password_page.dart';
@@ -8,8 +10,9 @@ import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   final VoidCallback? onLogin; // ✅ Optional callback for after successful login
+  final String termsVersion;
 
-  const LoginPage({super.key, this.onLogin});
+  const LoginPage({super.key, this.onLogin, this.termsVersion = kTermsVersion});
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -125,6 +128,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ),
                                 ),
                               );
+                            }
+
+                            final username = await LocalStorageService.instance
+                                .getUsername();
+                            final hasAcceptedTerms = await LocalStorageService
+                                .instance
+                                .hasAcceptedTerms(
+                                  userIdentity: username ?? '',
+                                  termsVersion: widget.termsVersion,
+                                );
+
+                            if (!hasAcceptedTerms && mounted) {
+                              final encodedUser = Uri.encodeQueryComponent(
+                                username ?? '',
+                              );
+                              context.go('/terms?user=$encodedUser&next=/home');
+                              return;
                             }
 
                             // 🔹 Continue le flux normal

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/legal_constants.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactPage extends StatelessWidget {
@@ -16,9 +19,7 @@ class ContactPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Contact'),
-      ),
+      appBar: AppBar(title: const Text('Contact')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -63,7 +64,7 @@ class ContactPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 "En cas de problème, de suggestion ou de retour à faire sur cette application, "
-                    "merci de me contacter par l’un des moyens ci dessous.",
+                "merci de me contacter par l’un des moyens ci dessous.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -101,8 +102,8 @@ class ContactPage extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             "Tu souhaites tester les prochaines fonctionnalités de LogistiScout "
-                                "en avant-première ? N’hésite pas à me contacter pour rejoindre "
-                                "la version de test de l’application.",
+                            "en avant-première ? N’hésite pas à me contacter pour rejoindre "
+                            "la version de test de l’application.",
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSecondaryContainer,
                               height: 1.4,
@@ -135,6 +136,24 @@ class ContactPage extends StatelessWidget {
                 leading: const Icon(Icons.groups),
                 title: const Text('Groupe SGDF'),
                 subtitle: const Text('Saint-Leu-la-Forêt'),
+              ),
+            ),
+
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.gavel),
+                title: const Text('Conditions d\'utilisation'),
+                subtitle: const Text('Relire les CGU (version de test)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final username = await LocalStorageService.instance
+                      .getUsername();
+                  if (!context.mounted) {
+                    return;
+                  }
+                  final encodedUser = Uri.encodeQueryComponent(username ?? '');
+                  context.go('/terms?user=$encodedUser&next=/contact');
+                },
               ),
             ),
 
