@@ -7,6 +7,8 @@ import 'package:logistiscout/domain/entities/group.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
+import 'package:logistiscout/services/group_export_service.dart';
+import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/controllers/group_settings_controller.dart';
 
 class GroupSettingsPage extends ConsumerStatefulWidget {
@@ -33,6 +35,7 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
   Widget build(BuildContext context) {
     final accountAsync = ref.watch(accountControllerProvider);
     final controller = ref.read(accountControllerProvider.notifier);
+    final currentGroup = accountAsync.valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -41,6 +44,38 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Exporter les tentes',
+            icon: const Icon(Icons.download_outlined),
+            onPressed: currentGroup == null
+                ? null
+                : () async {
+                    try {
+                      final tentes = await ref.read(tentesProvider.future);
+                      final filePath = await GroupExportService.exportTentsCsv(
+                        group: currentGroup,
+                        tents: tentes,
+                      );
+                      if (!context.mounted) return;
+                      if (filePath == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Export annule')),
+                        );
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Export enregistre: $filePath')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Export impossible: $e')),
+                      );
+                    }
+                  },
+          ),
+        ],
       ),
       body: accountAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
