@@ -2,12 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
 class EvenementController extends AsyncNotifier<List<Event>> {
   EventRepository get _repo => ref.read(eventRepositoryProvider);
-  final LocalStorageService _localStorage = LocalStorageService.instance;
 
   @override
   Future<List<Event>> build() async {

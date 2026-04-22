@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/domain/entities/group.dart';
-import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/data/repositories/group_repository.dart';
 import 'package:logistiscout/domain/entities/unit.dart';

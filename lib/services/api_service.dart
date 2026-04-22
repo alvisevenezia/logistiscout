@@ -4,7 +4,6 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/services/client_context_service.dart';
@@ -27,6 +26,7 @@ class ApiService {
   }
 
   static ApiService? _instance;
+  Future<bool>? _refreshInFlight;
 
   Future<Map<String, String>> _headers() async {
     final token = await TokenStore.instance.readAccessToken();
@@ -173,38 +173,63 @@ class ApiService {
   }
 
   Future<bool> refreshToken() async {
-    final refreshToken = await TokenStore.instance.readRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) return false;
-
-    final uri = Uri.parse('$baseUrl/v2/auth/refresh');
-
-    try {
-      final res = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'refresh_token': refreshToken}),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        return false;
-      }
-
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      final newAccess = data['access_token'] as String?;
-      final newRefresh = data['refresh_token'] as String?;
-
-      if (newAccess == null || newAccess.isEmpty) return false;
-
-      await TokenStore.instance.saveAccessToken(newAccess);
-      if (newRefresh != null && newRefresh.isNotEmpty) {
-        await TokenStore.instance.saveRefreshToken(newRefresh);
-      }
-      return true;
-    } catch (_) {
-      return false;
+    final inFlight = _refreshInFlight;
+    if (inFlight != null) {
+      return inFlight;
     }
+
+    final completer = Completer<bool>();
+    _refreshInFlight = completer.future;
+
+    () async {
+      try {
+        final refreshToken = await TokenStore.instance.readRefreshToken();
+        if (refreshToken == null || refreshToken.isEmpty) {
+          completer.complete(false);
+          return;
+        }
+
+        final uri = Uri.parse('$baseUrl/v2/auth/refresh');
+
+        final res = await http
+            .post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'refresh_token': refreshToken}),
+            )
+            .timeout(const Duration(seconds: 10));
+
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          completer.complete(false);
+          return;
+        }
+
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final newAccess = data['access_token'] as String?;
+        final newRefresh = data['refresh_token'] as String?;
+
+        if (newAccess == null || newAccess.isEmpty) {
+          completer.complete(false);
+          return;
+        }
+
+        await TokenStore.instance.saveAccessToken(newAccess);
+        if (newRefresh != null && newRefresh.isNotEmpty) {
+          await TokenStore.instance.saveRefreshToken(newRefresh);
+        }
+        completer.complete(true);
+      } catch (_) {
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+      } finally {
+        if (identical(_refreshInFlight, completer.future)) {
+          _refreshInFlight = null;
+        }
+      }
+    }();
+
+    return completer.future;
   }
 
   Future<dynamic> getGroupInfo() {

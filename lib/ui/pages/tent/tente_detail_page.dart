@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
@@ -48,6 +46,12 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   List<String>? _colorHexList;
   int? _favoriteUnitId;
   bool _favoriteUnitInitialized = false;
+  Tent? _currentTent;
+  Timer? _autosaveTimer;
+  Future<void>? _autosaveInFlight;
+  bool _autosaveListenersAttached = false;
+  bool _draftDirty = false;
+  bool _isAutosaving = false;
 
   static const _types = ['Canadienne', 'Tipi', 'Marabout', 'Autre'];
 
@@ -89,6 +93,8 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
   }
 
   void _ensureControllersAndState(Tent t) {
+    _currentTent = t;
+
     _nameCtl ??= TextEditingController(text: t.nom);
     _nbCtl ??= TextEditingController(text: t.nbPlaces.toString());
     _commentCtl ??= TextEditingController(text: t.comment);
@@ -106,10 +112,186 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     }
 
     _colorHexList ??= List<String>.from(t.colors);
+
+    _attachAutosaveListeners();
+  }
+
+  void _attachAutosaveListeners() {
+    if (_autosaveListenersAttached) {
+      return;
+    }
+
+    _autosaveListenersAttached = true;
+    _nameCtl?.addListener(_queueAutosave);
+    _nbCtl?.addListener(_queueAutosave);
+    _commentCtl?.addListener(_queueAutosave);
+    _teamCtl?.addListener(_queueAutosave);
+    _locationCtl?.addListener(_queueAutosave);
+  }
+
+  void _queueAutosave() {
+    if (_currentTent == null) {
+      return;
+    }
+
+    _draftDirty = true;
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(const Duration(milliseconds: 3500), () {
+      unawaited(_saveDraft());
+    });
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+
+    for (var index = 0; index < a.length; index++) {
+      if (a[index] != b[index]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  String _selectedUnitName(List<GroupUnit> groupUnits, int? favoriteUnitId) {
+    if (favoriteUnitId == null) {
+      return '';
+    }
+
+    for (final unit in groupUnits) {
+      if (int.tryParse(unit.id) == favoriteUnitId) {
+        return unit.name;
+      }
+    }
+
+    return '';
+  }
+
+  Tent _buildUpdatedTent(Tent tente, List<GroupUnit> groupUnits) {
+    return tente.copyWith(
+      nom: _nameCtl!.text.trim(),
+      nbPlaces: int.tryParse(_nbCtl!.text.trim()) ?? tente.nbPlaces,
+      tentType: _tentType!,
+      state: _tentStateFallback,
+      tentStatusId: _tentStatusId,
+      tentStatusLabel: _tentStatusLabel,
+      tentStatusColor: _tentStatusColor,
+      uniteId: _favoriteUnitId,
+      assignedUnit: _selectedUnitName(groupUnits, _favoriteUnitId),
+      isFloorEmbedded: _estIntegree!,
+      colors: _colorHexList!,
+      team: _teamCtl!.text.trim(),
+      location: _locationCtl!.text.trim(),
+    );
+  }
+
+  bool _hasTentChanged(Tent original, Tent updated) {
+    return original.nom != updated.nom ||
+        original.nbPlaces != updated.nbPlaces ||
+        original.tentType != updated.tentType ||
+        original.state != updated.state ||
+        original.tentStatusId != updated.tentStatusId ||
+        original.tentStatusLabel != updated.tentStatusLabel ||
+        original.tentStatusColor != updated.tentStatusColor ||
+        original.uniteId != updated.uniteId ||
+        original.assignedUnit != updated.assignedUnit ||
+        original.isFloorEmbedded != updated.isFloorEmbedded ||
+        !_listEquals(original.colors, updated.colors) ||
+        original.team != updated.team ||
+        original.location != updated.location;
+  }
+
+  Future<void> _saveDraft({bool force = false}) async {
+    final tent = _currentTent;
+    if (tent == null) {
+      return;
+    }
+
+    _autosaveTimer?.cancel();
+    _autosaveTimer = null;
+
+    if (_isAutosaving) {
+      return;
+    }
+
+    if (!_draftDirty && !force) {
+      return;
+    }
+
+    final updated = _buildUpdatedTent(
+      tent,
+      ref.read(accountControllerProvider).valueOrNull?.units ??
+          const <GroupUnit>[],
+    );
+    if (!_hasTentChanged(tent, updated)) {
+      _draftDirty = false;
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+
+    _isAutosaving = true;
+    if (mounted) {
+      setState(() {});
+    }
+
+    final saveFuture = ref.read(tentesProvider.notifier).updateTente(updated);
+    _autosaveInFlight = saveFuture;
+
+    try {
+      await saveFuture;
+      _draftDirty = false;
+    } catch (e, st) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sauvegarde automatique impossible : $e')),
+        );
+      }
+      debugPrintStack(label: 'Autosave tente failed', stackTrace: st);
+    } finally {
+      if (identical(_autosaveInFlight, saveFuture)) {
+        _autosaveInFlight = null;
+      }
+
+      _isAutosaving = false;
+      if (mounted) {
+        setState(() {});
+      }
+
+      if (_draftDirty && _autosaveTimer == null) {
+        _autosaveTimer = Timer(const Duration(milliseconds: 3500), () {
+          unawaited(_saveDraft());
+        });
+      }
+    }
+  }
+
+  Future<bool> _flushPendingAutosave() async {
+    _autosaveTimer?.cancel();
+    _autosaveTimer = null;
+
+    final inFlight = _autosaveInFlight;
+    if (inFlight != null) {
+      await inFlight;
+    }
+
+    if (_draftDirty) {
+      await _saveDraft(force: true);
+    }
+
+    return true;
   }
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
     _nameCtl?.dispose();
     _nbCtl?.dispose();
     _colorChipsCtl?.dispose();
@@ -191,636 +373,626 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
           _ensureControllersAndState(tente);
 
-          return controlAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) =>
-                Center(child: Text('Erreur chargement contrôles : $e')),
-            data: (controles) {
-              final dernierControle = controles.isNotEmpty
-                  ? controles.last
-                  : null;
+          return WillPopScope(
+            onWillPop: _flushPendingAutosave,
+            child: controlAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) =>
+                  Center(child: Text('Erreur chargement contrôles : $e')),
+              data: (controles) {
+                final dernierControle = controles.isNotEmpty
+                    ? controles.last
+                    : null;
 
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: HeaderCard(tent: tente),
                     ),
-                    child: HeaderCard(tent: tente),
-                  ),
 
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      children: [
-                        // --- Informations générales ---
-                        _SectionCard(
-                          title: 'Informations générales',
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: _nameCtl,
-                                decoration: inputDecoration.copyWith(
-                                  labelText: 'Nom',
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        children: [
+                          // --- Informations générales ---
+                          _SectionCard(
+                            title: 'Informations générales',
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: _nameCtl,
+                                  onChanged: (_) => _queueAutosave(),
+                                  decoration: inputDecoration.copyWith(
+                                    labelText: 'Nom',
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _nbCtl,
-                                      keyboardType: TextInputType.number,
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'Capacité (nb places)',
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      initialValue: _types.contains(_tentType!)
-                                          ? _tentType
-                                          : 'Autre',
-                                      items: _types
-                                          .map(
-                                            (t) => DropdownMenuItem(
-                                              value: t,
-                                              child: Text(
-                                                t,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (v) => setState(
-                                        () => _tentType = v ?? 'Autre',
-                                      ),
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'Type de tente',
-                                      ),
-                                      isExpanded: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: statuses.isEmpty
-                                        ? DropdownButtonFormField<TentState>(
-                                            initialValue: _tentStateFallback,
-                                            items: TentState.values
-                                                .map(
-                                                  (e) => DropdownMenuItem(
-                                                    value: e,
-                                                    child: Text(
-                                                      tentStateToString(e),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                            onChanged: (v) => setState(
-                                              () => _applyLegacyState(
-                                                v ?? TentState.broken,
-                                              ),
-                                            ),
-                                            decoration: inputDecoration
-                                                .copyWith(labelText: 'Statut'),
-                                            isExpanded: true,
-                                          )
-                                        : DropdownButtonFormField<int?>(
-                                            initialValue:
-                                                _statusById(
-                                                      statuses,
-                                                      _tentStatusId,
-                                                    ) !=
-                                                    null
-                                                ? _tentStatusId
-                                                : null,
-                                            items: statuses
-                                                .map(
-                                                  (e) => DropdownMenuItem<int?>(
-                                                    value: e.id,
-                                                    child: Text(
-                                                      e.name,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                )
-                                                .toList(),
-                                            onChanged: (v) => setState(() {
-                                              final selected = _statusById(
-                                                statuses,
-                                                v,
-                                              );
-                                              _tentStatusId = selected?.id;
-                                              _tentStatusLabel = selected?.name;
-                                              _tentStatusColor =
-                                                  selected?.color;
-                                            }),
-                                            decoration: inputDecoration
-                                                .copyWith(labelText: 'Statut'),
-                                            isExpanded: true,
-                                          ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: DropdownButtonFormField<int?>(
-                                      initialValue: _favoriteUnitId,
-                                      items: [
-                                        const DropdownMenuItem<int?>(
-                                          value: null,
-                                          child: Text(
-                                            'Aucune unité préférée',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _nbCtl,
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (_) => _queueAutosave(),
+                                        decoration: inputDecoration.copyWith(
+                                          labelText: 'Capacité (nb places)',
                                         ),
-                                        ...groupUnits
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: DropdownButtonFormField<String>(
+                                        initialValue:
+                                            _types.contains(_tentType!)
+                                            ? _tentType
+                                            : 'Autre',
+                                        items: _types
                                             .map(
-                                              (e) => DropdownMenuItem<int?>(
-                                                value: int.tryParse(e.id),
+                                              (t) => DropdownMenuItem(
+                                                value: t,
                                                 child: Text(
-                                                  e.name,
+                                                  t,
                                                   overflow:
                                                       TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             )
-                                            .where((item) => item.value != null)
-                                            .cast<DropdownMenuItem<int?>>(),
-                                      ],
-                                      onChanged: (v) =>
-                                          setState(() => _favoriteUnitId = v),
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'Unité',
-                                      ),
-                                      isExpanded: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _teamCtl,
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'Équipe',
+                                            .toList(),
+                                        onChanged: (v) => setState(() {
+                                          _tentType = v ?? 'Autre';
+                                          _queueAutosave();
+                                        }),
+                                        decoration: inputDecoration.copyWith(
+                                          labelText: 'Type de tente',
+                                        ),
+                                        isExpanded: true,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _locationCtl,
-                                      decoration: inputDecoration.copyWith(
-                                        labelText: 'Localisation',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              SwitchListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text('Tapis de sol intégré'),
-                                value: _estIntegree!,
-                                onChanged: (v) =>
-                                    setState(() => _estIntegree = v),
-                              ),
-                              const SizedBox(height: 4),
-                              _RowLabel('Couleurs'),
-                              const SizedBox(height: 6),
-                              _ColorChipsEditor(
-                                colorsHex: _colorHexList!,
-                                onAdd: (hex) =>
-                                    setState(() => _colorHexList!.add(hex)),
-                                onRemove: (hex) =>
-                                    setState(() => _colorHexList!.remove(hex)),
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.qr_code),
-                                    onPressed: () async {
-                                      final qrKey = GlobalKey();
-                                      await showDialog(
-                                        context: context,
-                                        builder: (dialogContext) => AlertDialog(
-                                          title: Text('QR Code - ${tente.nom}'),
-                                          content: RepaintBoundary(
-                                            key: qrKey,
-                                            child: Container(
-                                              color: Colors.white,
-                                              padding: const EdgeInsets.all(16),
-                                              child: Center(
-                                                child: SizedBox(
-                                                  width: 280,
-                                                  height: 280,
-                                                  child: FittedBox(
-                                                    fit: BoxFit.contain,
-                                                    child: ref
-                                                        .read(
-                                                          tentesProvider
-                                                              .notifier,
-                                                        )
-                                                        .createTenteQrCode(
-                                                          tente,
+                                  ],
+                                ),
+                                const SizedBox(height: 15),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: statuses.isEmpty
+                                          ? DropdownButtonFormField<TentState>(
+                                              initialValue: _tentStateFallback,
+                                              items: TentState.values
+                                                  .map(
+                                                    (e) => DropdownMenuItem(
+                                                      value: e,
+                                                      child: Text(
+                                                        tentStateToString(e),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              onChanged: (v) => setState(
+                                                () => _applyLegacyState(
+                                                  v ?? TentState.broken,
+                                                ),
+                                              ),
+                                              decoration: inputDecoration
+                                                  .copyWith(
+                                                    labelText: 'Statut',
+                                                  ),
+                                              isExpanded: true,
+                                            )
+                                          : DropdownButtonFormField<int?>(
+                                              initialValue:
+                                                  _statusById(
+                                                        statuses,
+                                                        _tentStatusId,
+                                                      ) !=
+                                                      null
+                                                  ? _tentStatusId
+                                                  : null,
+                                              items: statuses
+                                                  .map(
+                                                    (e) =>
+                                                        DropdownMenuItem<int?>(
+                                                          value: e.id,
+                                                          child: Text(
+                                                            e.name,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
                                                         ),
+                                                  )
+                                                  .toList(),
+                                              onChanged: (v) => setState(() {
+                                                final selected = _statusById(
+                                                  statuses,
+                                                  v,
+                                                );
+                                                _tentStatusId = selected?.id;
+                                                _tentStatusLabel =
+                                                    selected?.name;
+                                                _tentStatusColor =
+                                                    selected?.color;
+                                                _queueAutosave();
+                                              }),
+                                              decoration: inputDecoration
+                                                  .copyWith(
+                                                    labelText: 'Statut',
+                                                  ),
+                                              isExpanded: true,
+                                            ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: DropdownButtonFormField<int?>(
+                                        initialValue: _favoriteUnitId,
+                                        items: [
+                                          const DropdownMenuItem<int?>(
+                                            value: null,
+                                            child: Text(
+                                              'Aucune unité préférée',
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          ...groupUnits
+                                              .map(
+                                                (e) => DropdownMenuItem<int?>(
+                                                  value: int.tryParse(e.id),
+                                                  child: Text(
+                                                    e.name,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              )
+                                              .where(
+                                                (item) => item.value != null,
+                                              )
+                                              .cast<DropdownMenuItem<int?>>(),
+                                        ],
+                                        onChanged: (v) => setState(() {
+                                          _favoriteUnitId = v;
+                                          _queueAutosave();
+                                        }),
+                                        decoration: inputDecoration.copyWith(
+                                          labelText: 'Unité',
+                                        ),
+                                        isExpanded: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 15),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _teamCtl,
+                                        onChanged: (_) => _queueAutosave(),
+                                        decoration: inputDecoration.copyWith(
+                                          labelText: 'Équipe',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _locationCtl,
+                                        onChanged: (_) => _queueAutosave(),
+                                        decoration: inputDecoration.copyWith(
+                                          labelText: 'Localisation',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 15),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('Tapis de sol intégré'),
+                                  value: _estIntegree!,
+                                  onChanged: (v) => setState(() {
+                                    _estIntegree = v;
+                                    _queueAutosave();
+                                  }),
+                                ),
+                                const SizedBox(height: 4),
+                                _RowLabel('Couleurs'),
+                                const SizedBox(height: 6),
+                                _ColorChipsEditor(
+                                  colorsHex: _colorHexList!,
+                                  onAdd: (hex) => setState(() {
+                                    _colorHexList!.add(hex);
+                                    _queueAutosave();
+                                  }),
+                                  onRemove: (hex) => setState(() {
+                                    _colorHexList!.remove(hex);
+                                    _queueAutosave();
+                                  }),
+                                ),
+                                const SizedBox(height: 15),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.qr_code),
+                                      onPressed: () async {
+                                        final qrKey = GlobalKey();
+                                        await showDialog(
+                                          context: context,
+                                          builder: (dialogContext) => AlertDialog(
+                                            title: Text(
+                                              'QR Code - ${tente.nom}',
+                                            ),
+                                            content: RepaintBoundary(
+                                              key: qrKey,
+                                              child: Container(
+                                                color: Colors.white,
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
+                                                child: Center(
+                                                  child: SizedBox(
+                                                    width: 280,
+                                                    height: 280,
+                                                    child: FittedBox(
+                                                      fit: BoxFit.contain,
+                                                      child: ref
+                                                          .read(
+                                                            tentesProvider
+                                                                .notifier,
+                                                          )
+                                                          .createTenteQrCode(
+                                                            tente,
+                                                          ),
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(dialogContext),
-                                              child: const Text('Fermer'),
-                                            ),
-                                            ElevatedButton.icon(
-                                              icon: const Icon(Icons.save_alt),
-                                              label: const Text(
-                                                'Sauver dans la galerie',
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(
+                                                  dialogContext,
+                                                ),
+                                                child: const Text('Fermer'),
                                               ),
-                                              onPressed: () async {
-                                                final result =
-                                                    await _saveQrCodeImage(
-                                                      qrKey,
-                                                      tente.nom,
+                                              ElevatedButton.icon(
+                                                icon: const Icon(
+                                                  Icons.save_alt,
+                                                ),
+                                                label: const Text(
+                                                  'Sauver dans la galerie',
+                                                ),
+                                                onPressed: () async {
+                                                  final result =
+                                                      await _saveQrCodeImage(
+                                                        qrKey,
+                                                        tente.nom,
+                                                      );
+                                                  if (dialogContext.mounted) {
+                                                    Navigator.of(
+                                                      dialogContext,
+                                                    ).pop();
+                                                  }
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(result),
+                                                      ),
                                                     );
-                                                if (dialogContext.mounted) {
-                                                  Navigator.of(
-                                                    dialogContext,
-                                                  ).pop();
-                                                }
-                                                if (mounted) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(result),
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green.shade600,
-                                        foregroundColor: Colors.white,
-                                        elevation: 4,
-                                      ),
-                                      onPressed: () async {
-                                        var selectedUnitName = '';
-                                        if (_favoriteUnitId != null) {
-                                          for (final u in groupUnits) {
-                                            if (int.tryParse(u.id) ==
-                                                _favoriteUnitId) {
-                                              selectedUnitName = u.name;
-                                              break;
-                                            }
-                                          }
-                                        }
-
-                                        final updated = tente.copyWith(
-                                          nom: _nameCtl!.text.trim(),
-                                          nbPlaces:
-                                              int.tryParse(
-                                                _nbCtl!.text.trim(),
-                                              ) ??
-                                              tente.nbPlaces,
-                                          tentType: _tentType!,
-                                          state: _tentStateFallback,
-                                          tentStatusId: _tentStatusId,
-                                          tentStatusLabel: _tentStatusLabel,
-                                          tentStatusColor: _tentStatusColor,
-                                          uniteId: _favoriteUnitId,
-                                          assignedUnit: selectedUnitName,
-                                          isFloorEmbedded: _estIntegree!,
-                                          colors: _colorHexList!,
-                                          team: _teamCtl!.text.trim(),
-                                          location: _locationCtl!.text.trim(),
-                                        );
-                                        await ref
-                                            .read(tentesProvider.notifier)
-                                            .updateTente(updated);
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Modifications enregistrées',
+                                                  }
+                                                },
                                               ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.save),
-                                          SizedBox(width: 8),
-                                          Flexible(
-                                            child: Text(
-                                              'Enregistrer les modifications',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
+                                            ],
                                           ),
-                                        ],
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(
+                                          milliseconds: 150,
+                                        ),
+                                        child: _isAutosaving
+                                            ? const Padding(
+                                                key: ValueKey('autosaving'),
+                                                padding: EdgeInsets.all(2),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2.4,
+                                                    ),
+                                              )
+                                            : Icon(
+                                                _draftDirty
+                                                    ? Icons.cloud_off
+                                                    : Icons.cloud_done,
+                                                key: ValueKey(
+                                                  _draftDirty
+                                                      ? 'dirty'
+                                                      : 'clean',
+                                                ),
+                                                size: 22,
+                                                color: _draftDirty
+                                                    ? Colors.red.shade600
+                                                    : Colors.green.shade600,
+                                              ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // --- Dernier contrôle ---
-                        if (dernierControle != null)
-                          _SectionCard(
-                            title: 'Dernier contrôle',
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.blue.shade100,
-                                child: const Icon(
-                                  Icons.assignment_turned_in,
-                                  color: Colors.blue,
+                                  ],
                                 ),
-                              ),
-                              title: Text(
-                                'Contrôle du ${_fmtDate(dernierControle.date)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                dernierControle.comment.isNotEmpty
-                                    ? 'Remarques : ${dernierControle.comment}'
-                                    : 'Aucune remarque',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: const Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 18,
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ControleDetailPage(
-                                      controle: dernierControle,
-                                      tente: tente,
-                                    ),
-                                  ),
-                                );
-                              },
+                              ],
                             ),
                           ),
 
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                        // --- Historique des sorties (Événements) ---
-                        eventAsync.when(
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (e, _) =>
-                              Text('Erreur chargement événements : $e'),
-                          data: (evenements) {
-                            if (evenements.isEmpty) {
-                              return const _SectionCard(
+                          // --- Dernier contrôle ---
+                          if (dernierControle != null)
+                            _SectionCard(
+                              title: 'Dernier contrôle',
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.blue.shade100,
+                                  child: const Icon(
+                                    Icons.assignment_turned_in,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                title: Text(
+                                  'Contrôle du ${_fmtDate(dernierControle.date)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  dernierControle.comment.isNotEmpty
+                                      ? 'Remarques : ${dernierControle.comment}'
+                                      : 'Aucune remarque',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 18,
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ControleDetailPage(
+                                        controle: dernierControle,
+                                        tente: tente,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                          const SizedBox(height: 16),
+
+                          // --- Historique des sorties (Événements) ---
+                          eventAsync.when(
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (e, _) =>
+                                Text('Erreur chargement événements : $e'),
+                            data: (evenements) {
+                              if (evenements.isEmpty) {
+                                return const _SectionCard(
+                                  title: 'Historique des sorties',
+                                  child: Text(
+                                    'Aucune sortie enregistrée pour cette tente.',
+                                  ),
+                                );
+                              }
+
+                              return _SectionCard(
                                 title: 'Historique des sorties',
-                                child: Text(
-                                  'Aucune sortie enregistrée pour cette tente.',
+                                child: Column(
+                                  children: evenements.map((evt) {
+                                    final enCours = evt.dateFin.isAfter(
+                                      DateTime.now(),
+                                    );
+                                    return ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: CircleAvatar(
+                                        backgroundColor: enCours
+                                            ? Colors.green.shade100
+                                            : Colors.blue.shade100,
+                                        child: Icon(
+                                          enCours
+                                              ? Icons.campaign
+                                              : Icons.event_available,
+                                          color: enCours
+                                              ? Colors.green.shade800
+                                              : Colors.blue.shade800,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        evt.nom,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${_fmtDate(evt.date)}'
+                                        '${' → ${_fmtDate(evt.dateFin)}'}',
+                                      ),
+                                      trailing: const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 18,
+                                      ),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => EventDetailPage(
+                                              eventId: evt.id,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }).toList(),
                                 ),
                               );
-                            }
+                            },
+                          ),
 
-                            return _SectionCard(
-                              title: 'Historique des sorties',
-                              child: Column(
-                                children: evenements.map((evt) {
-                                  final enCours = evt.dateFin.isAfter(
-                                    DateTime.now(),
-                                  );
-                                  return ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: CircleAvatar(
-                                      backgroundColor: enCours
-                                          ? Colors.green.shade100
-                                          : Colors.blue.shade100,
-                                      child: Icon(
-                                        enCours
-                                            ? Icons.campaign
-                                            : Icons.event_available,
-                                        color: enCours
-                                            ? Colors.green.shade800
-                                            : Colors.blue.shade800,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      evt.nom,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${_fmtDate(evt.date)}'
-                                      '${' → ${_fmtDate(evt.dateFin)}'}',
-                                    ),
-                                    trailing: const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 18,
-                                    ),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              EventDetailPage(eventId: evt.id),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          },
-                        ),
+                          const SizedBox(height: 16),
 
-                        const SizedBox(height: 16),
-
-                        // --- Remarques ---
-                        _SectionCard(
-                          title: 'Remarques',
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: _commentCtl,
-                                maxLines: 3,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Notes sur la tente…',
+                          // --- Remarques ---
+                          _SectionCard(
+                            title: 'Remarques',
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: _commentCtl,
+                                  maxLines: 3,
+                                  onChanged: (_) => _queueAutosave(),
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    hintText: 'Notes sur la tente…',
+                                  ),
                                 ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: AnimatedOpacity(
+                                    opacity: _isAutosaving ? 1 : 0.45,
+                                    duration: const Duration(milliseconds: 150),
+                                    child: const Text(
+                                      'Sauvegarde automatique',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 80,
+                          ), // space for bottom buttons
+                        ],
+                      ),
+                    ),
+
+                    // 🟢 BOUTONS FIXES EN BAS
+                    SafeArea(
+                      top: false,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: const Offset(0, -2),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.assignment_turned_in),
+                                label: const Text('Faire un contrôle'),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ControllerPageName.controlerNamePage(
+                                            onNomValide: (nomControleur) async {
+                                              await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ControlEditPage(
+                                                        tent: tente,
+                                                        controllerName:
+                                                            nomControleur,
+                                                      ),
+                                                ),
+                                              );
+                                              await ref
+                                                  .read(
+                                                    controlProvider(
+                                                      tente.id,
+                                                    ).notifier,
+                                                  )
+                                                  .reload();
+                                            },
+                                          ),
+                                    ),
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.save),
-                                  label: const Text('Enregistrer la remarque'),
-                                  onPressed: () async {
-                                    final updated = tente.copyWith(
-                                      comment: _commentCtl!.text.trim(),
-                                    );
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: Colors.red.shade300),
+                                  foregroundColor: Colors.red.shade700,
+                                ),
+                                icon: const Icon(Icons.delete_forever),
+                                label: const Text('Supprimer'),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Supprimer la tente ?'),
+                                      content: Text(
+                                        'Supprimer « ${tente.nom} » ? Cette action est irréversible.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Annuler'),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Supprimer'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
                                     await ref
                                         .read(tentesProvider.notifier)
-                                        .updateTente(updated);
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Remarques enregistrées',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
+                                        .deleteTente(tente.id);
+                                    if (mounted) Navigator.pop(context);
+                                  }
+                                },
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 80), // space for bottom buttons
-                      ],
-                    ),
-                  ),
-
-                  // 🟢 BOUTONS FIXES EN BAS
-                  SafeArea(
-                    top: false,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            offset: const Offset(0, -2),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.assignment_turned_in),
-                              label: const Text('Faire un contrôle'),
-                              onPressed: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ControllerPageName.controlerNamePage(
-                                          onNomValide: (nomControleur) async {
-                                            await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => ControlEditPage(
-                                                  tent: tente,
-                                                  controllerName: nomControleur,
-                                                ),
-                                              ),
-                                            );
-                                            await ref
-                                                .read(
-                                                  controlProvider(
-                                                    tente.id,
-                                                  ).notifier,
-                                                )
-                                                .reload();
-                                          },
-                                        ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.red.shade300),
-                                foregroundColor: Colors.red.shade700,
-                              ),
-                              icon: const Icon(Icons.delete_forever),
-                              label: const Text('Supprimer'),
-                              onPressed: () async {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Supprimer la tente ?'),
-                                    content: Text(
-                                      'Supprimer « ${tente.nom} » ? Cette action est irréversible.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                        child: const Text('Annuler'),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                        ),
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                        child: const Text('Supprimer'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirm == true) {
-                                  await ref
-                                      .read(tentesProvider.notifier)
-                                      .deleteTente(tente.id);
-                                  if (mounted) Navigator.pop(context);
-                                }
-                              },
-                            ),
-                          ),
-                        ],
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           );
         },
       ),
@@ -1048,6 +1220,4 @@ class _SectionCard extends StatelessWidget {
 }
 
 // tiny helper for firstOrNull
-extension _IterableX<E> on Iterable<E> {
-  E? get firstOrNull => isEmpty ? null : first;
-}
+extension _IterableX<E> on Iterable<E> {}

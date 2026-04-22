@@ -6,7 +6,6 @@ import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/menu.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
 class EventRepositoryImpl implements EventRepository {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 

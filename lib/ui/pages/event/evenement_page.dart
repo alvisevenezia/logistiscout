@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logistiscout/core/di.dart';
-import 'package:logistiscout/domain/entities/event.dart';
-import 'package:logistiscout/domain/entities/group_unit.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/event/widgets/event_form_sheet.dart';
@@ -84,9 +80,12 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => setState(() => _showPastEvents = !_showPastEvents),
+                onPressed: () =>
+                    setState(() => _showPastEvents = !_showPastEvents),
                 child: Text(
-                  _showPastEvents ? 'Masquer les événements passés' : 'Consulter les événements passés',
+                  _showPastEvents
+                      ? 'Masquer les événements passés'
+                      : 'Consulter les événements passés',
                 ),
               ),
             ),
@@ -108,9 +107,9 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                     );
                     final matchesType =
                         _selectedType == null || evt.type == _selectedType;
-                      final isUpcoming = evt.isUpcoming(DateTime.now());
-                      final matchesTimeFilter = _showPastEvents || isUpcoming;
-                      return matchesName && matchesType && matchesTimeFilter;
+                    final isUpcoming = evt.isUpcoming(DateTime.now());
+                    final matchesTimeFilter = _showPastEvents || isUpcoming;
+                    return matchesName && matchesType && matchesTimeFilter;
                   }).toList();
 
                   if (filtered.isEmpty) {
@@ -128,10 +127,8 @@ class _EvenementsPageState extends ConsumerState<EvenementsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => EventDetailPage(
-                                eventId: filtered[index].id,
-                                openMenusDirectly: false,
-                              ),
+                              builder: (_) =>
+                                  EventDetailPage(eventId: filtered[index].id),
                             ),
                           ),
                         },

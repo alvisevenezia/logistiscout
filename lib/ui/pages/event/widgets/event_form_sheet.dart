@@ -237,7 +237,7 @@ Future<void> showEventFormSheet({
                               .then((events) {
                                 final indispo = <int>{};
                                 for (final evt in events) {
-                                  if (isEditing && evt.id == event!.id) {
+                                  if (isEditing && evt.id == event.id) {
                                     continue;
                                   }
                                   final chevauche =
@@ -261,26 +261,27 @@ Future<void> showEventFormSheet({
                                     b.nom.toLowerCase(),
                                   ),
                                 );
+                              final availableTentes = sortedTentes
+                                  .where((t) => !indispoIds.contains(t.id))
+                                  .toList();
+                              final unavailableTentes = sortedTentes
+                                  .where((t) => indispoIds.contains(t.id))
+                                  .toList();
 
                               return Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  for (final t in sortedTentes)
+                                  for (final t in availableTentes)
                                     FilterChip(
                                       label: Text(
                                         t.nom,
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: indispoIds.contains(t.id)
-                                              ? Colors.grey
-                                              : Colors.black,
+                                          color: Colors.black,
                                         ),
                                       ),
-                                      backgroundColor: indispoIds.contains(t.id)
-                                          ? Colors.grey.shade300
-                                          : Colors.grey.shade100,
-                                      disabledColor: Colors.grey.shade200,
+                                      backgroundColor: Colors.grey.shade100,
                                       selectedColor: Theme.of(
                                         context,
                                       ).colorScheme.primary.withAlpha(45),
@@ -293,18 +294,49 @@ Future<void> showEventFormSheet({
                                             : Colors.grey.shade400,
                                       ),
                                       selected: selectedTenteIds.contains(t.id),
-                                      onSelected: indispoIds.contains(t.id)
-                                          ? null
-                                          : (selected) {
-                                              setStateDialog(() {
-                                                if (selected) {
-                                                  selectedTenteIds.add(t.id);
-                                                } else {
-                                                  selectedTenteIds.remove(t.id);
-                                                }
-                                              });
-                                            },
+                                      onSelected: (selected) {
+                                        setStateDialog(() {
+                                          if (selected) {
+                                            selectedTenteIds.add(t.id);
+                                          } else {
+                                            selectedTenteIds.remove(t.id);
+                                          }
+                                        });
+                                      },
                                     ),
+                                  if (unavailableTentes.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: Text(
+                                        'Indisponibles sur la période',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium
+                                            ?.copyWith(
+                                              color: Colors.grey.shade700,
+                                            ),
+                                      ),
+                                    ),
+                                    for (final t in unavailableTentes)
+                                      FilterChip(
+                                        label: Text(
+                                          t.nom,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.grey.shade300,
+                                        disabledColor: Colors.grey.shade300,
+                                        selectedColor: Colors.grey.shade300,
+                                        side: BorderSide(
+                                          color: Colors.grey.shade400,
+                                        ),
+                                        selected: false,
+                                        onSelected: null,
+                                      ),
+                                  ],
                                 ],
                               );
                             },
@@ -329,7 +361,7 @@ Future<void> showEventFormSheet({
                               }
 
                               final savedEvent = Event(
-                                id: isEditing ? event!.id : -1,
+                                id: isEditing ? event.id : -1,
                                 nom: nomController.text.trim(),
                                 type: typeController.text.trim(),
                                 date: debut,

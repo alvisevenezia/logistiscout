@@ -5,7 +5,6 @@ import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
@@ -27,9 +26,10 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   Widget build(BuildContext context) {
     final tentesAsync = ref.watch(tentesProvider);
     final group = ref.watch(accountControllerProvider).valueOrNull;
-    final groupUnits =
-      group?.units ?? const <GroupUnit>[];
-    final statuses = _sortedStatuses(group?.tentStatuses ?? const <TentStatusRef>[]);
+    final groupUnits = group?.units ?? const <GroupUnit>[];
+    final statuses = _sortedStatuses(
+      group?.tentStatuses ?? const <TentStatusRef>[],
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tentes')),
@@ -186,10 +186,7 @@ class _TentesPageState extends ConsumerState<TentesPage> {
   ) {
     showDialog(
       context: context,
-      builder: (_) => AddTenteDialog(
-        units: units,
-        statuses: statuses,
-      ),
+      builder: (_) => AddTenteDialog(units: units, statuses: statuses),
     );
   }
 }
@@ -280,10 +277,7 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
               initialValue: status?.id,
               items: widget.statuses
                   .map(
-                    (e) => DropdownMenuItem(
-                      value: e.id,
-                      child: Text(e.name),
-                    ),
+                    (e) => DropdownMenuItem(value: e.id, child: Text(e.name)),
                   )
                   .toList(),
               onChanged: (v) => setState(() {
@@ -507,10 +501,7 @@ class _EtatFilter extends StatelessWidget {
           child: Text('Tous les statuts'),
         ),
         ...statuses.map(
-          (e) => DropdownMenuItem<int?>(
-            value: e.id,
-            child: Text(e.name),
-          ),
+          (e) => DropdownMenuItem<int?>(value: e.id, child: Text(e.name)),
         ),
       ],
       onChanged: onChanged,

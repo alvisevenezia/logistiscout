@@ -1,6 +1,5 @@
 import 'package:logistiscout/domain/entities/reservation.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
-import 'package:logistiscout/domain/entities/tent_status.dart';
 
 const _uniteIdNotProvided = Object();
 
@@ -106,10 +105,8 @@ class Tent {
     return state.chipColor;
   }
 
-  ColorPair get displayStatusPalette => ColorPair(
-        label: displayStatusLabel,
-        color: displayStatusColor,
-      );
+  ColorPair get displayStatusPalette =>
+      ColorPair(label: displayStatusLabel, color: displayStatusColor);
 }
 
 class ColorPair {

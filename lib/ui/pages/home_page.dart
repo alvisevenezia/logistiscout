@@ -5,7 +5,6 @@ import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
-import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
@@ -195,7 +194,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final evtsAVenir = [...state.evenements]
       ..sort((a, b) => a.date.compareTo(b.date));
     final prochainsEvts = evtsAVenir
-        .where((e) => e.date.isAfter(now))
+        .where((e) => e.dateFin.isAfter(now))
         .take(3)
         .toList();
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/ui/pages/account/group_settings_page.dart';
 import 'package:logistiscout/ui/pages/auth/auth_gate.dart';

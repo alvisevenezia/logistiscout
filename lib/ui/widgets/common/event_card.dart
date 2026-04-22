@@ -27,11 +27,9 @@ class EventCard extends ConsumerWidget {
     final mainUnitId = event.unites.isNotEmpty ? event.unites.first : null;
     final mainUnit = mainUnitId != null ? unitsById[mainUnitId] : null;
 
-    final cardColor = detail
-        ? mainUnit != null
-              ? Color(mainUnit.color)
-              : Colors.grey.shade200
-        : Colors.grey.shade100;
+    final cardColor = mainUnit != null
+        ? Color(mainUnit.color)
+        : Colors.grey.shade200;
 
     final unitLabel = mainUnit != null ? mainUnit.name : 'Aucune unité';
 

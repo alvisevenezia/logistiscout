@@ -4,7 +4,6 @@ import 'package:logistiscout/data/mappers/tente_mapper.dart';
 import 'package:logistiscout/data/models/tente_dto.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
 class TentRepositoryImpl implements TentRepository {
@@ -44,11 +43,15 @@ class TentRepositoryImpl implements TentRepository {
 
   @override
   Future<List<Tent>> getAvailableTent(DateTime debut, DateTime fin) async {
-    developer.log('[TenteRepository] 🔍 getAvailableTentes('
-        'debut=$debut, fin=$fin)');
+    developer.log(
+      '[TenteRepository] 🔍 getAvailableTentes('
+      'debut=$debut, fin=$fin)',
+    );
 
     final allJson = await api.getTentList();
-    final allTentes = allJson.map((j) => mapTentDtoToDomain(TentDto.fromJson(j))).toList();
+    final allTentes = allJson
+        .map((j) => mapTentDtoToDomain(TentDto.fromJson(j)))
+        .toList();
 
     final eventsJson = await api.getEventList();
 
@@ -63,14 +66,13 @@ class TentRepositoryImpl implements TentRepository {
       }
     }
 
-    final available = allTentes
-        .where((t) => !takenTentIds.contains(t.id))
-        .toList()
-      ..sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
+    final available =
+        allTentes.where((t) => !takenTentIds.contains(t.id)).toList()
+          ..sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
 
-    developer.log('[TenteRepository] ✅ ${available.length} tentes disponibles trouvées');
+    developer.log(
+      '[TenteRepository] ✅ ${available.length} tentes disponibles trouvées',
+    );
     return available;
   }
-
-
 }

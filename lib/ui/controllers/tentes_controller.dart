@@ -4,7 +4,6 @@ import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -79,7 +78,15 @@ class TentesController extends AsyncNotifier<List<Tent>> {
   Future<void> updateTente(Tent tente) async {
     try {
       await _repo.updateTent(tente);
-      await reload();
+      final current = state.valueOrNull;
+      if (current == null) {
+        await reload();
+        return;
+      }
+
+      state = AsyncValue.data(
+        current.map((item) => item.id == tente.id ? tente : item).toList(),
+      );
     } catch (e, st) {
       developer.log(
         '[TentesController] updateTente() failed',

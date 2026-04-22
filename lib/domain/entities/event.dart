@@ -21,7 +21,7 @@ class Event {
     required this.groupId,
   });
 
-  bool isUpcoming(DateTime now) => date.isAfter(now);
+  bool isUpcoming(DateTime now) => dateFin.isAfter(now);
 
   List<DateTime> get dateRange {
     final List<DateTime> out = [];
