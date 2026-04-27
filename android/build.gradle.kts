@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.LibraryExtension
+import com.android.build.api.dsl.ApplicationExtension
 
 allprojects {
     repositories {
@@ -15,10 +16,39 @@ subprojects {
 
         if (plugins.hasPlugin("com.android.library")) {
             project.extensions.configure<LibraryExtension> {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+
                 if (namespace == null) {
                     namespace = group.toString()
                 }
             }
+        }
+
+        if (plugins.hasPlugin("com.android.application")) {
+            project.extensions.configure<ApplicationExtension> {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+            }
+        }
+    }
+    
+    // Force Kotlin JVM target for all subprojects, including Flutter plugins
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 }
