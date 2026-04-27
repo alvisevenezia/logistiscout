@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/ui/controllers/evenement_detail_controller.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/event/widgets/info_card.dart';
 
 class InfosTab extends ConsumerWidget {
-  const InfosTab({super.key});
+  final VoidCallback onEdit;
+
+  const InfosTab({super.key, required this.onEdit});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,9 +24,15 @@ class InfosTab extends ConsumerWidget {
       return const Center(child: Text('Aucun événement trouvé.'));
     }
 
+    final group = ref.watch(accountControllerProvider).valueOrNull;
+    final unitsById = {
+      for (final unit in (group?.units ?? const []))
+        int.tryParse(unit.id): unit,
+    };
+
     final duration = evt.date.difference(evt.dateFin).inDays.abs() + 1;
     final unitNames = evt.unites.isNotEmpty
-        ? evt.unites.map((unit) => unit.name).join(", ")
+        ? evt.unites.map((id) => unitsById[id]?.name ?? 'Unité #$id').join(", ")
         : "Non spécifiée";
 
     final totalPlaces = c.allTentes
@@ -44,14 +53,11 @@ class InfosTab extends ConsumerWidget {
           _InfoRow(
             icon: Icons.date_range,
             label: "Période",
-            value: "Du ${_formatDate(evt.date)} au ${_formatDate(evt.dateFin)} ($duration jours)",
+            value:
+                "Du ${_formatDate(evt.date)} au ${_formatDate(evt.dateFin)} ($duration jours)",
           ),
           const Divider(),
-          _InfoRow(
-            icon: Icons.people,
-            label: "Unité(s)",
-            value: unitNames,
-          ),
+          _InfoRow(icon: Icons.people, label: "Unité(s)", value: unitNames),
           _InfoRow(
             icon: Icons.chair_alt,
             label: "Tentes assignées",
@@ -62,11 +68,7 @@ class InfosTab extends ConsumerWidget {
             child: FilledButton.icon(
               icon: const Icon(Icons.edit),
               label: const Text("Modifier l'événement"),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Ouverture de l'édition bientôt 💡")),
-                );
-              },
+              onPressed: onEdit,
             ),
           ),
         ],
@@ -76,7 +78,6 @@ class InfosTab extends ConsumerWidget {
 
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-
 }
 
 class _InfoRow extends StatelessWidget {
@@ -102,7 +103,9 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                  color: Colors.grey[800], fontWeight: FontWeight.w600),
+                color: Colors.grey[800],
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           Flexible(

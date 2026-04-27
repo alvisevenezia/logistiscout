@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
-import 'package:logistiscout/domain/entities/unit.dart';
 
-class HeaderCard extends StatelessWidget {
+class HeaderCard extends ConsumerWidget {
   final Tent tent;
   const HeaderCard({super.key, required this.tent});
 
   @override
-  Widget build(BuildContext context) {
-    final chipColor = _chipColor(tent.state);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final group = ref.watch(accountControllerProvider).valueOrNull;
+    int? matchedColor;
+    for (final u in (group?.units ?? const [])) {
+      if (int.tryParse(u.id) == tent.uniteId) {
+        matchedColor = u.color;
+        break;
+      }
+    }
+
+    final chipColor = Color(tent.displayStatusColor);
 
     return Card(
       elevation: 1.5,
@@ -19,7 +29,9 @@ class HeaderCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: Color(Unit.fromString(tent.assignedUnit).color),
+              backgroundColor: matchedColor != null
+                  ? Color(matchedColor)
+                  : Colors.grey.shade500,
               child: const Icon(Icons.cabin, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 14),
@@ -41,14 +53,17 @@ class HeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: chipColor.withAlpha(30),
                           border: Border.all(color: chipColor.withAlpha(80)),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          tentStateToString(tent.state),
+                          tent.displayStatusLabel,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -61,7 +76,7 @@ class HeaderCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${tent.tentType} • ${tent.nbPlaces} places'
-                        '${tent.assignedUnit.isNotEmpty ? ' • ${tent.assignedUnit}' : ''}',
+                    '${tent.assignedUnit.isNotEmpty ? ' • ${tent.assignedUnit}' : ''}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (tent.colors.isNotEmpty) ...[
@@ -88,17 +103,6 @@ class HeaderCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static Color _chipColor(TentState e) {
-    switch (e) {
-      case TentState.good :
-        return Colors.green.shade700;
-      case TentState.broken:
-        return Colors.orange.shade700;
-      default:
-        return Colors.red.shade700;
-    }
   }
 
   static Color _parseColor(String s) {

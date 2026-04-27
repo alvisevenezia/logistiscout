@@ -9,6 +9,8 @@ Control mapControlDtoToDomain(ControlDto dto) {
     date: DateTime.parse(dto.date),
     checklist: dto.checklist,
     comment: dto.comments,
+    imageUrl: dto.imageUrl,
+    imageUrls: dto.imageUrls,
   );
 }
 
@@ -20,5 +22,7 @@ ControlDto mapControlDomainToDto(Control control) {
     date: control.date.toIso8601String(),
     checklist: control.checklist,
     comments: control.comment,
+    imageUrl: control.imageUrl,
+    imageUrls: control.imageUrls,
   );
 }

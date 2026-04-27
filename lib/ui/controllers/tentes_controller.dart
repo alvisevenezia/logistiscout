@@ -4,30 +4,22 @@ import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
 import 'package:logistiscout/services/api_service.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 
 class TentesController extends AsyncNotifier<List<Tent>> {
-  late final TentRepository _repo;
+  final TentRepository _repo = TentRepositoryImpl(ApiService());
 
   @override
   Future<List<Tent>> build() async {
-    _repo = TentRepositoryImpl(ApiService());
     return _loadTentes();
   }
-
-
 
   Future<List<Tent>> _loadTentes() async {
     try {
       developer.log('[TentesController] Loading tents...');
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) {
-        throw Exception('Aucun groupe sélectionné.');
-      }
 
       final data = await _repo.getTentList();
       developer.log('[TentesController] Loaded ${data.length} tents');
@@ -36,7 +28,11 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
       return data;
     } catch (e, st) {
-      developer.log('[TentesController] _loadTentes() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] _loadTentes() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -48,57 +44,68 @@ class TentesController extends AsyncNotifier<List<Tent>> {
 
   Future<void> deleteTente(int id) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
-      await _repo.deleteTent(id, groupId);
+      await _repo.deleteTent(id);
       await reload();
     } catch (e, st) {
-      developer.log('[TentesController] deleteTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] deleteTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   Future<void> createTente(Tent tente) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
-
-      await _repo.createTent(groupId, tente);
+      await _repo.createTent(tente);
       await reload();
     } catch (e, st) {
-      developer.log('[TentesController] createTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] createTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   QrImageView createTenteQrCode(Tent tente) {
-    final groupId = LocalStorageService.instance.getGroupId() ?? 'unknown';
-    final qrData = 'tent:$groupId:${tente.id}';
-    return QrImageView(
-      data: qrData,
-      version: QrVersions.auto,
-      size: 200.0,
-    );
+    final qrData = 'logistiscout:///tents/${tente.id}';
+    return QrImageView(data: qrData, version: QrVersions.auto, size: 200.0);
   }
 
   Future<void> updateTente(Tent tente) async {
     try {
-      final groupId = await LocalStorageService.instance.getGroupId();
-      if (groupId == null) throw Exception('Groupe introuvable.');
+      await _repo.updateTent(tente);
+      final current = state.valueOrNull;
+      if (current == null) {
+        await reload();
+        return;
+      }
 
-      await _repo.updateTent(groupId, tente);
-      await reload();
+      state = AsyncValue.data(
+        current.map((item) => item.id == tente.id ? tente : item).toList(),
+      );
     } catch (e, st) {
-      developer.log('[TentesController] updateTente() failed', error: e, stackTrace: st);
+      developer.log(
+        '[TentesController] updateTente() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 }
 
-final tentesProvider =
-AsyncNotifierProvider<TentesController, List<Tent>>(TentesController.new);
+final tentesProvider = AsyncNotifierProvider<TentesController, List<Tent>>(
+  TentesController.new,
+);
 
-final evenementsParTenteProvider = FutureProvider.family<List<Event>, int>((ref, tenteId) async {
+final evenementsParTenteProvider = FutureProvider.family<List<Event>, int>((
+  ref,
+  tenteId,
+) async {
   final evenementsAsync = await ref.watch(evenementsProvider.future);
 
   final evenements = evenementsAsync.where((evt) {

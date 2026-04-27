@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/services/api_service.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 
 class AuthGate extends StatefulWidget {
@@ -44,14 +46,40 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!mounted) return;
 
-    context.go(loggedIn ? '/home' : '/login');
+    if (!loggedIn) {
+      context.go('/login');
+      return;
+    }
 
+    final installationId = await LocalStorageService.instance
+        .getOrCreateInstallationId();
+    final username = await LocalStorageService.instance.getUsername();
+
+    final groupId = await LocalStorageService.instance.getGroupId();
+
+    final accepted = await LocalStorageService.instance
+        .hasAcceptedTermsForDevice(
+          installationId: installationId,
+          termsVersion: kTermsVersion,
+          legacyUserIdentity: username,
+          legacyGroupId: groupId,
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (accepted) {
+      context.go('/home');
+      return;
+    }
+
+    final encodedUser = Uri.encodeQueryComponent(installationId);
+    context.go('/terms?user=$encodedUser&next=/home');
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

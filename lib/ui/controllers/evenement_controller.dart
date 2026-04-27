@@ -2,39 +2,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/repositories/event_repository.dart';
-import 'package:logistiscout/services/local_storage_service.dart';
 import 'dart:developer' as developer;
 
 class EvenementController extends AsyncNotifier<List<Event>> {
-  late final EventRepository _repo;
-  final LocalStorageService _localStorage = LocalStorageService.instance;
+  EventRepository get _repo => ref.read(eventRepositoryProvider);
 
   @override
   Future<List<Event>> build() async {
-    _repo = ref.read(eventRepositoryProvider);
     return _loadEvenements();
   }
 
   Future<List<Event>> _loadEvenements() async {
     try {
-      final groupId = await _localStorage.getGroupId();
-
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
-
-      developer.log('[EvenementController] 🚀 Loading events for groupId=$groupId');
+      developer.log('[EvenementController] 🚀 Loading events ');
 
       final events = await _repo.getAllEvents();
 
-      developer.log('[EvenementController] ✅ Successfully loaded ${events.length} events');
+      developer.log(
+        '[EvenementController] ✅ Successfully loaded ${events.length} events',
+      );
       if (events.isNotEmpty) {
         developer.log('First event: ${events.first.nom}');
       }
 
       return events;
     } catch (e, st) {
-      developer.log('[EvenementController] ❌ _loadEvenements() failed', error: e, stackTrace: st);
+      developer.log(
+        '[EvenementController] ❌ _loadEvenements() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -46,56 +43,56 @@ class EvenementController extends AsyncNotifier<List<Event>> {
 
   Future<void> addEvenement(Event event) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
-
-      developer.log('[EvenementController] ➕ Adding event "${event.nom}" for groupId=$groupId');
+      developer.log('[EvenementController] ➕ Adding event "${event.nom}" ');
 
       await _repo.createEvent(event);
 
       await reload();
     } catch (e, st) {
-      developer.log('[EvenementController] ❌ addEvenement() failed', error: e, stackTrace: st);
+      developer.log(
+        '[EvenementController] ❌ addEvenement() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   Future<void> updateEvenement(Event event) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
+      developer.log('[EvenementController] ✏️ Updating event id=${event.id}');
 
-      developer.log('[EvenementController] ✏️ Updating event id=${event.id} ($groupId)');
-
-     _repo.updateEvent(event);
+      await _repo.updateEvent(event);
 
       await reload();
     } catch (e, st) {
-      developer.log('[EvenementController] ❌ updateEvenement() failed', error: e, stackTrace: st);
+      developer.log(
+        '[EvenementController] ❌ updateEvenement() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   Future<void> deleteEvenement(int id) async {
     try {
-      final groupId = await _localStorage.getGroupId();
-      if (groupId == null || groupId.isEmpty) {
-        throw Exception('groupId introuvable — utilisateur non connecté');
-      }
+      developer.log('[EvenementController] 🗑️ Deleting event id=$id ');
 
-      developer.log('[EvenementController] 🗑️ Deleting event id=$id for groupId=$groupId');
-
+      await _repo.deleteEvent(id);
       await reload();
     } catch (e, st) {
-      developer.log('[EvenementController] ❌ deleteEvenement() failed', error: e, stackTrace: st);
+      developer.log(
+        '[EvenementController] ❌ deleteEvenement() failed',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 }
 
 final evenementsProvider =
-AsyncNotifierProvider<EvenementController, List<Event>>(EvenementController.new);
+    AsyncNotifierProvider<EvenementController, List<Event>>(
+      EvenementController.new,
+    );

@@ -48,7 +48,11 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Cette application a besoin d'accéder à la caméra pour scanner des codes QR et des documents.</string>
+	<string>Cette application utilise la caméra pour scanner des QR codes. This app uses the camera to scan QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Cette application accède à la photothèque pour sélectionner des photos de contrôles. This app accesses your photo library so you can select inspection photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Cette application enregistre des images générées (ex: QR code) dans votre photothèque. This app saves generated images (for example QR codes) to your photo library.</string>
 	<key>CFBundleURLTypes</key>
     <array>
       <dict>

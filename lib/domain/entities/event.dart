@@ -1,5 +1,4 @@
 // domain/entities/evenement.dart
-import 'package:logistiscout/domain/entities/unit.dart';
 
 class Event {
   final int id;
@@ -8,7 +7,7 @@ class Event {
   final DateTime dateFin;
   final String type;
   final List<int> associatedTents;
-  final List<Unit> unites;
+  final List<int> unites;
   final String groupId;
 
   const Event({
@@ -22,7 +21,7 @@ class Event {
     required this.groupId,
   });
 
-  bool isUpcoming(DateTime now) => date.isAfter(now);
+  bool isUpcoming(DateTime now) => dateFin.isAfter(now);
 
   List<DateTime> get dateRange {
     final List<DateTime> out = [];
@@ -42,7 +41,7 @@ class Event {
     DateTime? dateFin,
     String? type,
     List<int>? associatedTents,
-    List<Unit>? unites,
+    List<int>? unites,
     String? groupId,
   }) {
     return Event(
