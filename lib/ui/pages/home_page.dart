@@ -277,6 +277,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             error: state.error,
             isOffline: state.isOffline,
             hasData: state.evenements.isNotEmpty || state.tentes.isNotEmpty,
+            totalTentes: state.tentes.length,
             prochainsEvts: prochainsEvts,
             tentesUtilisees: tentesUtilisees,
             tentesToRepair: tentesToRepair,
@@ -413,6 +414,7 @@ class _HomeBody extends StatelessWidget {
     required this.error,
     required this.isOffline,
     required this.hasData,
+    required this.totalTentes,
     required this.prochainsEvts,
     required this.tentesUtilisees,
     required this.tentesToRepair,
@@ -423,6 +425,7 @@ class _HomeBody extends StatelessWidget {
   final String? error;
   final bool isOffline;
   final bool hasData;
+  final int totalTentes;
 
   final List<Event> prochainsEvts;
   final List<Tent> tentesUtilisees;
@@ -482,6 +485,17 @@ class _HomeBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _HomeStatsStrip(
+                    totalTentes: totalTentes,
+                    enReparation: tentesToRepair.length,
+                    enService: (totalTentes - tentesToRepair.length).clamp(
+                      0,
+                      totalTentes,
+                    ),
+                    evenementsAVenir: prochainsEvts.length,
+                    tentesUtilisees: tentesUtilisees.length,
+                  ),
+                  const SizedBox(height: 20),
                   Text(
                     'Prochains événements',
                     style: Theme.of(context).textTheme.titleLarge,
@@ -530,6 +544,191 @@ class _HomeBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HomeStatsStrip extends StatelessWidget {
+  const _HomeStatsStrip({
+    required this.totalTentes,
+    required this.enReparation,
+    required this.enService,
+    required this.evenementsAVenir,
+    required this.tentesUtilisees,
+  });
+
+  final int totalTentes;
+  final int enReparation;
+  final int enService;
+  final int evenementsAVenir;
+  final int tentesUtilisees;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = <_HomeStatCardData>[
+      _HomeStatCardData(
+        title: 'Tentes',
+        value: totalTentes.toString(),
+        subtitle: 'au total',
+        icon: Icons.cabin,
+        colors: [const Color(0xFF1D4ED8), const Color(0xFF60A5FA)],
+      ),
+      _HomeStatCardData(
+        title: 'Opérationnelles',
+        value: enService.toString(),
+        subtitle: 'prêtes à partir',
+        icon: Icons.check_circle,
+        colors: [const Color(0xFF047857), const Color(0xFF34D399)],
+      ),
+      _HomeStatCardData(
+        title: 'En réparation',
+        value: enReparation.toString(),
+        subtitle: 'à surveiller',
+        icon: Icons.build_circle,
+        colors: [const Color(0xFFB45309), const Color(0xFFF59E0B)],
+      ),
+      _HomeStatCardData(
+        title: 'Sorties',
+        value: evenementsAVenir.toString(),
+        subtitle: '$tentesUtilisees tentes utilisées',
+        icon: Icons.event_available,
+        colors: [const Color(0xFF7C3AED), const Color(0xFFA78BFA)],
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Aperçu',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 520;
+            if (isWide) {
+              return GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 2.7,
+                children: cards
+                    .map((data) => _HomeStatCard(data: data))
+                    .toList(),
+              );
+            }
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: cards
+                  .map(
+                    (data) => SizedBox(
+                      width: (constraints.maxWidth - 12) / 2,
+                      child: _HomeStatCard(data: data),
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeStatCardData {
+  final String title;
+  final String value;
+  final String subtitle;
+  final IconData icon;
+  final List<Color> colors;
+
+  const _HomeStatCardData({
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.icon,
+    required this.colors,
+  });
+}
+
+class _HomeStatCard extends StatelessWidget {
+  final _HomeStatCardData data;
+
+  const _HomeStatCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: data.colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(data.icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  data.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data.value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  data.subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
