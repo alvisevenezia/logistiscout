@@ -23,7 +23,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   int tapCount = 0;
   DateTime? firstTapTime;
   bool _migrationPopupShown = false;
-  bool _noticesChecked = false;
 
   @override
   void initState() {
@@ -88,10 +87,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _showLoginNotices() async {
-    if (_noticesChecked || !mounted) {
+    if (!mounted) {
       return;
     }
-    _noticesChecked = true;
 
     try {
       final notices = await ref.read(apiServiceProvider).getActiveNotices();
