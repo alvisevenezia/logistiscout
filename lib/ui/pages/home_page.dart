@@ -237,9 +237,31 @@ class _HomePageState extends ConsumerState<HomePage> {
             icon: const Icon(Icons.logout),
             tooltip: 'Déconnexion',
             onPressed: () async {
-              await controller.logout(ref);
-              if (context.mounted) {
-                context.go('/login');
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Se déconnecter ?'),
+                  content: const Text(
+                    'Voulez-vous vraiment vous déconnecter de votre compte ?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: const Text('Annuler'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text('Déconnexion'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await controller.logout(ref);
+                if (context.mounted) {
+                  context.go('/login');
+                }
               }
             },
           ),

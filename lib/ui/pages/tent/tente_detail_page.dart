@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
+import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
@@ -380,9 +381,10 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
               error: (e, _) =>
                   Center(child: Text('Erreur chargement contrôles : $e')),
               data: (controles) {
-                final dernierControle = controles.isNotEmpty
-                    ? controles.last
-                    : null;
+                final controlesRecents = [...controles]
+                  ..sort((a, b) => b.date.compareTo(a.date));
+                final controlesApercu = controlesRecents.take(3).toList();
+                final hasMoreControles = controlesRecents.length > 3;
 
                 return Column(
                   children: [
@@ -735,49 +737,89 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
                           const SizedBox(height: 16),
 
-                          // --- Dernier contrôle ---
-                          if (dernierControle != null)
-                            _SectionCard(
-                              title: 'Dernier contrôle',
-                              child: ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.blue.shade100,
-                                  child: const Icon(
-                                    Icons.assignment_turned_in,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                                title: Text(
-                                  'Contrôle du ${_fmtDate(dernierControle.date)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  dernierControle.comment.isNotEmpty
-                                      ? 'Remarques : ${dernierControle.comment}'
-                                      : 'Aucune remarque',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 18,
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ControleDetailPage(
-                                        controle: dernierControle,
-                                        tente: tente,
+                          _SectionCard(
+                            title: 'Historique des contrôles',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (controlesRecents.isEmpty)
+                                  const Text(
+                                    'Aucun contrôle enregistré pour cette tente.',
+                                  )
+                                else ...[
+                                  ...controlesApercu.map((controle) {
+                                    return Card(
+                                      elevation: 0,
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        side: BorderSide(
+                                          color: Colors.blue.shade100,
+                                        ),
+                                      ),
+                                      child: ListTile(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 8,
+                                            ),
+                                        leading: CircleAvatar(
+                                          backgroundColor: Colors.blue.shade100,
+                                          child: const Icon(
+                                            Icons.assignment_turned_in,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                        title: Text(
+                                          'Contrôle du ${_fmtDate(controle.date)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          controle.comment.isNotEmpty
+                                              ? controle.comment
+                                              : 'Aucune remarque',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        trailing: const Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: 18,
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  ControleDetailPage(
+                                                    controle: controle,
+                                                    tente: tente,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                  if (hasMoreControles)
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton.icon(
+                                        onPressed: () =>
+                                            _showAllControlsHistory(
+                                              context,
+                                              tente,
+                                              controlesRecents,
+                                            ),
+                                        icon: const Icon(Icons.visibility),
+                                        label: const Text('Voir plus'),
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
+                                ],
+                              ],
                             ),
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -996,6 +1038,112 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
           );
         },
       ),
+    );
+  }
+
+  void _showAllControlsHistory(
+    BuildContext context,
+    Tent tente,
+    List<Control> controles,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Historique complet des contrôles',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Fermer',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(sheetContext),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: controles.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final controle = controles[index];
+                      final hasComment = controle.comment.trim().isNotEmpty;
+                      return Card(
+                        elevation: 0,
+                        margin: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.blue.shade100,
+                            child: const Icon(
+                              Icons.assignment_turned_in,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          title: Text(
+                            'Contrôle du ${_fmtDate(controle.date)}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              hasComment ? controle.comment : 'Aucune remarque',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 18,
+                          ),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ControleDetailPage(
+                                  controle: controle,
+                                  tente: tente,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
