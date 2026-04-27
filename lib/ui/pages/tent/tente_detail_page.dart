@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
-import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
@@ -19,6 +17,9 @@ import 'package:logistiscout/ui/pages/control/controle_detail_page.dart';
 import 'package:logistiscout/ui/pages/control/controle_edit_page.dart';
 import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/tent/widgets/tente_control_history_section.dart';
+import 'package:logistiscout/ui/pages/tent/widgets/tente_detail_common_widgets.dart';
+import 'package:logistiscout/ui/pages/tent/widgets/tente_event_history_section.dart';
 import 'package:logistiscout/ui/widgets/common/hearder_card.dart';
 
 class TenteDetailPage extends ConsumerStatefulWidget {
@@ -381,11 +382,6 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
               error: (e, _) =>
                   Center(child: Text('Erreur chargement contrôles : $e')),
               data: (controles) {
-                final controlesRecents = [...controles]
-                  ..sort((a, b) => b.date.compareTo(a.date));
-                final controlesApercu = controlesRecents.take(3).toList();
-                final hasMoreControles = controlesRecents.length > 3;
-
                 return Column(
                   children: [
                     Padding(
@@ -401,7 +397,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         children: [
                           // --- Informations générales ---
-                          _SectionCard(
+                          TenteSectionCard(
                             title: 'Informations générales',
                             child: Column(
                               children: [
@@ -603,9 +599,9 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                   }),
                                 ),
                                 const SizedBox(height: 4),
-                                _RowLabel('Couleurs'),
+                                const TenteRowLabel('Couleurs'),
                                 const SizedBox(height: 6),
-                                _ColorChipsEditor(
+                                TenteColorChipsEditor(
                                   colorsHex: _colorHexList!,
                                   onAdd: (hex) => setState(() {
                                     _colorHexList!.add(hex);
@@ -737,166 +733,30 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
                           const SizedBox(height: 16),
 
-                          _SectionCard(
-                            title: 'Historique des contrôles',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (controlesRecents.isEmpty)
-                                  const Text(
-                                    'Aucun contrôle enregistré pour cette tente.',
-                                  )
-                                else ...[
-                                  ...controlesApercu.map((controle) {
-                                    return Card(
-                                      elevation: 0,
-                                      margin: const EdgeInsets.only(bottom: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                        side: BorderSide(
-                                          color: Colors.blue.shade100,
-                                        ),
-                                      ),
-                                      child: ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 8,
-                                            ),
-                                        leading: CircleAvatar(
-                                          backgroundColor: Colors.blue.shade100,
-                                          child: const Icon(
-                                            Icons.assignment_turned_in,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                        title: Text(
-                                          'Contrôle du ${_fmtDate(controle.date)}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          controle.comment.isNotEmpty
-                                              ? controle.comment
-                                              : 'Aucune remarque',
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        trailing: const Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          size: 18,
-                                        ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  ControleDetailPage(
-                                                    controle: controle,
-                                                    tente: tente,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }),
-                                  if (hasMoreControles)
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton.icon(
-                                        onPressed: () =>
-                                            _showAllControlsHistory(
-                                              context,
-                                              tente,
-                                              controlesRecents,
-                                            ),
-                                        icon: const Icon(Icons.visibility),
-                                        label: const Text('Voir plus'),
-                                      ),
-                                    ),
-                                ],
-                              ],
-                            ),
+                          TenteControlHistorySection(
+                            controls: controles,
+                            tent: tente,
+                            formatDate: _fmtDate,
                           ),
 
                           const SizedBox(height: 16),
 
-                          // --- Historique des sorties (Événements) ---
                           eventAsync.when(
                             loading: () => const Center(
                               child: CircularProgressIndicator(),
                             ),
                             error: (e, _) =>
                                 Text('Erreur chargement événements : $e'),
-                            data: (evenements) {
-                              if (evenements.isEmpty) {
-                                return const _SectionCard(
-                                  title: 'Historique des sorties',
-                                  child: Text(
-                                    'Aucune sortie enregistrée pour cette tente.',
-                                  ),
-                                );
-                              }
-
-                              return _SectionCard(
-                                title: 'Historique des sorties',
-                                child: Column(
-                                  children: evenements.map((evt) {
-                                    final enCours = evt.dateFin.isAfter(
-                                      DateTime.now(),
-                                    );
-                                    return ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      leading: CircleAvatar(
-                                        backgroundColor: enCours
-                                            ? Colors.green.shade100
-                                            : Colors.blue.shade100,
-                                        child: Icon(
-                                          enCours
-                                              ? Icons.campaign
-                                              : Icons.event_available,
-                                          color: enCours
-                                              ? Colors.green.shade800
-                                              : Colors.blue.shade800,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        evt.nom,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        '${_fmtDate(evt.date)}'
-                                        '${' → ${_fmtDate(evt.dateFin)}'}',
-                                      ),
-                                      trailing: const Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 18,
-                                      ),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => EventDetailPage(
-                                              eventId: evt.id,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                              );
-                            },
+                            data: (evenements) => TenteEventHistorySection(
+                              events: evenements,
+                              formatDate: _fmtDate,
+                            ),
                           ),
 
                           const SizedBox(height: 16),
 
                           // --- Remarques ---
-                          _SectionCard(
+                          TenteSectionCard(
                             title: 'Remarques',
                             child: Column(
                               children: [
@@ -1041,112 +901,6 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
     );
   }
 
-  void _showAllControlsHistory(
-    BuildContext context,
-    Tent tente,
-    List<Control> controles,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        final theme = Theme.of(sheetContext);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Historique complet des contrôles',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Fermer',
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(sheetContext),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: controles.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final controle = controles[index];
-                      final hasComment = controle.comment.trim().isNotEmpty;
-                      return Card(
-                        elevation: 0,
-                        margin: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(
-                            color: theme.colorScheme.outlineVariant,
-                          ),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.blue.shade100,
-                            child: const Icon(
-                              Icons.assignment_turned_in,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          title: Text(
-                            'Contrôle du ${_fmtDate(controle.date)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              hasComment ? controle.comment : 'Aucune remarque',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 18,
-                          ),
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ControleDetailPage(
-                                  controle: controle,
-                                  tente: tente,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   static String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }
@@ -1190,182 +944,3 @@ Future<String> _saveQrCodeImage(GlobalKey qrKey, String name) async {
   await file.writeAsBytes(bytes, flush: true);
   return 'Échec galerie, QR code enregistré localement: ${file.path}';
 }
-
-class _ColorChipsEditor extends StatelessWidget {
-  final List<String> colorsHex;
-  final void Function(String hex) onAdd;
-  final void Function(String hex) onRemove;
-
-  const _ColorChipsEditor({
-    required this.colorsHex,
-    required this.onAdd,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.start,
-      children: [
-        // existing colors as removable chips
-        ...colorsHex.map((hex) {
-          final color = _parseHexColor(hex);
-          return Chip(
-            label: Text(
-              hex.toUpperCase(),
-              style: TextStyle(
-                color:
-                    ThemeData.estimateBrightnessForColor(color) ==
-                        Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
-              ),
-            ),
-            backgroundColor: color,
-            deleteIcon: const Icon(Icons.close),
-            onDeleted: () => onRemove(hex),
-          );
-        }),
-
-        // "+" add button
-        _AddColorButton(
-          onPick: (color) {
-            final hex = _toHex(color);
-            if (!colorsHex.contains(hex)) {
-              onAdd(hex);
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  static Color _parseHexColor(String hex) {
-    try {
-      final h = hex.startsWith('#') ? hex.substring(1) : hex;
-      return Color(int.parse(h, radix: 16) + 0xFF000000);
-    } catch (_) {
-      return Colors.grey.shade400;
-    }
-  }
-
-  static String _toHex(Color c) {
-    final v = (c.toARGB32() & 0xFFFFFF)
-        .toRadixString(16)
-        .padLeft(6, '0')
-        .toUpperCase();
-    return '#$v';
-    // If you want ARGB: return '#${c.value.toRadixString(16).padLeft(8,'0').toUpperCase()}';
-  }
-}
-
-class _AddColorButton extends StatelessWidget {
-  final void Function(Color) onPick;
-  const _AddColorButton({required this.onPick});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        Color temp = Colors.blue;
-        final ok = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Choisir une couleur'),
-            content: SingleChildScrollView(
-              child: ColorPicker(
-                pickerColor: temp,
-                onColorChanged: (c) => temp = c,
-                enableAlpha: false,
-                pickerAreaHeightPercent: 0.7,
-              ),
-            ),
-            actions: [
-              TextButton(
-                child: const Text('Annuler'),
-                onPressed: () => Navigator.pop(context, false),
-              ),
-              ElevatedButton(
-                child: const Text('Ajouter'),
-                onPressed: () => Navigator.pop(context, true),
-              ),
-            ],
-          ),
-        );
-        if (ok == true) {
-          onPick(temp);
-        }
-      },
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black26),
-          borderRadius: BorderRadius.circular(19),
-          color: Colors.white,
-        ),
-        child: const Icon(Icons.add, size: 22),
-      ),
-    );
-  }
-}
-
-class _RowLabel extends StatelessWidget {
-  final String text;
-  const _RowLabel(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _SectionCard({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              // 👈 title + action icon aligned
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// tiny helper for firstOrNull
-extension _IterableX<E> on Iterable<E> {}
