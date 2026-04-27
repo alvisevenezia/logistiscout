@@ -51,16 +51,19 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
 
+    final installationId = await LocalStorageService.instance
+        .getOrCreateInstallationId();
     final username = await LocalStorageService.instance.getUsername();
-    if (username == null || username.trim().isEmpty) {
-      context.go('/login');
-      return;
-    }
 
-    final accepted = await LocalStorageService.instance.hasAcceptedTerms(
-      userIdentity: username,
-      termsVersion: kTermsVersion,
-    );
+    final groupId = await LocalStorageService.instance.getGroupId();
+
+    final accepted = await LocalStorageService.instance
+        .hasAcceptedTermsForDevice(
+          installationId: installationId,
+          termsVersion: kTermsVersion,
+          legacyUserIdentity: username,
+          legacyGroupId: groupId,
+        );
 
     if (!mounted) {
       return;
@@ -71,7 +74,7 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
 
-    final encodedUser = Uri.encodeQueryComponent(username);
+    final encodedUser = Uri.encodeQueryComponent(installationId);
     context.go('/terms?user=$encodedUser&next=/home');
   }
 

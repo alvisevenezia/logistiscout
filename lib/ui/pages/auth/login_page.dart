@@ -115,6 +115,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 _passwordController.text.trim(),
                               );
                           if (success && mounted) {
+                            final installationId = await LocalStorageService
+                                .instance
+                                .getOrCreateInstallationId();
+                            final groupId = await LocalStorageService.instance
+                                .getGroupId();
                             final savedName = await LocalStorageService.instance
                                 .getControllerName();
 
@@ -134,14 +139,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 .getUsername();
                             final hasAcceptedTerms = await LocalStorageService
                                 .instance
-                                .hasAcceptedTerms(
-                                  userIdentity: username ?? '',
+                                .hasAcceptedTermsForDevice(
+                                  installationId: installationId,
                                   termsVersion: widget.termsVersion,
+                                  legacyUserIdentity: username,
+                                  legacyGroupId: groupId,
                                 );
 
                             if (!hasAcceptedTerms && mounted) {
                               final encodedUser = Uri.encodeQueryComponent(
-                                username ?? '',
+                                installationId,
                               );
                               context.go('/terms?user=$encodedUser&next=/home');
                               return;

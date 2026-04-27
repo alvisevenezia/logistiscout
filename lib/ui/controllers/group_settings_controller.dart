@@ -4,6 +4,10 @@ import 'package:logistiscout/domain/entities/group.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/data/repositories/group_repository.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
+import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/controllers/home_controller.dart';
+import 'package:logistiscout/ui/controllers/evenement_controller.dart';
+import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import '../../core/di.dart';
 
 class GroupSettingsController extends AsyncNotifier<Group> {
@@ -65,17 +69,31 @@ class GroupSettingsController extends AsyncNotifier<Group> {
       return false;
     }
 
-    return _updateGroup(
-      group.copyWith(
-        name: normalizedName == null || normalizedName.isEmpty
-            ? null
-            : normalizedName,
-        email: normalizedEmail,
-        login: normalizedLogin == null || normalizedLogin.isEmpty
-            ? null
-            : normalizedLogin,
-      ),
+    final updated = group.copyWith(
+      name: normalizedName == null || normalizedName.isEmpty
+          ? null
+          : normalizedName,
+      email: normalizedEmail,
+      login: normalizedLogin == null || normalizedLogin.isEmpty
+          ? null
+          : normalizedLogin,
     );
+
+    final ok = await _updateGroup(updated);
+    if (!ok) {
+      return false;
+    }
+
+    if (normalizedLogin != null && normalizedLogin.isNotEmpty) {
+      await LocalStorageService.instance.saveUsername(normalizedLogin);
+    }
+
+    ref.invalidate(evenementsProvider);
+    ref.invalidate(tentesProvider);
+    ref.invalidate(accountControllerProvider);
+    ref.invalidate(accueilControllerProvider);
+
+    return true;
   }
 
   void setType(String type) {

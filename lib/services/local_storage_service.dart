@@ -6,6 +6,7 @@ class LocalStorageService {
   static final LocalStorageService instance = LocalStorageService._();
 
   static const _usernameKey = 'username';
+  static const _groupIdKey = 'groupId';
   static const _controleurKey = 'controleurName';
   static const _tokenKey = 'token';
   static const _installationIdKey = 'installationId';
@@ -17,6 +18,16 @@ class LocalStorageService {
   Future<void> saveUsername(String username) async {
     final prefs = await _prefs;
     await prefs.setString(_usernameKey, username);
+  }
+
+  Future<void> saveGroupId(String groupId) async {
+    final prefs = await _prefs;
+    await prefs.setString(_groupIdKey, groupId);
+  }
+
+  Future<String?> getGroupId() async {
+    final prefs = await _prefs;
+    return prefs.getString(_groupIdKey);
   }
 
   Future<String?> getUsername() async {
@@ -52,8 +63,8 @@ class LocalStorageService {
     await prefs.setString(_installationIdKey, installationId);
   }
 
-  String _termsAcceptedKey(String userIdentity, String termsVersion) {
-    final normalizedIdentity = userIdentity.trim().toLowerCase();
+  String _termsAcceptedKey(String subject, String termsVersion) {
+    final normalizedIdentity = subject.trim().toLowerCase();
     return '$_termsAcceptedPrefix:$normalizedIdentity:$termsVersion';
   }
 
@@ -68,6 +79,45 @@ class LocalStorageService {
     final prefs = await _prefs;
     return prefs.getBool(_termsAcceptedKey(userIdentity, termsVersion)) ??
         false;
+  }
+
+  Future<bool> hasAcceptedTermsForDevice({
+    required String installationId,
+    required String termsVersion,
+    String? legacyUserIdentity,
+    String? legacyGroupId,
+  }) async {
+    if (installationId.trim().isEmpty) {
+      return false;
+    }
+
+    if (await hasAcceptedTerms(
+      userIdentity: installationId,
+      termsVersion: termsVersion,
+    )) {
+      return true;
+    }
+
+    final legacyCandidates = <String?>[legacyUserIdentity, legacyGroupId];
+    for (final candidate in legacyCandidates) {
+      if (candidate == null || candidate.trim().isEmpty) {
+        continue;
+      }
+
+      final accepted = await hasAcceptedTerms(
+        userIdentity: candidate,
+        termsVersion: termsVersion,
+      );
+      if (accepted) {
+        await acceptTerms(
+          userIdentity: installationId,
+          termsVersion: termsVersion,
+        );
+        return true;
+      }
+    }
+
+    return false;
   }
 
   Future<void> acceptTerms({

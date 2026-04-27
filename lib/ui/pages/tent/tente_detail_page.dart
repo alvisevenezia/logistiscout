@@ -139,7 +139,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
 
     _draftDirty = true;
     _autosaveTimer?.cancel();
-    _autosaveTimer = Timer(const Duration(milliseconds: 3500), () {
+    _autosaveTimer = Timer(const Duration(milliseconds: 1500), () {
       unawaited(_saveDraft());
     });
 
