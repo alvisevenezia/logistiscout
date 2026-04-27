@@ -21,10 +21,6 @@ subprojects {
                     targetCompatibility = JavaVersion.VERSION_17
                 }
 
-                kotlinOptions {
-                    jvmTarget = "17"
-                }
-
                 if (namespace == null) {
                     namespace = group.toString()
                 }
@@ -38,17 +34,14 @@ subprojects {
                     targetCompatibility = JavaVersion.VERSION_17
                 }
 
-                kotlinOptions {
-                    jvmTarget = "17"
-                }
             }
         }
-    }
-    
-    // Force Kotlin JVM target for all subprojects, including Flutter plugins
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        
+        // Force Kotlin JVM target for all subprojects, including Flutter plugins
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
         }
     }
 }
