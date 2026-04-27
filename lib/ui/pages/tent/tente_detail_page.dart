@@ -17,6 +17,7 @@ import 'package:logistiscout/ui/pages/control/controle_detail_page.dart';
 import 'package:logistiscout/ui/pages/control/controle_edit_page.dart';
 import 'package:logistiscout/ui/pages/control/controle_saisie_nom_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
+import 'package:logistiscout/ui/pages/tent/widgets/tente_action_journal_section.dart';
 import 'package:logistiscout/ui/pages/tent/widgets/tente_control_history_section.dart';
 import 'package:logistiscout/ui/pages/tent/widgets/tente_detail_common_widgets.dart';
 import 'package:logistiscout/ui/pages/tent/widgets/tente_event_history_section.dart';
@@ -751,6 +752,14 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                               events: evenements,
                               formatDate: _fmtDate,
                             ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          TenteActionJournalSection(
+                            controls: controles,
+                            tent: tente,
+                            formatDate: _fmtDate,
                           ),
 
                           const SizedBox(height: 16),
