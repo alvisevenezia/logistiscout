@@ -5,6 +5,7 @@ import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/data/repositories/group_repository.dart';
 import 'package:logistiscout/domain/entities/unit.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
@@ -94,6 +95,11 @@ class GroupSettingsController extends AsyncNotifier<Group> {
     ref.invalidate(accueilControllerProvider);
 
     return true;
+  }
+
+  Future<void> deleteAccount() async {
+    await _groupRepository.deleteCurrentGroup();
+    await ref.read(accueilControllerProvider.notifier).logout(ref);
   }
 
   void setType(String type) {
