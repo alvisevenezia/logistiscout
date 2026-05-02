@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/legal_constants.dart';
+import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/ui/controllers/login_controller.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/ui/pages/auth/forgot_password_page.dart';
@@ -24,6 +25,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  String _errorMessageFor(Object error) {
+    if (error is AppException) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        final backend = error.message.trim().toLowerCase();
+        if (backend == 'mot de passe incorrect') {
+          return 'Mot de passe incorrect.';
+        }
+        if (backend == 'compte introuvable ou supprimé') {
+          return 'Ce compte a été supprimé ou n\'existe plus.';
+        }
+        if (backend == 'identifiants invalides') {
+          return 'Identifiant ou mot de passe incorrect.';
+        }
+      }
+      return error.message;
+    }
+    return error.toString().replaceFirst('Exception: ', '');
+  }
+
   @override
   void dispose() {
     _loginController.dispose();
@@ -34,6 +54,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginControllerProvider);
+    final uiError = loginState.asError?.error;
+
+    ref.listen<AsyncValue<void>>(loginControllerProvider, (previous, next) {
+      final currentError = next.asError?.error;
+      final previousError = previous?.asError?.error;
+
+      if (!mounted ||
+          currentError == null ||
+          identical(currentError, previousError)) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(_errorMessageFor(currentError)),
+            backgroundColor: Colors.red,
+          ),
+        );
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Connexion')),
@@ -161,6 +202,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       },
               ),
 
+              if (uiError != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessageFor(uiError),
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
+
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -183,24 +232,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 },
                 child: const Text("Créer un compte"),
               ),
-              // Error message
-              if (loginState.hasError)
-                if (loginState.error.toString().contains(
-                  '401',
-                )) // 🔹 Check for specific error
-                  const Text(
-                    'Identifiant ou mot de passe incorrect',
-                    style: TextStyle(color: Colors.red),
-                  )
-                else
-                  Text(
-                    loginState.error?.toString().replaceFirst(
-                          'Exception: ',
-                          '',
-                        ) ??
-                        'Erreur inconnue',
-                    style: const TextStyle(color: Colors.red),
-                  ),
             ],
           ),
         ),

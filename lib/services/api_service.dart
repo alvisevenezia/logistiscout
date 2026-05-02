@@ -55,6 +55,21 @@ class ApiService {
 
   final String baseUrl;
 
+  String? _extractErrorDetail(String rawBody) {
+    try {
+      final decoded = jsonDecode(rawBody);
+      if (decoded is Map<String, dynamic>) {
+        final detail = decoded['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          return detail.trim();
+        }
+      }
+    } catch (_) {
+      // Keep fallback mapping when response body is not valid JSON.
+    }
+    return null;
+  }
+
   //Gestion des erreurs HTTP et des exceptions
   Future<http.Response> _safeRequest(
     HttpMethod method,
@@ -116,8 +131,10 @@ class ApiService {
       final isAuthError =
           response.statusCode == 401 || response.statusCode == 403;
       final isRefreshCall = path == '/auth/refresh';
+      final isLoginCall = path == '/auth/login';
+      final backendDetail = _extractErrorDetail(response.body);
 
-      if (isAuthError && !retrying && !isRefreshCall) {
+      if (isAuthError && !retrying && !isRefreshCall && !isLoginCall) {
         final refreshed = await refreshToken();
         if (refreshed) {
           // retry once with the new access token
@@ -134,12 +151,21 @@ class ApiService {
       // --- Your existing error mapping ---
       switch (response.statusCode) {
         case 400:
-          throw AppException("Requête invalide (400).", statusCode: 400);
+          throw AppException(
+            backendDetail ?? "Requête invalide (400).",
+            statusCode: 400,
+          );
         case 401:
         case 403:
-          throw AppException("Accès refusé.", statusCode: response.statusCode);
+          throw AppException(
+            backendDetail ?? "Accès refusé.",
+            statusCode: response.statusCode,
+          );
         case 404:
-          throw AppException("Ressource non trouvée (404).", statusCode: 404);
+          throw AppException(
+            backendDetail ?? "Ressource non trouvée (404).",
+            statusCode: 404,
+          );
         case 500:
         case 502:
         case 503:

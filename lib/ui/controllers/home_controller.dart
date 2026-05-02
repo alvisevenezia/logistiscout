@@ -69,7 +69,10 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> logout(dynamic ref) async {
+  Future<void> logout(
+    dynamic ref, {
+    bool invalidateAccountController = true,
+  }) async {
     await LocalStorageService.instance.clearAll();
     await TokenStore.instance.clear();
 
@@ -79,7 +82,9 @@ class HomeController extends StateNotifier<HomeState> {
 
     ref.invalidate(evenementsProvider);
     ref.invalidate(tentesProvider);
-    ref.invalidate(accountControllerProvider);
+    if (invalidateAccountController) {
+      ref.invalidate(accountControllerProvider);
+    }
     ref.invalidate(accueilControllerProvider);
   }
 
