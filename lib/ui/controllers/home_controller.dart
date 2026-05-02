@@ -69,7 +69,7 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> logout(Ref ref) async {
+  Future<void> logout(dynamic ref) async {
     await LocalStorageService.instance.clearAll();
     await TokenStore.instance.clear();
 
@@ -83,7 +83,7 @@ class HomeController extends StateNotifier<HomeState> {
     ref.invalidate(accueilControllerProvider);
   }
 
-  Future<void> refresh(WidgetRef ref) async {
+  Future<void> refresh(dynamic ref) async {
     // re-run the same fetch logic you do on init
     await loadData();
   }
