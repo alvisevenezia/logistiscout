@@ -44,6 +44,10 @@ class GroupRepository {
     await api.updateGroupProfileFields(payload);
   }
 
+  Future<void> deleteCurrentGroup() async {
+    await api.deleteCurrentGroup();
+  }
+
   Future<GroupUnit> createUnit({
     required String name,
     required int color,

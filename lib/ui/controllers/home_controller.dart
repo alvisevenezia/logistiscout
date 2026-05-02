@@ -69,7 +69,7 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> logout(WidgetRef ref) async {
+  Future<void> logout(Ref ref) async {
     await LocalStorageService.instance.clearAll();
     await TokenStore.instance.clear();
 

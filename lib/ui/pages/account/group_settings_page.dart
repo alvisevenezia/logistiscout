@@ -192,6 +192,33 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.delete_forever_outlined),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                ),
+                label: const Text('Supprimer le compte'),
+                onPressed: () async {
+                  final confirmed = await _confirmDeleteAccount(context);
+                  if (confirmed != true) return;
+
+                  try {
+                    await controller.deleteAccount();
+                    if (!context.mounted) return;
+                    context.go('/login');
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Suppression impossible: $e')),
+                    );
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -335,6 +362,29 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
     );
     ctl.dispose();
     return value;
+  }
+
+  Future<bool?> _confirmDeleteAccount(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer le compte'),
+        content: const Text(
+          'Cette action supprimera le groupe et toutes ses données. Elle est irreversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _openUnitSheet(

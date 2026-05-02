@@ -658,6 +658,15 @@ class ApiService {
     await _safeRequest(HttpMethod.put, '/me', body: jsonEncode(json));
   }
 
+  Future<void> deleteCurrentGroup() async {
+    try {
+      await _safeRequest(HttpMethod.delete, '/me');
+    } on AppException catch (e) {
+      if (e.statusCode != 405) rethrow;
+      await _safeRequest(HttpMethod.post, '/me/delete');
+    }
+  }
+
   Future<Map<String, dynamic>> createGroupUnit(
     Map<String, dynamic> json,
   ) async {
