@@ -99,7 +99,9 @@ class GroupSettingsController extends AsyncNotifier<Group> {
 
   Future<void> deleteAccount() async {
     await _groupRepository.deleteCurrentGroup();
-    await ref.read(accueilControllerProvider.notifier).logout(ref);
+    await ref
+        .read(accueilControllerProvider.notifier)
+        .logout(ref, invalidateAccountController: false);
   }
 
   void setType(String type) {

@@ -86,7 +86,7 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _buildProfileCard(context, controller),
+              _buildProfileCard(context, controller, group),
               const SizedBox(height: 16),
               _buildGroupTypeCard(group, controller),
               const SizedBox(height: 16),
@@ -113,6 +113,7 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
   Widget _buildProfileCard(
     BuildContext context,
     GroupSettingsController controller,
+    Group group,
   ) {
     return Card(
       child: Padding(
@@ -203,7 +204,10 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                 ),
                 label: const Text('Supprimer le compte'),
                 onPressed: () async {
-                  final confirmed = await _confirmDeleteAccount(context);
+                  final confirmed = await _confirmDeleteAccount(
+                    context,
+                    group.name,
+                  );
                   if (confirmed != true) return;
 
                   try {
@@ -364,25 +368,67 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
     return value;
   }
 
-  Future<bool?> _confirmDeleteAccount(BuildContext context) {
+  Future<bool?> _confirmDeleteAccount(
+    BuildContext context,
+    String groupName,
+  ) async {
+    final expectedName = groupName.trim();
+    var typedName = '';
+
     return showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Supprimer le compte'),
-        content: const Text(
-          'Cette action supprimera le groupe et toutes ses données. Elle est irreversible.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Supprimer'),
-          ),
-        ],
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          final normalizedTypedName = typedName.trim();
+          final isMatch = normalizedTypedName == expectedName;
+
+          return AlertDialog(
+            title: const Text('Supprimer le compte'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Cette action supprimera le groupe et toutes ses donnees. Elle est irreversible.',
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Saisissez le nom du groupe pour confirmer: "$groupName"',
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        typedName = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Nom du groupe',
+                      border: const OutlineInputBorder(),
+                      errorText: normalizedTypedName.isEmpty || isMatch
+                          ? null
+                          : 'Le nom ne correspond pas.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: isMatch
+                    ? () => Navigator.pop(dialogContext, true)
+                    : null,
+                child: const Text('Supprimer'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
