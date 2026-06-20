@@ -1,5 +1,10 @@
 platform :ios, '14.0'
 
+# DKPhotoGallery (pulled in by image_picker_ios) is a Swift pod that depends on
+# SDWebImage, a non-modular Obj-C pod. Static-lib integration needs module maps
+# for that to work, hence this.
+use_modular_headers!
+
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
