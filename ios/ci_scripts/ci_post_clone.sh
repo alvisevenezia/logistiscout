@@ -10,6 +10,15 @@ cd "$CI_PRIMARY_REPOSITORY_PATH" # change working directory to the root of your 
 git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
 export PATH="$PATH:$HOME/flutter/bin"
 
+# This project's Xcode target isn't migrated to consume Flutter's Swift Package
+# Manager integration (no FlutterGeneratedPluginSwiftPackage reference). When SPM
+# is enabled, flutter pub get silently excludes any plugin that ships a
+# Package.swift (connectivity_plus, device_info_plus, file_picker, etc.) from the
+# CocoaPods install, and since Xcode has no SPM package to fall back on, those
+# plugins' modules never get built ("Module 'X' not found"). Force CocoaPods for
+# all plugins until the project is migrated to SPM.
+flutter config --no-enable-swift-package-manager
+
 # Install Flutter artifacts for iOS (--ios), or macOS (--macos) platforms.
 flutter precache --ios
 
