@@ -45,35 +45,58 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Exporter les tentes',
-            icon: const Icon(Icons.download_outlined),
-            onPressed: currentGroup == null
-                ? null
-                : () async {
-                    try {
-                      final tentes = await ref.read(tentesProvider.future);
-                      final filePath = await GroupExportService.exportTentsCsv(
-                        group: currentGroup,
-                        tents: tentes,
-                      );
-                      if (!context.mounted) return;
-                      if (filePath == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Export annule')),
-                        );
-                        return;
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Export enregistre: $filePath')),
-                      );
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Export impossible: $e')),
-                      );
-                    }
-                  },
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            enabled: currentGroup != null,
+            onSelected: (value) async {
+              if (currentGroup == null) return;
+              try {
+                final tentes = await ref.read(tentesProvider.future);
+                final String? filePath;
+                if (value == 'export_tentes') {
+                  filePath = await GroupExportService.exportTentsCsv(
+                    group: currentGroup,
+                    tents: tentes,
+                  );
+                } else {
+                  filePath = await GroupExportService.exportControlsCsv(
+                    group: currentGroup,
+                    tents: tentes,
+                  );
+                }
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      filePath == null ? 'Export annule' : 'Fichier sauvegarde: $filePath',
+                    ),
+                  ),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Export impossible: $e')),
+                );
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem<String>(
+                value: 'export_tentes',
+                child: ListTile(
+                  leading: Icon(Icons.cabin),
+                  title: Text('Exporter les tentes (CSV)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'export_controles',
+                child: ListTile(
+                  leading: Icon(Icons.checklist),
+                  title: Text('Exporter les controles (CSV)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),

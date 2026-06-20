@@ -5,6 +5,7 @@ import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
+import 'package:logistiscout/services/tent_import_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 
@@ -32,7 +33,17 @@ class _TentesPageState extends ConsumerState<TentesPage> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tentes')),
+      appBar: AppBar(
+        title: const Text('Tentes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_upload_outlined),
+            tooltip: 'Importer depuis Excel',
+            onPressed: () =>
+                _importFromExcel(context, groupUnits, statuses),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: tentesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -159,7 +170,15 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                         final t = filtered[i];
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: TentCard(tent: t),
+                          child: GestureDetector(
+                            onLongPress: () => _showTentContextMenu(
+                              context,
+                              t,
+                              groupUnits,
+                              statuses,
+                            ),
+                            child: TentCard(tent: t),
+                          ),
                         );
                       },
                     ),
@@ -189,17 +208,192 @@ class _TentesPageState extends ConsumerState<TentesPage> {
       builder: (_) => AddTenteDialog(units: units, statuses: statuses),
     );
   }
+
+  void _showTentContextMenu(
+    BuildContext context,
+    Tent tent,
+    List<GroupUnit> units,
+    List<TentStatusRef> statuses,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                tent.nom,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const Divider(height: 20),
+            ListTile(
+              leading: const Icon(Icons.copy_outlined),
+              title: const Text('Dupliquer cette tente'),
+              subtitle: const Text('Copie tous les attributs, nom à renseigner'),
+              onTap: () {
+                Navigator.pop(ctx);
+                showDialog(
+                  context: context,
+                  builder: (_) => AddTenteDialog(
+                    units: units,
+                    statuses: statuses,
+                    sourceTent: tent,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _importFromExcel(
+    BuildContext context,
+    List<GroupUnit> units,
+    List<TentStatusRef> statuses,
+  ) async {
+    final rows = await TentImportService.pickAndParse();
+    if (rows == null) return;
+    if (!context.mounted) return;
+
+    if (rows.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Le fichier Excel est vide ou invalide.')),
+      );
+      return;
+    }
+
+    final result = TentImportService.buildTents(
+      rows: rows,
+      units: units,
+      statuses: statuses,
+    );
+
+    if (result.tents.isEmpty && result.errors.isNotEmpty) {
+      if (!context.mounted) return;
+      _showImportReport(context, result, 0);
+      return;
+    }
+
+    // Confirmation avant création
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirmer l\'import'),
+        content: Text(
+          '${result.tents.length} tente(s) seront créées.'
+          '${result.errors.isNotEmpty ? '\n\n${result.errors.length} avertissement(s) détecté(s).' : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Importer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    int created = 0;
+    final creationErrors = <String>[];
+
+    for (final tent in result.tents) {
+      try {
+        await ref.read(tentesProvider.notifier).createTente(tent);
+        created++;
+      } catch (e) {
+        creationErrors.add('${tent.nom} : $e');
+      }
+    }
+
+    if (!context.mounted) return;
+    _showImportReport(
+      context,
+      TentImportResult(
+        tents: result.tents.take(created).toList(),
+        errors: [...result.errors, ...creationErrors],
+      ),
+      created,
+    );
+  }
+
+  void _showImportReport(
+    BuildContext context,
+    TentImportResult result,
+    int created,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Résultat de l\'import'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('✅ $created tente(s) créée(s).'),
+              if (result.errors.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('⚠️ ${result.errors.length} avertissement(s) :'),
+                const SizedBox(height: 4),
+                ...result.errors.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(left: 8, top: 2),
+                    child: Text(
+                      '• $e',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// ---------- Dialog d’ajout ----------
+// ---------- Dialog d’ajout / duplication ----------
 class AddTenteDialog extends ConsumerStatefulWidget {
   final List<GroupUnit> units;
   final List<TentStatusRef> statuses;
+  final Tent? sourceTent;
 
   const AddTenteDialog({
     super.key,
     required this.units,
     required this.statuses,
+    this.sourceTent,
   });
 
   @override
@@ -221,11 +415,32 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
   @override
   void initState() {
     super.initState();
+    final source = widget.sourceTent;
+    // Le nom est toujours vide (à saisir), même en duplication.
     nomCtl = TextEditingController();
-    nbCtl = TextEditingController(text: '6');
-    couleursCtl = TextEditingController();
-    selectedUnit = null;
-    status = widget.statuses.isNotEmpty ? widget.statuses.first : null;
+    nbCtl = TextEditingController(
+      text: source != null ? source.nbPlaces.toString() : '6',
+    );
+    couleursCtl = TextEditingController(
+      text: source?.colors.join(', ') ?? '',
+    );
+    type = source?.tentType ?? 'Canadienne';
+    integree = source?.isFloorEmbedded ?? false;
+
+    if (source != null) {
+      selectedUnit = widget.units.cast<GroupUnit?>().firstWhere(
+        (u) => int.tryParse(u!.id) == source.uniteId,
+        orElse: () => null,
+      );
+      status = widget.statuses.cast<TentStatusRef?>().firstWhere(
+        (s) => s!.id == source.tentStatusId,
+        orElse: () => null,
+      );
+      status ??= widget.statuses.isNotEmpty ? widget.statuses.first : null;
+    } else {
+      selectedUnit = null;
+      status = widget.statuses.isNotEmpty ? widget.statuses.first : null;
+    }
   }
 
   @override
@@ -239,7 +454,11 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nouvelle tente'),
+      title: Text(
+        widget.sourceTent != null
+            ? 'Dupliquer "${widget.sourceTent!.nom}"'
+            : 'Nouvelle tente',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -368,7 +587,11 @@ class _AddTenteDialogState extends ConsumerState<AddTenteDialog> {
 
                   if (mounted) Navigator.pop(context);
                 },
-          child: Text(isSaving ? 'Ajout...' : 'Ajouter'),
+          child: Text(
+            isSaving
+                ? (widget.sourceTent != null ? 'Duplication...' : 'Ajout...')
+                : (widget.sourceTent != null ? 'Dupliquer' : 'Ajouter'),
+          ),
         ),
       ],
     );

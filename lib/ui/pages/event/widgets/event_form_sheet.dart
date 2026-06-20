@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/controllers/evenement_controller.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 
@@ -355,43 +356,48 @@ Future<void> showEventFormSheet({
                                       runSpacing: 8,
                                       children: [
                                         for (final t in availableTentes)
-                                          FilterChip(
-                                            label: Text(
-                                              t.nom,
-                                              style: const TextStyle(
-                                                fontSize: 13,
+                                          GestureDetector(
+                                            onLongPress: () =>
+                                                _showTentQuickDetails(
+                                                  context,
+                                                  t,
+                                                  groupUnits,
+                                                ),
+                                            child: FilterChip(
+                                              label: Text(
+                                                t.nom,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                ),
                                               ),
+                                              backgroundColor: theme
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                              selectedColor: theme
+                                                  .colorScheme
+                                                  .primary
+                                                  .withAlpha(45),
+                                              side: BorderSide(
+                                                color: selectedTenteIds
+                                                        .contains(t.id)
+                                                    ? theme.colorScheme.primary
+                                                          .withAlpha(150)
+                                                    : theme.colorScheme
+                                                          .outlineVariant,
+                                              ),
+                                              selected: selectedTenteIds
+                                                  .contains(t.id),
+                                              onSelected: (selected) {
+                                                setStateDialog(() {
+                                                  if (selected) {
+                                                    selectedTenteIds.add(t.id);
+                                                  } else {
+                                                    selectedTenteIds
+                                                        .remove(t.id);
+                                                  }
+                                                });
+                                              },
                                             ),
-                                            backgroundColor: theme
-                                                .colorScheme
-                                                .surfaceContainerHighest,
-                                            selectedColor: theme
-                                                .colorScheme
-                                                .primary
-                                                .withAlpha(45),
-                                            side: BorderSide(
-                                              color:
-                                                  selectedTenteIds.contains(
-                                                    t.id,
-                                                  )
-                                                  ? theme.colorScheme.primary
-                                                        .withAlpha(150)
-                                                  : theme
-                                                        .colorScheme
-                                                        .outlineVariant,
-                                            ),
-                                            selected: selectedTenteIds.contains(
-                                              t.id,
-                                            ),
-                                            onSelected: (selected) {
-                                              setStateDialog(() {
-                                                if (selected) {
-                                                  selectedTenteIds.add(t.id);
-                                                } else {
-                                                  selectedTenteIds.remove(t.id);
-                                                }
-                                              });
-                                            },
                                           ),
                                         if (unavailableTentes.isNotEmpty) ...[
                                           const SizedBox(height: 4),
@@ -401,39 +407,44 @@ Future<void> showEventFormSheet({
                                               'Indisponibles sur la période',
                                               style: theme.textTheme.labelMedium
                                                   ?.copyWith(
-                                                    color: theme
-                                                        .colorScheme
+                                                    color: theme.colorScheme
                                                         .onSurfaceVariant,
                                                   ),
                                             ),
                                           ),
                                           for (final t in unavailableTentes)
-                                            FilterChip(
-                                              label: Text(
-                                                t.nom,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
+                                            GestureDetector(
+                                              onLongPress: () =>
+                                                  _showTentQuickDetails(
+                                                    context,
+                                                    t,
+                                                    groupUnits,
+                                                  ),
+                                              child: FilterChip(
+                                                label: Text(
+                                                  t.nom,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: theme.colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
                                                 ),
-                                              ),
-                                              backgroundColor: theme
-                                                  .colorScheme
-                                                  .surfaceContainerHighest,
-                                              disabledColor: theme
-                                                  .colorScheme
-                                                  .surfaceContainerHighest,
-                                              selectedColor: theme
-                                                  .colorScheme
-                                                  .surfaceContainerHighest,
-                                              side: BorderSide(
-                                                color: theme
+                                                backgroundColor: theme
                                                     .colorScheme
-                                                    .outlineVariant,
+                                                    .surfaceContainerHighest,
+                                                disabledColor: theme
+                                                    .colorScheme
+                                                    .surfaceContainerHighest,
+                                                selectedColor: theme
+                                                    .colorScheme
+                                                    .surfaceContainerHighest,
+                                                side: BorderSide(
+                                                  color: theme.colorScheme
+                                                      .outlineVariant,
+                                                ),
+                                                selected: false,
+                                                onSelected: null,
                                               ),
-                                              selected: false,
-                                              onSelected: null,
                                             ),
                                         ],
                                       ],
@@ -561,3 +572,116 @@ class _EventFormSection extends StatelessWidget {
 
 String _formatDate(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+void _showTentQuickDetails(
+  BuildContext context,
+  Tent tent,
+  List<GroupUnit> groupUnits,
+) {
+  final unitName = tent.assignedUnit.trim().isEmpty
+      ? 'Aucune'
+      : tent.assignedUnit;
+
+  int? unitColor;
+  for (final u in groupUnits) {
+    if (int.tryParse(u.id) == tent.uniteId) {
+      unitColor = u.color;
+      break;
+    }
+  }
+
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Row(
+        children: [
+          CircleAvatar(
+            radius: 14,
+            backgroundColor:
+                unitColor != null ? Color(unitColor) : Colors.grey.shade400,
+            child: const Icon(Icons.cabin, size: 16, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              tent.nom,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _tentDetailRow(Icons.category_outlined, 'Type', tent.tentType),
+          _tentDetailRow(Icons.people_outline, 'Places', '${tent.nbPlaces}'),
+          _tentDetailRow(Icons.flag_outlined, 'Unité', unitName),
+          _tentDetailRow(
+            Icons.info_outline,
+            'Statut',
+            tent.displayStatusLabel,
+          ),
+          if (tent.team.isNotEmpty)
+            _tentDetailRow(Icons.group_outlined, 'Équipe', tent.team),
+          if (tent.location.isNotEmpty)
+            _tentDetailRow(
+              Icons.location_on_outlined,
+              'Localisation',
+              tent.location,
+            ),
+          if (tent.isFloorEmbedded)
+            _tentDetailRow(Icons.layers_outlined, 'Sol intégré', 'Oui'),
+          if (tent.colors.isNotEmpty)
+            _tentDetailRow(
+              Icons.palette_outlined,
+              'Couleurs',
+              tent.colors.join(', '),
+            ),
+          if (tent.comment.trim().isNotEmpty)
+            _tentDetailRow(
+              Icons.notes_outlined,
+              'Commentaire',
+              tent.comment,
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Fermer'),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _tentDetailRow(IconData icon, String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade600),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 13),
+          ),
+        ),
+      ],
+    ),
+  );
+}
