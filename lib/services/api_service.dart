@@ -44,7 +44,12 @@ class ApiService {
     return headers;
   }
 
-  factory ApiService({String baseUrl = 'https://api.logistiscout.fr'}) {
+  static const String _defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api.logistiscout.fr',
+  );
+
+  factory ApiService({String baseUrl = _defaultBaseUrl}) {
     developer.log('ApiService instance requested', name: 'ApiService');
     return _instance ??= ApiService._internal(baseUrl: baseUrl);
   }
