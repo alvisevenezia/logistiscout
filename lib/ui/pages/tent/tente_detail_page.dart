@@ -189,6 +189,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
       assignedUnit: _selectedUnitName(groupUnits, _favoriteUnitId),
       isFloorEmbedded: _estIntegree!,
       colors: _colorHexList!,
+      comment: _commentCtl!.text.trim(),
       team: _teamCtl!.text.trim(),
       location: _locationCtl!.text.trim(),
     );
@@ -206,6 +207,7 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
         original.assignedUnit != updated.assignedUnit ||
         original.isFloorEmbedded != updated.isFloorEmbedded ||
         !_listEquals(original.colors, updated.colors) ||
+        original.comment != updated.comment ||
         original.team != updated.team ||
         original.location != updated.location;
   }

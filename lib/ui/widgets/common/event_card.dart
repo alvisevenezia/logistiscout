@@ -84,7 +84,7 @@ class EventCard extends ConsumerWidget {
               ),
               if (detail) ...[
                 Text(
-                  '⛺ Tentes : ${event.associatedTents.isEmpty ? "Aucune" : event.associatedTents.join(", ")}',
+                  '⛺ Nombre de tentes : ${event.associatedTents.length}',
                   style: TextStyle(color: textColor),
                 ),
               ],
