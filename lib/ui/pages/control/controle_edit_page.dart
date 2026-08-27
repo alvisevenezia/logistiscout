@@ -530,22 +530,39 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                   }
 
                   final selectedState = _state ?? widget.tent.state;
+                  final controlRemark = remarquesController.text.trim();
 
-                  if (widget.tent.state != selectedState) {
+                  final stateChanged = widget.tent.state != selectedState;
+                  // Synchro « Remplacer » : la remarque du contrôle devient
+                  // celle de la tente. Une remarque de contrôle vide ne doit
+                  // pas effacer la remarque existante de la tente.
+                  final remarkChanged =
+                      controlRemark.isNotEmpty &&
+                      controlRemark != widget.tent.comment;
+
+                  if (stateChanged || remarkChanged) {
                     developer.log(
-                      'Updating tent state from ${widget.tent.state} to $selectedState',
+                      'Syncing tent after control: '
+                      'stateChanged=$stateChanged remarkChanged=$remarkChanged',
                       name: 'ControlEditPage',
                     );
+
+                    var updatedTent = widget.tent;
+                    if (stateChanged) {
+                      updatedTent = updatedTent.copyWith(
+                        state: selectedState,
+                        tentStatusId: null,
+                        tentStatusLabel: tentStateToString(selectedState),
+                        tentStatusColor: selectedState.chipColor,
+                      );
+                    }
+                    if (remarkChanged) {
+                      updatedTent = updatedTent.copyWith(comment: controlRemark);
+                    }
+
                     await ref
                         .read(tentesProvider.notifier)
-                        .updateTente(
-                          widget.tent.copyWith(
-                            state: selectedState,
-                            tentStatusId: null,
-                            tentStatusLabel: tentStateToString(selectedState),
-                            tentStatusColor: selectedState.chipColor,
-                          ),
-                        );
+                        .updateTente(updatedTent);
                   }
 
                   if (context.mounted) {
