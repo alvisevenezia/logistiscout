@@ -10,6 +10,7 @@ import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer' as developer;
 
 class HomePage extends ConsumerStatefulWidget {
@@ -343,6 +344,19 @@ class _LoginNoticeCard extends StatelessWidget {
     return '$day/$month ${hour}h$minute';
   }
 
+  Future<void> _launchActionUrl(BuildContext context, String url) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !(await canLaunchUrl(uri))) {
+      developer.log('[HomePage] cannot launch notice action url: $url');
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Impossible d\'ouvrir ce lien.')),
+      );
+      return;
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = _levelColor();
@@ -388,7 +402,26 @@ class _LoginNoticeCard extends StatelessWidget {
               ).textTheme.bodySmall?.copyWith(color: Colors.black54),
             ),
           ],
-          if (notice.actionLabel != null && notice.actionLabel!.isNotEmpty) ...[
+          if (notice.actionUrl != null && notice.actionUrl!.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: () => _launchActionUrl(context, notice.actionUrl!),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: Text(
+                  notice.actionLabel != null && notice.actionLabel!.isNotEmpty
+                      ? notice.actionLabel!
+                      : 'Ouvrir le lien',
+                ),
+              ),
+            ),
+          ] else if (notice.actionLabel != null &&
+              notice.actionLabel!.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               notice.actionLabel!,
