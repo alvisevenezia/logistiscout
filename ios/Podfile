@@ -1,4 +1,4 @@
-platform :ios, '14.0'
+platform :ios, '15.0'
 
 # DKPhotoGallery (pulled in by image_picker_ios) is a Swift pod that depends on
 # SDWebImage, a non-modular Obj-C pod. Static-lib integration needs module maps
@@ -44,7 +44,7 @@ post_install do |installer|
 
     target.build_configurations.each do |config|
       # Xcode Cloud / Xcode 16+: avoid pods stuck on iOS 9 default target.
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       # Keep third-party pods in Swift 5 mode to avoid Swift 6 strict warnings-as-errors.
       config.build_settings['SWIFT_VERSION'] = '5.0'
       config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
