@@ -90,12 +90,14 @@ class GroupRepository {
     required int color,
     int? order,
     bool isDefault = false,
+    bool needsRepair = false,
   }) async {
     final json = await api.createTentStatus({
       'name': name,
       'color': color,
       'order': order,
       'isDefault': isDefault,
+      'needsRepair': needsRepair,
     });
     return TentStatusRef.fromJson(json);
   }
@@ -107,6 +109,7 @@ class GroupRepository {
     int? order,
     bool? isDefault,
     bool? isArchived,
+    bool? needsRepair,
   }) async {
     final payload = <String, dynamic>{};
     if (name != null) payload['name'] = name;
@@ -114,6 +117,7 @@ class GroupRepository {
     if (order != null) payload['order'] = order;
     if (isDefault != null) payload['isDefault'] = isDefault;
     if (isArchived != null) payload['isArchived'] = isArchived;
+    if (needsRepair != null) payload['needsRepair'] = needsRepair;
 
     final json = await api.updateTentStatus(statusId, payload);
     return TentStatusRef.fromJson(json);

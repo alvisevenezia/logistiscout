@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
+import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
@@ -203,9 +204,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     final tentesUtilisees = state.tentes
         .where((t) => tentesUtiliseesIds.contains(t.id))
         .toList();
-    final tentesToRepair = state.tentes
-        .where((t) => _isNonNominalStatus(t.displayStatusLabel))
-        .toList();
+    final tentesToRepair = tentsNeedingRepair(
+      state.tentes,
+      ref.watch(accountControllerProvider).valueOrNull?.tentStatuses ??
+          const <TentStatusRef>[],
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -432,11 +435,6 @@ class _LoginNoticeCard extends StatelessWidget {
       ),
     );
   }
-}
-
-bool _isNonNominalStatus(String label) {
-  final normalized = label.trim().toLowerCase();
-  return normalized.isNotEmpty && normalized != 'bon' && normalized != 'ok';
 }
 
 class _HomeBody extends StatelessWidget {

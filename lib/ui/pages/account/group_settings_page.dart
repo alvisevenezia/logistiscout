@@ -492,14 +492,19 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
       isScrollControlled: true,
       builder: (_) => _StatusEditorSheet(
         initialStatus: initialStatus,
-        onSubmit: (name, color) async {
+        onSubmit: (name, color, needsRepair) async {
           if (initialStatus == null) {
-            await controller.addTentStatus(name: name, color: color);
+            await controller.addTentStatus(
+              name: name,
+              color: color,
+              needsRepair: needsRepair,
+            );
           } else {
             await controller.updateTentStatus(
               initialStatus.id,
               name: name,
               color: color,
+              needsRepair: needsRepair,
             );
           }
         },
@@ -792,7 +797,7 @@ class _TentStatusesTabState extends State<_TentStatusesTab> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${item.isArchived ? 'Archive' : 'Actif'}${item.isDefault ? ' • Defaut' : ''}',
+                                      '${item.isArchived ? 'Archive' : 'Actif'}${item.isDefault ? ' • Defaut' : ''}${item.needsRepair ? ' • À réparer' : ''}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -1024,7 +1029,8 @@ class _StatusEditorSheet extends StatefulWidget {
   const _StatusEditorSheet({required this.onSubmit, this.initialStatus});
 
   final TentStatusRef? initialStatus;
-  final Future<void> Function(String name, int color) onSubmit;
+  final Future<void> Function(String name, int color, bool needsRepair)
+  onSubmit;
 
   @override
   State<_StatusEditorSheet> createState() => _StatusEditorSheetState();
@@ -1034,12 +1040,14 @@ class _StatusEditorSheetState extends State<_StatusEditorSheet> {
   late final TextEditingController _nameCtl;
   late final TextEditingController _hexCtl;
   late Color _color;
+  late bool _needsRepair;
 
   @override
   void initState() {
     super.initState();
     _nameCtl = TextEditingController(text: widget.initialStatus?.name ?? '');
     _color = Color(widget.initialStatus?.color ?? 0xFF388E3C);
+    _needsRepair = widget.initialStatus?.needsRepair ?? false;
     _hexCtl = TextEditingController(text: _hex(_color));
   }
 
@@ -1101,12 +1109,25 @@ class _StatusEditorSheetState extends State<_StatusEditorSheet> {
               ),
             ],
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Tente à réparer'),
+            subtitle: const Text(
+              "Les tentes avec ce statut apparaissent dans « Tentes à réparer » sur l'accueil.",
+            ),
+            value: _needsRepair,
+            onChanged: (v) => setState(() => _needsRepair = v),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                await widget.onSubmit(_nameCtl.text.trim(), _color.toARGB32());
+                await widget.onSubmit(
+                  _nameCtl.text.trim(),
+                  _color.toARGB32(),
+                  _needsRepair,
+                );
                 if (!context.mounted) return;
                 Navigator.pop(context);
               },

@@ -196,11 +196,13 @@ void main() {
           name: any(named: 'name'),
           color: any(named: 'color'),
           order: any(named: 'order'),
+          needsRepair: any(named: 'needsRepair'),
         ),
       ).thenAnswer((invocation) async {
         final name = invocation.namedArguments[#name] as String;
         final color = invocation.namedArguments[#color] as int;
         final order = invocation.namedArguments[#order] as int? ?? 0;
+        final needsRepair = invocation.namedArguments[#needsRepair] as bool;
         final created = TentStatusRef(
           id: 2,
           name: name,
@@ -208,6 +210,7 @@ void main() {
           order: order,
           isDefault: false,
           isArchived: false,
+          needsRepair: needsRepair,
         );
         current = current.copyWith(
           tentStatuses: [...current.tentStatuses, created],
@@ -220,12 +223,14 @@ void main() {
           name: any(named: 'name'),
           color: any(named: 'color'),
           isArchived: any(named: 'isArchived'),
+          needsRepair: any(named: 'needsRepair'),
         ),
       ).thenAnswer((invocation) async {
         final id = invocation.positionalArguments.first as int;
         final name = invocation.namedArguments[#name] as String?;
         final color = invocation.namedArguments[#color] as int?;
         final isArchived = invocation.namedArguments[#isArchived] as bool?;
+        final needsRepair = invocation.namedArguments[#needsRepair] as bool?;
         current = current.copyWith(
           tentStatuses: current.tentStatuses
               .map(
@@ -234,6 +239,7 @@ void main() {
                         name: name ?? s.name,
                         color: color ?? s.color,
                         isArchived: isArchived ?? s.isArchived,
+                        needsRepair: needsRepair ?? s.needsRepair,
                       )
                     : s,
               )
@@ -264,6 +270,7 @@ void main() {
       final created = await controller.addTentStatus(
         name: 'A verifier',
         color: 0xFFFFA000,
+        needsRepair: true,
       );
       expect(created, isTrue);
       verify(
@@ -271,6 +278,7 @@ void main() {
           name: 'A verifier',
           color: 0xFFFFA000,
           order: 1,
+          needsRepair: true,
         ),
       ).called(1);
 
@@ -278,6 +286,7 @@ void main() {
         2,
         name: 'A reparer',
         color: 0xFFFF0000,
+        needsRepair: false,
       );
       expect(updated, isTrue);
       verify(
@@ -286,13 +295,49 @@ void main() {
           name: 'A reparer',
           color: 0xFFFF0000,
           isArchived: null,
+          needsRepair: false,
         ),
       ).called(1);
+      expect(
+        container
+            .read(accountControllerProvider)
+            .valueOrNull!
+            .tentStatuses
+            .firstWhere((s) => s.id == 2)
+            .needsRepair,
+        isFalse,
+      );
 
       await controller.removeTentStatus(2);
       verify(
         () => repo.deleteTentStatus(2, replacementStatusId: null),
       ).called(1);
     });
+
+    test(
+      'reload garde les donnees affichees (pas de retour a l onglet Unites)',
+      () async {
+        final repo = MockGroupRepository();
+        final current = buildGroup();
+        when(() => repo.getGroupInfo()).thenAnswer((_) async => current);
+
+        final container = ProviderContainer(
+          overrides: [groupRepositoryProvider.overrideWithValue(repo)],
+        );
+        addTearDown(container.dispose);
+        await container.read(accountControllerProvider.future);
+
+        final emitted = <AsyncValue<Group>>[];
+        container.listen(
+          accountControllerProvider,
+          (_, next) => emitted.add(next),
+        );
+
+        await container.read(accountControllerProvider.notifier).reload();
+
+        expect(emitted, isNotEmpty);
+        expect(emitted.every((s) => s.hasValue), isTrue);
+      },
+    );
   });
 }

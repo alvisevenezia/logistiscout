@@ -181,13 +181,21 @@ class GroupSettingsController extends AsyncNotifier<Group> {
     await reload();
   }
 
-  /// Reload from repository
+  /// Reload from repository.
+  ///
+  /// Keeps the previous value while loading: the settings page only shows a
+  /// spinner on a bare AsyncLoading, which would rebuild its tabs and jump
+  /// back to the first one after every edit.
   Future<void> reload() async {
-    state = const AsyncLoading();
+    state = const AsyncLoading<Group>().copyWithPrevious(state);
     state = await AsyncValue.guard(() => _groupRepository.getGroupInfo());
   }
 
-  Future<bool> addTentStatus({required String name, required int color}) async {
+  Future<bool> addTentStatus({
+    required String name,
+    required int color,
+    bool needsRepair = false,
+  }) async {
     final group = state.valueOrNull;
     if (group == null) return false;
 
@@ -202,6 +210,7 @@ class GroupSettingsController extends AsyncNotifier<Group> {
       name: name.trim(),
       color: color,
       order: group.tentStatuses.length,
+      needsRepair: needsRepair,
     );
     await reload();
     return true;
@@ -212,6 +221,7 @@ class GroupSettingsController extends AsyncNotifier<Group> {
     required String name,
     required int color,
     bool? isArchived,
+    bool? needsRepair,
   }) async {
     final group = state.valueOrNull;
     if (group == null) return false;
@@ -228,6 +238,7 @@ class GroupSettingsController extends AsyncNotifier<Group> {
       name: name.trim(),
       color: color,
       isArchived: isArchived,
+      needsRepair: needsRepair,
     );
     await reload();
     return true;
@@ -270,6 +281,7 @@ class GroupSettingsController extends AsyncNotifier<Group> {
       name: nextName,
       color: source.color,
       order: group.tentStatuses.length,
+      needsRepair: source.needsRepair,
     );
     await reload();
   }
