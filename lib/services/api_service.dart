@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:http/http.dart' as http;
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
@@ -44,10 +45,16 @@ class ApiService {
     return headers;
   }
 
+  static const prodBaseUrl = 'https://api.logistiscout.fr';
+  static const devBaseUrl = 'https://dev.logistiscout.fr';
+
+  /// Release → prod ; debug/profile → serveur de dev.
   static const String _defaultBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.logistiscout.fr',
+    defaultValue: kReleaseMode ? prodBaseUrl : devBaseUrl,
   );
+
+  static bool get targetsProd => _defaultBaseUrl == prodBaseUrl;
 
   factory ApiService({String baseUrl = _defaultBaseUrl}) {
     developer.log('ApiService instance requested', name: 'ApiService');
