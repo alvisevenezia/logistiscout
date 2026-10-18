@@ -66,6 +66,9 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: "stable"
+          # Version figée : les Flutter plus récentes refusent la config
+          # Android actuelle (Kotlin 2.1.0 / AGP 8.9.1), cf. échecs depuis août.
+          flutter-version: "3.44.4"
       - run: flutter pub get
       - run: flutter clean
       - run: flutter build appbundle --release
