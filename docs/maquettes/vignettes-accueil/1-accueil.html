@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Accueil — aperçu personnalisé</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0077b3}a:hover{color:#003a5d}
+</style>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F4F6F9; font-family: Roboto, system-ui, sans-serif; color: #003a5d; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; padding: 0 20px; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E3E8EF">
+    <h1 style="margin: 0; font-size: 22px; font-weight: 700">Accueil</h1>
+    <button aria-label="Compte" style="width: 44px; height: 44px; border: none; background: transparent; color: #003a5d; display: flex; align-items: center; justify-content: center">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+    </button>
+  </header>
+
+  <main style="flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h2 style="margin: 0; font-size: 22px; font-weight: 800">Aperçu</h2>
+      <a href="2-personnaliser.html" style="min-height: 44px; padding: 0 12px; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; text-decoration: none; border-radius: 22px; background: #E6F1F8">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"></path></svg>
+        Personnaliser
+      </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #1D4ED8, #3B82F6); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20L12 4l9 16H3z"></path><path d="M12 4v16"></path></svg>
+          Tentes
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">24</div>
+        <div style="font-size: 12px">au total</div>
+      </div>
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #047857, #059669); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>
+          Opérationnelles
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">19</div>
+        <div style="font-size: 12px">prêtes à partir</div>
+      </div>
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #B45309, #D97706); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6a4 4 0 0 0 5 5l-9 9-3-3 9-9a4 4 0 0 0-2-2z"></path></svg>
+          À réparer
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">5</div>
+        <div style="font-size: 12px">à surveiller</div>
+      </div>
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #0E7490, #0891B2); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"></path></svg>
+          En séchage
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">6</div>
+        <div style="font-size: 12px">chez les jeunes</div>
+      </div>
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #6D28D9, #7C3AED); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+          Sorties
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">2</div>
+        <div style="font-size: 12px">11 tentes utilisées</div>
+      </div>
+      <div style="height: 104px; border-radius: 16px; padding: 14px; box-sizing: border-box; color: #FFFFFF; background: linear-gradient(135deg, #9F1239, #BE123C); display: flex; flex-direction: column; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M6 6l12 12"></path></svg>
+          Hors service
+        </div>
+        <div style="font-size: 30px; font-weight: 800; line-height: 1">3</div>
+        <div style="font-size: 12px">inutilisables</div>
+      </div>
+    </div>
+
+    <h2 style="margin: 10px 0 0; font-size: 20px; font-weight: 800">Prochains événements</h2>
+    <div style="background: #FFFFFF; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border: 1px solid #E3E8EF">
+      <div style="font-size: 16px; font-weight: 700">Week-end de groupe</div>
+      <div style="font-size: 14px; color: #4A6378">17–19 oct. · 8 tentes</div>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border: 1px solid #E3E8EF">
+      <div style="font-size: 16px; font-weight: 700">Sortie Scouts-Guides</div>
+      <div style="font-size: 14px; color: #4A6378">8–9 nov. · 3 tentes</div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

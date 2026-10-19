@@ -2,6 +2,7 @@ import 'package:logistiscout/data/mappers/group_mapper.dart';
 import 'package:logistiscout/data/models/group_dto.dart';
 import 'package:logistiscout/domain/entities/group.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/home_tile.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/services/api_service.dart';
 
@@ -133,6 +134,25 @@ class GroupRepository {
       replacementStatusId: replacementStatusId,
       archiveOnly: archiveOnly,
     );
+  }
+
+  Future<List<HomeTile>> getHomeTiles() async {
+    return _parseHomeTiles(await api.getHomeTiles());
+  }
+
+  Future<List<HomeTile>> saveHomeTiles(List<HomeTile> tiles) async {
+    final list = await api.saveHomeTiles(tiles.map((t) => t.toJson()).toList());
+    return _parseHomeTiles(list);
+  }
+
+  Future<List<HomeTile>> resetHomeTiles() async {
+    return _parseHomeTiles(await api.resetHomeTiles());
+  }
+
+  List<HomeTile> _parseHomeTiles(List<dynamic> list) {
+    return list
+        .map((e) => HomeTile.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<TentStatusRef>> resetDefaultTentStatuses() async {

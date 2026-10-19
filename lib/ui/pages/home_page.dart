@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
+import 'package:logistiscout/domain/entities/home_tile.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
@@ -12,6 +13,7 @@ import 'package:logistiscout/ui/controllers/home_controller.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:logistiscout/ui/widgets/home/home_stat_card.dart';
 import 'dart:developer' as developer;
 
 class HomePage extends ConsumerStatefulWidget {
@@ -204,11 +206,23 @@ class _HomePageState extends ConsumerState<HomePage> {
     final tentesUtilisees = state.tentes
         .where((t) => tentesUtiliseesIds.contains(t.id))
         .toList();
-    final tentesToRepair = tentsNeedingRepair(
-      state.tentes,
-      ref.watch(accountControllerProvider).valueOrNull?.tentStatuses ??
-          const <TentStatusRef>[],
+    final statuses =
+        ref.watch(accountControllerProvider).valueOrNull?.tentStatuses ??
+        const <TentStatusRef>[];
+    final tentesToRepair = tentsNeedingRepair(state.tentes, statuses);
+    final overview = HomeOverviewData(
+      tents: state.tentes,
+      statuses: statuses,
+      upcomingEventsCount: prochainsEvts.length,
+      usedTentsCount: tentesUtilisees.length,
     );
+    final tiles =
+        ref.watch(homeTilesControllerProvider).valueOrNull ??
+        HomeTile.defaults;
+    final overviewCards = [
+      for (final tile in tiles)
+        if (tile.visible) homeStatCardFor(tile, overview),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -283,6 +297,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             prochainsEvts: prochainsEvts,
             tentesUtilisees: tentesUtilisees,
             tentesToRepair: tentesToRepair,
+            overviewCards: overviewCards,
             onRetry: () =>
                 controller.refresh(ref), // add this method in controller
           ),
@@ -447,6 +462,7 @@ class _HomeBody extends StatelessWidget {
     required this.prochainsEvts,
     required this.tentesUtilisees,
     required this.tentesToRepair,
+    required this.overviewCards,
     required this.onRetry,
   });
 
@@ -459,6 +475,7 @@ class _HomeBody extends StatelessWidget {
   final List<Event> prochainsEvts;
   final List<Tent> tentesUtilisees;
   final List<Tent> tentesToRepair;
+  final List<HomeStatCardData> overviewCards;
   final VoidCallback onRetry;
 
   @override
@@ -515,14 +532,8 @@ class _HomeBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _HomeStatsStrip(
-                    totalTentes: totalTentes,
-                    enReparation: tentesToRepair.length,
-                    enService: (totalTentes - tentesToRepair.length).clamp(
-                      0,
-                      totalTentes,
-                    ),
-                    evenementsAVenir: prochainsEvts.length,
-                    tentesUtilisees: tentesUtilisees.length,
+                    cards: overviewCards,
+                    onCustomize: () => context.push('/home-tiles'),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -578,61 +589,32 @@ class _HomeBody extends StatelessWidget {
 }
 
 class _HomeStatsStrip extends StatelessWidget {
-  const _HomeStatsStrip({
-    required this.totalTentes,
-    required this.enReparation,
-    required this.enService,
-    required this.evenementsAVenir,
-    required this.tentesUtilisees,
-  });
+  const _HomeStatsStrip({required this.cards, required this.onCustomize});
 
-  final int totalTentes;
-  final int enReparation;
-  final int enService;
-  final int evenementsAVenir;
-  final int tentesUtilisees;
+  final List<HomeStatCardData> cards;
+  final VoidCallback onCustomize;
 
   @override
   Widget build(BuildContext context) {
-    final cards = <_HomeStatCardData>[
-      _HomeStatCardData(
-        title: 'Tentes',
-        value: totalTentes.toString(),
-        subtitle: 'au total',
-        icon: Icons.cabin,
-        colors: [const Color(0xFF1D4ED8), const Color(0xFF60A5FA)],
-      ),
-      _HomeStatCardData(
-        title: 'Opérationnelles',
-        value: enService.toString(),
-        subtitle: 'prêtes à partir',
-        icon: Icons.check_circle,
-        colors: [const Color(0xFF047857), const Color(0xFF34D399)],
-      ),
-      _HomeStatCardData(
-        title: 'En réparation',
-        value: enReparation.toString(),
-        subtitle: 'à surveiller',
-        icon: Icons.build_circle,
-        colors: [const Color(0xFFB45309), const Color(0xFFF59E0B)],
-      ),
-      _HomeStatCardData(
-        title: 'Sorties',
-        value: evenementsAVenir.toString(),
-        subtitle: '$tentesUtilisees tentes utilisées',
-        icon: Icons.event_available,
-        colors: [const Color(0xFF7C3AED), const Color(0xFFA78BFA)],
-      ),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Aperçu',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Aperçu',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: onCustomize,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: const Text('Personnaliser'),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         LayoutBuilder(
@@ -647,7 +629,7 @@ class _HomeStatsStrip extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 2.7,
                 children: cards
-                    .map((data) => _HomeStatCard(data: data))
+                    .map((data) => HomeStatCard(data: data))
                     .toList(),
               );
             }
@@ -659,7 +641,7 @@ class _HomeStatsStrip extends StatelessWidget {
                   .map(
                     (data) => SizedBox(
                       width: (constraints.maxWidth - 12) / 2,
-                      child: _HomeStatCard(data: data),
+                      child: HomeStatCard(data: data),
                     ),
                   )
                   .toList(),
@@ -671,93 +653,3 @@ class _HomeStatsStrip extends StatelessWidget {
   }
 }
 
-class _HomeStatCardData {
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-  final List<Color> colors;
-
-  const _HomeStatCardData({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-    required this.colors,
-  });
-}
-
-class _HomeStatCard extends StatelessWidget {
-  final _HomeStatCardData data;
-
-  const _HomeStatCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: data.colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(data.icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  data.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  data.value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  data.subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

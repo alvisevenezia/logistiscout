@@ -9,6 +9,7 @@ import 'package:logistiscout/ui/pages/auth/auth_gate.dart';
 import 'package:logistiscout/ui/pages/contact/contact_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_detail_page.dart';
 import 'package:logistiscout/ui/pages/event/evenement_page.dart';
+import 'package:logistiscout/ui/pages/home/home_tiles_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
 import 'package:logistiscout/ui/pages/auth/login_page.dart';
 import 'package:logistiscout/ui/pages/legal/terms_page.dart';
@@ -41,6 +42,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/account',
       builder: (context, state) => const GroupSettingsPage(),
+    ),
+    GoRoute(
+      path: '/home-tiles',
+      builder: (context, state) => const HomeTilesPage(),
     ),
     // Bottom-nav shell
     ShellRoute(

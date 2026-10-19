@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Personnaliser l'aperçu</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0077b3}a:hover{color:#003a5d}
+</style>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F4F6F9; font-family: Roboto, system-ui, sans-serif; color: #003a5d; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; padding: 0 8px; background: #FFFFFF; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid #E3E8EF">
+    <a href="1-accueil.html" aria-label="Retour" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #003a5d">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 20px; font-weight: 700; flex: 1">Personnaliser l'aperçu</h1>
+    <button style="min-height: 44px; padding: 0 12px; border: none; background: transparent; color: #0077b3; font: 500 15px Roboto, system-ui, sans-serif">Réinitialiser</button>
+  </header>
+
+  <main style="flex: 1; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+    <p style="margin: 0 4px 4px; font-size: 14px; line-height: 1.45; color: #4A6378">Glissez pour réordonner. Touchez une vignette pour choisir ce qu'elle compte.</p>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E8EF; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #1D4ED8, #3B82F6)"></span>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Tentes</div>
+        <div style="font-size: 13px; color: #4A6378">Toutes les tentes</div>
+      </div>
+      <label style="min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A6378"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #0077b3">Visible</label>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E8EF; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #047857, #059669)"></span>
+      <a href="3-nouvelle-vignette.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #003a5d">
+        <span style="font-size: 15px; font-weight: 700">Opérationnelles</span>
+        <span style="font-size: 13px; color: #4A6378; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Correcte · Séchage + correcte · Séchage + réparation</span>
+      </a>
+      <label style="min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A6378"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #0077b3">Visible</label>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E8EF; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #B45309, #D97706)"></span>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">À réparer</div>
+        <div style="font-size: 13px; color: #4A6378; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Statuts marqués « à réparer »</div>
+      </div>
+      <label style="min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A6378"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #0077b3">Visible</label>
+    </div>
+
+    <div style="background: #FFFFFF; border: 2px solid #0077b3; border-radius: 14px; padding: 9px 8px 9px 3px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #0E7490, #0891B2)"></span>
+      <a href="3-nouvelle-vignette.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #003a5d">
+        <span style="font-size: 15px; font-weight: 700">En séchage <span style="font-size: 11px; font-weight: 700; color: #0E7490; background: #E0F2F7; padding: 2px 5px; border-radius: 5px; vertical-align: 2px">PERSO</span></span>
+        <span style="font-size: 13px; color: #4A6378; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Séchage + correcte · Séchage + réparation</span>
+      </a>
+      <button aria-label="Supprimer la vignette En séchage" style="width: 44px; height: 44px; border: none; background: transparent; color: #4A6378; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+      </button>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E8EF; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #6D28D9, #7C3AED)"></span>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Sorties</div>
+        <div style="font-size: 13px; color: #4A6378">Événements à venir</div>
+      </div>
+      <label style="min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A6378"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #0077b3">Visible</label>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E8EF; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #9F1239, #BE123C)"></span>
+      <a href="3-nouvelle-vignette.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #003a5d">
+        <span style="font-size: 15px; font-weight: 700">Hors service <span style="font-size: 11px; font-weight: 700; color: #9F1239; background: #FCE7EC; padding: 2px 5px; border-radius: 5px; vertical-align: 2px">PERSO</span></span>
+        <span style="font-size: 13px; color: #4A6378">HS</span>
+      </a>
+      <button aria-label="Supprimer la vignette Hors service" style="width: 44px; height: 44px; border: none; background: transparent; color: #4A6378; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+      </button>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px dashed #B8C6D2; border-radius: 14px; padding: 10px 8px 10px 4px; display: flex; align-items: center; gap: 8px; opacity: 0.7">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8AA0B2" stroke-width="2" stroke-linecap="round"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg>
+      <span style="width: 36px; height: 36px; border-radius: 10px; flex: none; background: #CBD5E1"></span>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 15px; font-weight: 700">Tentes utilisées</div>
+        <div style="font-size: 13px; color: #4A6378">Masquée</div>
+      </div>
+      <label style="min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4A6378"><input type="checkbox" style="width: 20px; height: 20px; accent-color: #0077b3">Visible</label>
+    </div>
+  </main>
+
+  <div style="padding: 12px 16px 24px; background: #F4F6F9">
+    <a href="3-nouvelle-vignette.html" style="min-height: 52px; border-radius: 26px; background: #003a5d; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 700">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+      Nouvelle vignette
+    </a>
+  </div>
+</div>
+</body>
+</html>

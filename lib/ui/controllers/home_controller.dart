@@ -86,10 +86,12 @@ class HomeController extends StateNotifier<HomeState> {
       ref.invalidate(accountControllerProvider);
     }
     ref.invalidate(accueilControllerProvider);
+    ref.invalidate(homeTilesControllerProvider);
   }
 
   Future<void> refresh(dynamic ref) async {
     // re-run the same fetch logic you do on init
+    ref.invalidate(homeTilesControllerProvider);
     await loadData();
   }
 }

@@ -805,6 +805,28 @@ class ApiService {
     );
   }
 
+  Future<List<dynamic>> getHomeTiles() async {
+    final response = await _safeRequest(HttpMethod.get, '/me/home-tiles');
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
+  Future<List<dynamic>> saveHomeTiles(List<Map<String, dynamic>> tiles) async {
+    final response = await _safeRequest(
+      HttpMethod.put,
+      '/me/home-tiles',
+      body: jsonEncode({'tiles': tiles}),
+    );
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
+  Future<List<dynamic>> resetHomeTiles() async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/me/home-tiles/reset-defaults',
+    );
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
   Future<List<dynamic>> resetDefaultTentStatuses() async {
     final response = await _safeRequest(
       HttpMethod.post,
