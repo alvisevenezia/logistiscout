@@ -45,9 +45,11 @@ jobs:
       #          SECRET: ${{ secrets.SECRET }}
       #        run: python scripts/create_env.py
       - name: change build number
-        env:
-          BUILD_NUM: ${{github.run_number}}
-        run: python scripts/change_build_number.py
+        # versionCode commun aux pistes beta et production, toujours croissant :
+        # secondes depuis le 2024-01-01. (github.run_number est propre à chaque
+        # workflow : la production, moins numérotée que la beta, était refusée
+        # par le Play Store.)
+        run: BUILD_NUM=$(( $(date -u +%s) - 1704067200 )) python scripts/change_build_number.py
       - uses: actions/setup-java@v1
         with:
           java-version: "20.x"
