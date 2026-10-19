@@ -1,19 +1,37 @@
+"""Remplace le numéro de build (partie après `+`) de la ligne `version:` du pubspec.
+
+Le fichier est lu et réécrit tel quel (fins de ligne conservées, fichier
+entièrement réécrit) : l'ancienne version réécrivait par-dessus sans tronquer,
+ce qui laissait des restes en fin de fichier sous Linux (pubspec en CRLF).
+"""
 import os
+import re
+import sys
 
-BUILD_NUM=os.environ.get("BUILD_NUM")
+PUBSPEC = "./pubspec.yaml"
 
-with open("./pubspec.yaml", "r+") as file:
-    content = file.read()
-    content_list = content.split("\n")
-    # print(content_list)
-    for index, line in enumerate(content_list):
-        if (line.startswith("version:")):
-            original_text = line
-            without_build_number = original_text[:original_text.find("+")]
-            new_version_with_build_number = without_build_number + f"+{BUILD_NUM}"
-            string_index = index
-    print(new_version_with_build_number)
-    content_list[string_index] = new_version_with_build_number
-    new_yaml = """{}""".format("\n".join(content_list))
-    file.seek(0)
-    file.write(new_yaml)
+
+def main() -> None:
+    build_num = os.environ.get("BUILD_NUM", "").strip()
+    if not build_num.isdigit():
+        sys.exit(f"BUILD_NUM invalide : {build_num!r}")
+
+    with open(PUBSPEC, encoding="utf-8", newline="") as file:
+        content = file.read()
+
+    new_content, count = re.subn(
+        r"(?m)^(version:[ \t]*[^\s+]+)(?:\+[^\s]*)?",
+        rf"\g<1>+{build_num}",
+        content,
+    )
+    if count != 1:
+        sys.exit(f"Ligne 'version:' introuvable ou multiple dans {PUBSPEC} ({count})")
+
+    with open(PUBSPEC, "w", encoding="utf-8", newline="") as file:
+        file.write(new_content)
+
+    print(re.search(r"(?m)^version:.*$", new_content).group(0).strip())
+
+
+if __name__ == "__main__":
+    main()
