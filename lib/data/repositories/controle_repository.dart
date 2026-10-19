@@ -25,8 +25,11 @@ class ControlRepository {
     if (control.id == null) {
       throw Exception('Cannot update a controle without an ID');
     }
-    final dto = mapControlDomainToDto(control);
-    await api.updateControl(control.id!, dto.toJson());
+    final json = mapControlDomainToDto(control).toJson();
+    // Toujours envoyée, même vide : c'est la liste des photos à garder.
+    json['image_urls'] = control.imageUrls;
+    json.remove('image_url');
+    await api.updateControl(control.id!, json);
     return control;
   }
 

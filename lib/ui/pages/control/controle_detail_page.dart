@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:developer' as developer;
+import 'package:logistiscout/services/local_storage_service.dart';
+import 'package:logistiscout/ui/controllers/controle_controller.dart';
+import 'package:logistiscout/ui/pages/control/controle_edit_page.dart';
 import 'package:logistiscout/domain/entities/controle.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/ui/widgets/common/hearder_card.dart';
 
-class ControleDetailPage extends StatelessWidget {
+class ControleDetailPage extends ConsumerWidget {
   final Control controle;
   final Tent tente;
 
@@ -17,10 +21,89 @@ class ControleDetailPage extends StatelessWidget {
   String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
+  Future<void> _edit(BuildContext context) async {
+    var controllerName = controle.checklist['nom_controleur']?.toString() ?? '';
+    if (controllerName.trim().isEmpty) {
+      controllerName =
+          await LocalStorageService.instance.getControllerName() ?? '';
+    }
+    if (!context.mounted) return;
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ControlEditPage(
+          tent: tente,
+          controllerName: controllerName,
+          initialControl: controle,
+        ),
+      ),
+    );
+    // Retour à la liste, qui est rechargée avec le contrôle modifié.
+    if (saved == true && context.mounted) Navigator.pop(context, true);
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Supprimer ce contrôle ?'),
+        content: Text(
+          'Contrôle du ${_formatDate(controle.date)} : la suppression est définitive (photos comprises).',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref
+          .read(controlProvider(controle.tentId).notifier)
+          .deleteControl(controle.id!);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Contrôle supprimé.')));
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Suppression impossible : $e')),
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Détail du contrôle')),
+      appBar: AppBar(
+        title: const Text('Détail du contrôle'),
+        actions: [
+          if (controle.id != null) ...[
+            IconButton(
+              tooltip: 'Modifier',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => _edit(context),
+            ),
+            IconButton(
+              tooltip: 'Supprimer',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => _delete(context, ref),
+            ),
+          ],
+        ],
+      ),
       body: Column(
         children: [
           Padding(

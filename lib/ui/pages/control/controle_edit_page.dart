@@ -13,10 +13,14 @@ class ControlEditPage extends ConsumerStatefulWidget {
   final Tent tent;
   final String controllerName;
 
+  /// Contrôle existant à modifier ; null pour un nouveau contrôle.
+  final Control? initialControl;
+
   const ControlEditPage({
     super.key,
     required this.tent,
     required this.controllerName,
+    this.initialControl,
   });
 
   @override
@@ -32,6 +36,24 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
   final Map<String, StatusElementControl?> statusByItem = {};
   TentState? _state;
   final List<_PendingPhoto> _selectedPhotos = [];
+
+  /// Photos déjà enregistrées (modification) ; « Retirer » les enlève.
+  final List<String> _existingPhotoUrls = [];
+
+  bool get _isEditing => widget.initialControl != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialControl;
+    if (initial != null) {
+      statusByItem.addAll(controlItemStatuses(initial.checklist));
+      sardinesController.text =
+          initial.checklist['Nombre de sardines/piquets']?.toString() ?? '';
+      remarquesController.text = initial.comment;
+      _existingPhotoUrls.addAll(initial.imageUrls);
+    }
+  }
 
   @override
   void dispose() {
@@ -202,7 +224,13 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
     final explications = _explications();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Contrôle - ${widget.tent.nom}')),
+      appBar: AppBar(
+        title: Text(
+          _isEditing
+              ? 'Modifier le contrôle - ${widget.tent.nom}'
+              : 'Contrôle - ${widget.tent.nom}',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -374,6 +402,45 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                         ),
                       ],
                     ),
+                    if (_existingPhotoUrls.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final url in List.of(_existingPhotoUrls))
+                            SizedBox(
+                              width: 110,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: Image.network(
+                                        url,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const ColoredBox(
+                                              color: Color(0x11000000),
+                                              child: Icon(Icons.broken_image),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => setState(() {
+                                      _existingPhotoUrls.remove(url);
+                                    }),
+                                    child: const Text('Retirer'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                     if (_selectedPhotos.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Wrap(
@@ -418,7 +485,7 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                             ),
                         ],
                       ),
-                    ] else ...[
+                    ] else if (_existingPhotoUrls.isEmpty) ...[
                       const SizedBox(height: 8),
                       const Text('Aucune photo ajoutée.'),
                     ],
@@ -438,7 +505,9 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(Icons.save),
-              label: const Text('Valider le contrôle'),
+              label: Text(
+                _isEditing ? 'Enregistrer les modifications' : 'Valider le contrôle',
+              ),
               onPressed: () async {
                 developer.log(
                   'Save control tapped for tentId=${widget.tent.id}, selectedPhotos=${_selectedPhotos.length}',
@@ -465,18 +534,34 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                     name: 'ControlEditPage',
                   );
 
-                  final controle = Control(
-                    id: null,
-                    tentId: widget.tent.id,
-                    date: DateTime.now(),
-                    comment: remarquesController.text.trim(),
-                    checklist: payload,
-                    userId: 0,
-                  );
+                  final initial = widget.initialControl;
+                  final Control createdControl;
+                  if (initial != null) {
+                    // Modification : même contrôle (date, contrôleur d'origine),
+                    // photos existantes non retirées conservées.
+                    createdControl = await ref
+                        .read(controlProvider(widget.tent.id).notifier)
+                        .updateControl(
+                          initial.copyWith(
+                            checklist: payload,
+                            comment: remarquesController.text.trim(),
+                            imageUrls: List.of(_existingPhotoUrls),
+                          ),
+                        );
+                  } else {
+                    final controle = Control(
+                      id: null,
+                      tentId: widget.tent.id,
+                      date: DateTime.now(),
+                      comment: remarquesController.text.trim(),
+                      checklist: payload,
+                      userId: 0,
+                    );
 
-                  final createdControl = await ref
-                      .read(controlProvider(widget.tent.id).notifier)
-                      .addControl(controle);
+                    createdControl = await ref
+                        .read(controlProvider(widget.tent.id).notifier)
+                        .addControl(controle);
+                  }
 
                   var controlIdForUpload = createdControl.id;
                   if (controlIdForUpload == null &&
@@ -536,9 +621,14 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
                   // Synchro « Remplacer » : la remarque du contrôle devient
                   // celle de la tente. Une remarque de contrôle vide ne doit
                   // pas effacer la remarque existante de la tente.
+                  // En modification, seule une remarque réellement changée est
+                  // reportée : rouvrir un ancien contrôle ne doit pas écraser
+                  // une remarque plus récente de la tente.
                   final remarkChanged =
                       controlRemark.isNotEmpty &&
-                      controlRemark != widget.tent.comment;
+                      controlRemark != widget.tent.comment &&
+                      (initial == null ||
+                          controlRemark != initial.comment.trim());
 
                   if (stateChanged || remarkChanged) {
                     developer.log(
@@ -567,8 +657,12 @@ class _ControlEditPageState extends ConsumerState<ControlEditPage> {
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Contrôle enregistré avec succès !'),
+                      SnackBar(
+                        content: Text(
+                          _isEditing
+                              ? 'Contrôle modifié.'
+                              : 'Contrôle enregistré avec succès !',
+                        ),
                       ),
                     );
                     Navigator.pop(context, true);
