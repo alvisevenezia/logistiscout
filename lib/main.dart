@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/api_environment.dart';
 import 'package:logistiscout/services/api_service.dart';
 import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/ui/pages/account/group_settings_page.dart';
@@ -86,6 +87,7 @@ final _router = GoRouter(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiEnvironmentSettings.restore();
 
   runApp(ProviderScope(child: MyApp()));
 }
@@ -98,15 +100,21 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Logistiscout',
       routerConfig: _router,
-      // Bandeau visible dès que l'app ne vise pas l'API de prod.
-      builder: (context, child) => ApiService.targetsProd
-          ? child!
-          : Banner(
-              message: 'DEV',
-              location: BannerLocation.topEnd,
-              color: const Color(0xFFE2001A),
-              child: child!,
-            ),
+      // Bandeau selon le serveur utilisé : DEV (rouge), ou PROD (orange) quand
+      // un build de dev vise la prod. Rien sur un build de production.
+      builder: (context, child) => ValueListenableBuilder<String>(
+        valueListenable: ApiService.baseUrlListenable,
+        builder: (context, baseUrl, _) {
+          final onProd = baseUrl == ApiService.prodBaseUrl;
+          if (onProd && !ApiEnvironmentSettings.canSwitch) return child!;
+          return Banner(
+            message: onProd ? 'PROD' : 'DEV',
+            location: BannerLocation.topEnd,
+            color: onProd ? const Color(0xFFE65100) : const Color(0xFFE2001A),
+            child: child!,
+          );
+        },
+      ),
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
           primary: Color(0xFF003a5d),

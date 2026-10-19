@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logistiscout/core/api_environment.dart';
 import 'package:logistiscout/core/legal_constants.dart';
 import 'package:logistiscout/services/app_exception.dart';
 import 'package:logistiscout/ui/controllers/login_controller.dart';
@@ -97,6 +98,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 32),
+
+              if (ApiEnvironmentSettings.canSwitch) ...[
+                const _ServerSelector(),
+                const SizedBox(height: 24),
+              ],
 
               TextFormField(
                 controller: _loginController,
@@ -236,6 +242,53 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Choix du serveur, uniquement dans les builds de dev.
+class _ServerSelector extends StatefulWidget {
+  const _ServerSelector();
+
+  @override
+  State<_ServerSelector> createState() => _ServerSelectorState();
+}
+
+class _ServerSelectorState extends State<_ServerSelector> {
+  late ApiEnvironment _selected = ApiEnvironmentSettings.current;
+
+  Future<void> _select(ApiEnvironment env) async {
+    await ApiEnvironmentSettings.select(env);
+    if (!mounted) return;
+    setState(() => _selected = env);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Serveur : ${env.label} (${env.baseUrl})')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Serveur', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 8),
+        SegmentedButton<ApiEnvironment>(
+          segments: [
+            for (final env in ApiEnvironment.values)
+              ButtonSegment(value: env, label: Text(env.label)),
+          ],
+          selected: {_selected},
+          onSelectionChanged: (selection) => _select(selection.first),
+        ),
+        if (_selected == ApiEnvironment.prod) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Attention : vous travaillez sur les données réelles.',
+            style: TextStyle(color: Color(0xFFE65100)),
+          ),
+        ],
+      ],
     );
   }
 }

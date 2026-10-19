@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart'
+    show ValueNotifier, kReleaseMode, visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/app_exception.dart';
@@ -22,7 +23,7 @@ enum HttpMethod {
 }
 
 class ApiService {
-  ApiService._internal({required this.baseUrl}) {
+  ApiService._internal({required String baseUrl}) : _baseUrl = baseUrl {
     developer.log('ApiService singleton created', name: 'ApiService');
   }
 
@@ -48,32 +49,59 @@ class ApiService {
   static const prodBaseUrl = 'https://api.logistiscout.fr';
   static const devBaseUrl = 'https://dev.logistiscout.fr';
 
-  /// Release → prod ; debug/profile → serveur de dev.
-  static const String _defaultBaseUrl = String.fromEnvironment(
+  /// Cible au build : release → prod ; debug/profile → serveur de dev.
+  static const String defaultBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: kReleaseMode ? prodBaseUrl : devBaseUrl,
   );
 
-  static bool get targetsProd => _defaultBaseUrl == prodBaseUrl;
+  /// Serveur effectivement utilisé (peut changer à l'exécution, cf.
+  /// ApiEnvironmentSettings) ; l'UI s'y abonne pour le bandeau.
+  static final ValueNotifier<String> baseUrlListenable = ValueNotifier(
+    defaultBaseUrl,
+  );
 
-  factory ApiService({String baseUrl = _defaultBaseUrl}) {
+  factory ApiService({String baseUrl = defaultBaseUrl}) {
     developer.log('ApiService instance requested', name: 'ApiService');
     return _instance ??= ApiService._internal(baseUrl: baseUrl);
   }
 
   static void reconfigure({required String baseUrl, http.Client? client}) {
     _instance = ApiService._internal(baseUrl: baseUrl);
+    baseUrlListenable.value = baseUrl;
   }
 
-  final String baseUrl;
+  /// Change de serveur sur l'instance partagée : les repositories qui la
+  /// détiennent déjà basculent aussi.
+  static void useBaseUrl(String baseUrl) {
+    final instance = _instance;
+    if (instance == null) {
+      _instance = ApiService._internal(baseUrl: baseUrl);
+    } else {
+      instance._baseUrl = baseUrl;
+    }
+    baseUrlListenable.value = baseUrl;
+  }
 
-  String? _extractErrorDetail(String rawBody) {
+  String _baseUrl;
+  String get baseUrl => _baseUrl;
+
+  /// Message lisible d'une erreur FastAPI : `detail` texte, ou
+  /// `detail.message` pour les erreurs structurées.
+  @visibleForTesting
+  static String? extractErrorDetail(String rawBody) {
     try {
       final decoded = jsonDecode(rawBody);
       if (decoded is Map<String, dynamic>) {
         final detail = decoded['detail'];
         if (detail is String && detail.trim().isNotEmpty) {
           return detail.trim();
+        }
+        if (detail is Map<String, dynamic>) {
+          final message = detail['message'];
+          if (message is String && message.trim().isNotEmpty) {
+            return message.trim();
+          }
         }
       }
     } catch (_) {
@@ -144,7 +172,7 @@ class ApiService {
           response.statusCode == 401 || response.statusCode == 403;
       final isRefreshCall = path == '/auth/refresh';
       final isLoginCall = path == '/auth/login';
-      final backendDetail = _extractErrorDetail(response.body);
+      final backendDetail = extractErrorDetail(response.body);
 
       if (isAuthError && !retrying && !isRefreshCall && !isLoginCall) {
         final refreshed = await refreshToken();
@@ -611,7 +639,8 @@ class ApiService {
     }
 
     throw AppException(
-      'Upload de photo impossible (${response.statusCode}) - ${response.body}',
+      extractErrorDetail(response.body) ??
+          'Upload de photo impossible (${response.statusCode}).',
       statusCode: response.statusCode,
     );
   }
