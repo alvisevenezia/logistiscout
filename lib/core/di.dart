@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/data/repositories/group_repository.dart';
+import 'package:logistiscout/data/repositories/item_repository.dart';
 import 'package:logistiscout/data/repositories/tente_repository_impl.dart';
 import 'package:logistiscout/domain/entities/group.dart';
 import 'package:logistiscout/domain/repositories/tente_repository.dart';
@@ -29,6 +30,11 @@ final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
 final tentRepositoryProvider = Provider<TentRepository>((ref) {
   final api = ref.read(apiServiceProvider);
   return TentRepositoryImpl(api);
+});
+
+final itemRepositoryProvider = Provider<ItemRepository>((ref) {
+  final api = ref.read(apiServiceProvider);
+  return ItemRepository(api);
 });
 
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {

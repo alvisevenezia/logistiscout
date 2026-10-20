@@ -7,6 +7,8 @@ enum HomeTileKind {
   repair('repair'),
   outings('outings'),
   usedTents('used_tents'),
+  items('items'),
+  issues('issues'),
   custom('custom');
 
   const HomeTileKind(this.jsonValue);
@@ -62,7 +64,20 @@ class HomeTile {
     HomeTile(id: 'repair', kind: HomeTileKind.repair),
     HomeTile(id: 'outings', kind: HomeTileKind.outings),
     HomeTile(id: 'used_tents', kind: HomeTileKind.usedTents, visible: false),
+    HomeTile(id: 'items', kind: HomeTileKind.items),
+    HomeTile(id: 'issues', kind: HomeTileKind.issues),
   ];
+
+  /// Ajoute à la fin les vignettes d'origine absentes d'une disposition
+  /// enregistrée (nouvelles vignettes apparues depuis).
+  static List<HomeTile> withMissingDefaults(List<HomeTile> tiles) {
+    final ids = {for (final t in tiles) t.id};
+    return [
+      ...tiles,
+      for (final d in defaults)
+        if (!ids.contains(d.id)) d,
+    ];
+  }
 
   HomeTile copyWith({
     bool? visible,
@@ -125,12 +140,18 @@ class HomeOverviewData {
   final List<TentStatusRef> statuses;
   final int upcomingEventsCount;
   final int usedTentsCount;
+  final int itemsCount;
+  final int itemsToRepairCount;
+  final int openIssuesCount;
 
   const HomeOverviewData({
     required this.tents,
     required this.statuses,
     required this.upcomingEventsCount,
     required this.usedTentsCount,
+    this.itemsCount = 0,
+    this.itemsToRepairCount = 0,
+    this.openIssuesCount = 0,
   });
 }
 
@@ -144,6 +165,10 @@ int homeTileCount(HomeTile tile, HomeOverviewData data) {
       return data.upcomingEventsCount;
     case HomeTileKind.usedTents:
       return data.usedTentsCount;
+    case HomeTileKind.items:
+      return data.itemsCount;
+    case HomeTileKind.issues:
+      return data.openIssuesCount;
     case HomeTileKind.operational:
       if (tile.statusIds.isEmpty) {
         return data.tents.length -

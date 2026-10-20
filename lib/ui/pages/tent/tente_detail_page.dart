@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/issue.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,6 +23,7 @@ import 'package:logistiscout/ui/pages/tent/widgets/tente_control_history_section
 import 'package:logistiscout/ui/pages/tent/widgets/tente_detail_common_widgets.dart';
 import 'package:logistiscout/ui/pages/tent/widgets/tente_event_history_section.dart';
 import 'package:logistiscout/ui/widgets/common/hearder_card.dart';
+import 'package:logistiscout/ui/widgets/issues/issues_section.dart';
 
 class TenteDetailPage extends ConsumerStatefulWidget {
   final int tentId;
@@ -732,6 +734,13 @@ class _TenteDetailPageState extends ConsumerState<TenteDetailPage> {
                                 ),
                               ],
                             ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          IssuesSection(
+                            target: IssueTarget.tent(tente.id),
+                            targetName: tente.nom,
                           ),
 
                           const SizedBox(height: 16),

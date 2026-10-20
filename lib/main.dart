@@ -13,6 +13,8 @@ import 'package:logistiscout/ui/pages/home/home_tiles_page.dart';
 import 'package:logistiscout/ui/pages/home_page.dart';
 import 'package:logistiscout/ui/pages/auth/login_page.dart';
 import 'package:logistiscout/ui/pages/legal/terms_page.dart';
+import 'package:logistiscout/ui/pages/materiel/materiel_detail_page.dart';
+import 'package:logistiscout/ui/pages/materiel/materiel_page.dart';
 import 'package:logistiscout/ui/pages/tent/tente_detail_page.dart';
 import 'package:logistiscout/ui/pages/tent/tentes_page.dart';
 
@@ -61,6 +63,19 @@ final _router = GoRouter(
               builder: (context, state) {
                 final tentId = int.parse(state.pathParameters['tentId']!);
                 return TenteDetailPage(tentId: tentId);
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/materiel',
+          builder: (context, state) => const MaterielPage(),
+          routes: [
+            GoRoute(
+              path: ':itemId',
+              builder: (context, state) {
+                final itemId = int.parse(state.pathParameters['itemId']!);
+                return MaterielDetailPage(itemId: itemId);
               },
             ),
           ],
@@ -175,8 +190,9 @@ class _MainNavigationState extends State<_MainNavigation> {
 
   int _locationToIndex(String location) {
     if (location.startsWith('/tents')) return 1;
-    if (location.startsWith('/events')) return 2;
-    if (location.startsWith('/contact')) return 3;
+    if (location.startsWith('/materiel')) return 2;
+    if (location.startsWith('/events')) return 3;
+    if (location.startsWith('/contact')) return 4;
     return 0; // /accueil (and default)
   }
 
@@ -185,8 +201,10 @@ class _MainNavigationState extends State<_MainNavigation> {
       case 1:
         return '/tents';
       case 2:
-        return '/events';
+        return '/materiel';
       case 3:
+        return '/events';
+      case 4:
         return '/contact';
       case 0:
       default:
@@ -256,6 +274,10 @@ class _MainNavigationState extends State<_MainNavigation> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.cabin), label: 'Tentes'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.backpack),
+            label: 'Matériel',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Événements'),
           BottomNavigationBarItem(
             icon: Icon(Icons.contact_support),

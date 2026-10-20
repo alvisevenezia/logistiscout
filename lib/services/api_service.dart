@@ -548,15 +548,39 @@ class ApiService {
     required int controlId,
     required Uint8List bytes,
     required String fileName,
+  }) {
+    return _uploadPicture(
+      path: '/controles/$controlId/picture',
+      bytes: bytes,
+      fileName: fileName,
+    );
+  }
+
+  Future<Map<String, dynamic>> uploadIssuePicture({
+    required int issueId,
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    return _uploadPicture(
+      path: '/issues/$issueId/picture',
+      bytes: bytes,
+      fileName: fileName,
+    );
+  }
+
+  Future<Map<String, dynamic>> _uploadPicture({
+    required String path,
+    required Uint8List bytes,
+    required String fileName,
     bool retrying = false,
   }) async {
-    final uri = Uri.parse('$baseUrl/v2/controles/$controlId/picture');
+    final uri = Uri.parse('$baseUrl/v2$path');
     final headers = await _headers();
     final authHeader = headers['Authorization'];
     headers.remove('Content-Type');
 
     developer.log(
-      'POST multipart /v2/controles/$controlId/picture '
+      'POST multipart /v2$path '
       'fileName=$fileName size=${bytes.length}B retrying=$retrying '
       'authPresent=${authHeader != null && authHeader.isNotEmpty} uri=$uri',
       name: 'ApiService',
@@ -601,7 +625,7 @@ class ApiService {
     }
 
     developer.log(
-      'Response /v2/controles/$controlId/picture: ${response.statusCode} - ${response.body}',
+      'Response /v2$path: ${response.statusCode} - ${response.body}',
       name: 'ApiService',
     );
 
@@ -622,8 +646,8 @@ class ApiService {
         name: 'ApiService',
       );
       if (refreshed) {
-        return uploadControlPicture(
-          controlId: controlId,
+        return _uploadPicture(
+          path: path,
           bytes: bytes,
           fileName: fileName,
           retrying: true,
@@ -658,6 +682,77 @@ class ApiService {
 
   Future<void> deleteControl(int controlId) async {
     await _safeRequest(HttpMethod.delete, '/controles/$controlId');
+  }
+
+  Future<List<dynamic>> getItemTypes() async {
+    final response = await _safeRequest(HttpMethod.get, '/item-types');
+    return jsonDecode(response.body);
+  }
+
+  Future<List<dynamic>> getItems() async {
+    final response = await _safeRequest(HttpMethod.get, '/items');
+    return jsonDecode(response.body);
+  }
+
+  Future<Map<String, dynamic>> createItem(Map<String, dynamic> item) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/items',
+      body: jsonEncode(item),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateItem(
+    int itemId,
+    Map<String, dynamic> item,
+  ) async {
+    final response = await _safeRequest(
+      HttpMethod.put,
+      '/items/$itemId',
+      body: jsonEncode(item),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> deleteItem(int itemId) async {
+    await _safeRequest(HttpMethod.delete, '/items/$itemId');
+  }
+
+  Future<List<dynamic>> getIssues({
+    String? targetKind,
+    int? targetId,
+    String? state,
+  }) async {
+    final query = <String, String>{
+      if (targetKind != null) 'targetKind': targetKind,
+      if (targetId != null) 'targetId': '$targetId',
+      if (state != null) 'state': state,
+    };
+    final suffix = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
+    final response = await _safeRequest(HttpMethod.get, '/issues$suffix');
+    return jsonDecode(response.body);
+  }
+
+  Future<Map<String, dynamic>> createIssue(Map<String, dynamic> issue) async {
+    final response = await _safeRequest(
+      HttpMethod.post,
+      '/issues',
+      body: jsonEncode(issue),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateIssue(
+    int issueId,
+    Map<String, dynamic> issue,
+  ) async {
+    final response = await _safeRequest(
+      HttpMethod.put,
+      '/issues/$issueId',
+      body: jsonEncode(issue),
+    );
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<List<dynamic>> getMenuList() async {

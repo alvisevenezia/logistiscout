@@ -93,6 +93,22 @@ HomeStatCardData homeStatCardFor(HomeTile tile, HomeOverviewData data) {
         icon: Icons.cabin,
         colors: const [Color(0xFF0369A1), Color(0xFF38BDF8)],
       );
+    case HomeTileKind.items:
+      return HomeStatCardData(
+        title: 'Matériel',
+        value: value,
+        subtitle: '${data.itemsToRepairCount} à réparer',
+        icon: Icons.backpack,
+        colors: const [Color(0xFF0E7490), Color(0xFF22D3EE)],
+      );
+    case HomeTileKind.issues:
+      return HomeStatCardData(
+        title: 'Signalements',
+        value: value,
+        subtitle: 'ouverts',
+        icon: Icons.report_problem,
+        colors: const [Color(0xFF9F1239), Color(0xFFFB7185)],
+      );
     case HomeTileKind.custom:
       return HomeStatCardData(
         title: tile.title ?? '',

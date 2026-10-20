@@ -12,7 +12,7 @@ class HomeTilesController extends AsyncNotifier<List<HomeTile>> {
   @override
   FutureOr<List<HomeTile>> build() async {
     try {
-      return await _repository.getHomeTiles();
+      return HomeTile.withMissingDefaults(await _repository.getHomeTiles());
     } catch (_) {
       // Hors ligne ou API plus ancienne : l'accueil garde l'aperçu d'origine.
       return HomeTile.defaults;

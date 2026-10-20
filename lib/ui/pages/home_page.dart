@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/event.dart';
 import 'package:logistiscout/domain/entities/home_tile.dart';
+import 'package:logistiscout/domain/entities/item.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/data/models/login_notice_dto.dart';
 import 'package:logistiscout/services/local_storage_service.dart';
 import 'package:logistiscout/services/token_store.dart';
 import 'package:logistiscout/ui/controllers/home_controller.dart';
+import 'package:logistiscout/ui/controllers/items_controller.dart';
 import 'package:logistiscout/ui/widgets/common/event_card.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -210,11 +212,17 @@ class _HomePageState extends ConsumerState<HomePage> {
         ref.watch(accountControllerProvider).valueOrNull?.tentStatuses ??
         const <TentStatusRef>[];
     final tentesToRepair = tentsNeedingRepair(state.tentes, statuses);
+    // Matériel et signalements : 0 tant que l'API ne les fournit pas.
+    final items = ref.watch(itemsProvider).valueOrNull ?? const <Item>[];
+    final openIssues = ref.watch(openIssuesProvider).valueOrNull ?? const [];
     final overview = HomeOverviewData(
       tents: state.tentes,
       statuses: statuses,
       upcomingEventsCount: prochainsEvts.length,
       usedTentsCount: tentesUtilisees.length,
+      itemsCount: items.length,
+      itemsToRepairCount: items.where((i) => i.usage != ItemUsage.ok).length,
+      openIssuesCount: openIssues.length,
     );
     final tiles =
         ref.watch(homeTilesControllerProvider).valueOrNull ??

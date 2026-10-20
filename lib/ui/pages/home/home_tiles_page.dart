@@ -147,6 +147,10 @@ class HomeTilesPage extends ConsumerWidget {
         return 'Événements à venir';
       case HomeTileKind.usedTents:
         return 'Tentes des prochaines sorties';
+      case HomeTileKind.items:
+        return 'Tout le matériel hors tentes';
+      case HomeTileKind.issues:
+        return 'Problèmes signalés non résolus';
       case HomeTileKind.operational:
         return tile.statusIds.isEmpty
             ? 'Tentes non marquées « à réparer »'

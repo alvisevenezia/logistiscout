@@ -37,7 +37,17 @@ void main() {
 
   test('charge les vignettes du groupe', () async {
     final tiles = await container.read(homeTilesControllerProvider.future);
-    expect(tiles.length, 5);
+    expect(tiles.length, HomeTile.defaults.length);
+  });
+
+  test('une disposition ancienne recoit les nouvelles vignettes', () async {
+    when(() => repo.getHomeTiles()).thenAnswer(
+      (_) async => HomeTile.defaults
+          .where((t) => t.kind != HomeTileKind.items)
+          .toList(),
+    );
+    final tiles = await container.read(homeTilesControllerProvider.future);
+    expect(tiles.last.id, 'items');
   });
 
   test('hors ligne: vignettes par defaut', () async {
@@ -67,7 +77,7 @@ void main() {
     await controller.setVisible('tents', false);
     expect(saved!.first.visible, isFalse);
 
-    await controller.reorder(5, 0);
+    await controller.reorder(HomeTile.defaults.length, 0);
     expect(ids().first, 'custom-1');
 
     await controller.remove('custom-1');

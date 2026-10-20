@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logistiscout/core/di.dart';
 import 'package:logistiscout/domain/entities/group_unit.dart';
+import 'package:logistiscout/domain/entities/issue.dart';
 import 'package:logistiscout/domain/entities/tent_status.dart';
 import 'package:logistiscout/domain/entities/tente.dart';
 import 'package:logistiscout/services/tent_import_service.dart';
 import 'package:logistiscout/ui/controllers/tentes_controller.dart';
 import 'package:logistiscout/ui/widgets/common/tent_card.dart';
+import 'package:logistiscout/ui/widgets/issues/issue_dialog.dart';
 
 class TentesPage extends ConsumerStatefulWidget {
   const TentesPage({super.key});
@@ -255,6 +257,18 @@ class _TentesPageState extends ConsumerState<TentesPage> {
                     statuses: statuses,
                     sourceTent: tent,
                   ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.report_problem_outlined),
+              title: const Text('Signaler un problème'),
+              onTap: () {
+                Navigator.pop(ctx);
+                showIssueDialog(
+                  context,
+                  target: IssueTarget.tent(tent.id),
+                  targetName: tent.nom,
                 );
               },
             ),

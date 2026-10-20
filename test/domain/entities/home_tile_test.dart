@@ -135,8 +135,35 @@ void main() {
         'repair',
         'outings',
         'used_tents',
+        'items',
+        'issues',
       ]);
-      expect(HomeTile.defaults.last.visible, isFalse);
+      expect(
+        HomeTile.defaults.firstWhere((t) => t.id == 'used_tents').visible,
+        isFalse,
+      );
+    });
+
+    test('les vignettes d origine absentes sont ajoutees a la fin', () {
+      final saved = [
+        const HomeTile(id: 'repair', kind: HomeTileKind.repair),
+        const HomeTile(id: 'custom-1', kind: HomeTileKind.custom, title: 'HS'),
+      ];
+
+      final tiles = HomeTile.withMissingDefaults(saved);
+
+      expect(tiles.take(2).map((t) => t.id), ['repair', 'custom-1']);
+      expect(tiles.map((t) => t.id).toSet(), {
+        'repair',
+        'custom-1',
+        'tents',
+        'operational',
+        'outings',
+        'used_tents',
+        'items',
+        'issues',
+      });
+      expect(tiles.where((t) => t.id == 'repair').length, 1);
     });
   });
 }
