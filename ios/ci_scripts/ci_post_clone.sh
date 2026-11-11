@@ -28,6 +28,17 @@ flutter precache --ios
 # Install Flutter dependencies.
 flutter pub get
 
+# Serveur visé par l'app. Le workflow Xcode Cloud des testeurs internes
+# définit LOGISTISCOUT_API_ENV=dev : l'app vise le serveur de dev et propose
+# le choix Dev/Prod à la connexion. Sans cette variable (testeurs externes,
+# App Store), l'app vise la prod, sans choix.
+if [ "$LOGISTISCOUT_API_ENV" = "dev" ]; then
+  echo "Build interne : serveur de dev par défaut, choix Dev/Prod activé"
+  flutter build ios --config-only --release --no-codesign     --dart-define=API_BASE_URL=https://dev.logistiscout.fr
+else
+  echo "Build externe / App Store : serveur de prod uniquement"
+fi
+
 # Install CocoaPods using Homebrew.
 HOMEBREW_NO_AUTO_UPDATE=1 # disable homebrew's automatic updates.
 brew install cocoapods
