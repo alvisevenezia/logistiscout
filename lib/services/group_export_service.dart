@@ -135,6 +135,35 @@ class GroupExportService {
     return buffer.toString();
   }
 
+  /// Enregistre l'export complet du compte (JSON fourni par l'API).
+  static Future<String?> exportAccountJson({
+    required Group group,
+    required Uint8List bytes,
+  }) async {
+    if (kIsWeb) {
+      throw UnsupportedError('Export non supporte sur le web.');
+    }
+
+    return FilePicker.platform.saveFile(
+      dialogTitle: 'Choisir ou sauvegarder le fichier JSON',
+      fileName: _buildAccountFileName(group),
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+      bytes: bytes,
+    );
+  }
+
+  static String _buildAccountFileName(Group group) {
+    final sanitized = group.name
+        .trim()
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    final stamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+    final baseName = sanitized.isEmpty ? 'group' : sanitized;
+    return 'donnees_${baseName}_$stamp.json';
+  }
+
   static String _buildControlsFileName(Group group) {
     final sanitized = group.name
         .trim()

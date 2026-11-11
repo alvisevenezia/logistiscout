@@ -51,14 +51,23 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
             onSelected: (value) async {
               if (currentGroup == null) return;
               try {
-                final tentes = await ref.read(tentesProvider.future);
                 final String? filePath;
-                if (value == 'export_tentes') {
+                if (value == 'export_all') {
+                  final bytes = await ref
+                      .read(apiServiceProvider)
+                      .exportAccountData();
+                  filePath = await GroupExportService.exportAccountJson(
+                    group: currentGroup,
+                    bytes: bytes,
+                  );
+                } else if (value == 'export_tentes') {
+                  final tentes = await ref.read(tentesProvider.future);
                   filePath = await GroupExportService.exportTentsCsv(
                     group: currentGroup,
                     tents: tentes,
                   );
                 } else {
+                  final tentes = await ref.read(tentesProvider.future);
                   filePath = await GroupExportService.exportControlsCsv(
                     group: currentGroup,
                     tents: tentes,
@@ -93,6 +102,14 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                 child: ListTile(
                   leading: Icon(Icons.checklist),
                   title: Text('Exporter les controles (CSV)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'export_all',
+                child: ListTile(
+                  leading: Icon(Icons.download),
+                  title: Text('Exporter toutes les donnees (JSON)'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

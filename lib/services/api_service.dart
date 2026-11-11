@@ -725,6 +725,12 @@ class ApiService {
     await _safeRequest(HttpMethod.put, '/me', body: jsonEncode(json));
   }
 
+  /// Toutes les données du groupe, au format JSON (fichier brut).
+  Future<Uint8List> exportAccountData() async {
+    final response = await _safeRequest(HttpMethod.get, '/me/export');
+    return response.bodyBytes;
+  }
+
   Future<void> deleteCurrentGroup() async {
     try {
       await _safeRequest(HttpMethod.delete, '/me');
